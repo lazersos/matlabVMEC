@@ -1,0 +1,193 @@
+function data = read_nescoil( filename )
+%READ_NESCOIL Summary of this function goes here
+%   Detailed explanation goes here
+
+fid = fopen(filename,'r');
+if strfind(filename,'nescin')
+    fgetl(fid);
+    fgetl(fid);
+    data.iasym = 0;
+    line=fgetl(fid); temp = sscanf(line,'%d %d %d %d %d %d %*s',6);
+    if strfind(line,'T')
+        data.iasym = 1;
+    end
+    data.nu = temp(1);
+    data.nv = temp(2);
+    data.nu1 = temp(3);
+    data.nv1 = temp(4);
+    data.npol = temp(5);
+    data.ntor = temp(6);
+    fgetl(fid);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid);
+    temp = sscanf(line,'%d %d %d %d',4);
+    data.mf = temp(1);
+    data.nf = temp(2);
+    data.md = temp(3);
+    data.nd = temp(4);
+    fgetl(fid);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid);
+    temp = sscanf(line,'%d %f %e %f',4);
+    data.nfp = temp(1);
+    data.iotae = temp(2);
+    data.phipe = temp(3);
+    data.curpol = temp(4);
+    fgetl(fid);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid); temp = sscanf(line,'%e %f %d',3);
+    data.cut = temp(1);
+    data.cup = temp(2);
+    data.ibex = temp(3);
+    fgetl(fid);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid); temp = sscanf(line,'%d %d %d %d %e %e',6);
+    data.mstrt = temp(1);
+    data.mstep = temp(2);
+    data.mkeep = temp(3);
+    data.mdspw = temp(4);
+    data.curwt = temp(5);
+    data.trgwt = temp(6);
+    fgetl(fid);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid); temp = sscanf(line,'%d %d %d %d %d %d',6);
+    data.w_psurf = temp(1);
+    data.w_csurf = temp(2);
+    data.w_bunv = temp(3);
+    data.w_jsurf = temp(4);
+    data.w_xerr = temp(5);
+    data.w_svd = temp(6);
+    fgetl(fid);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid); temp = sscanf(line,'%d',1);
+    data.mn_plas = temp(1);
+    fgetl(fid);
+    fgetl(fid);
+    temp = fscanf(fid,'%d %d %e %e %e %e %e %e',[8 data.mn_plas]);
+    data.xm_plas = temp(1,:);
+    data.xn_plas = temp(2,:).*data.nfp;
+    data.rmnc_plas = temp(3,:)';
+    data.zmns_plas = temp(4,:)';
+    data.lmns_plas = temp(5,:)';
+    data.rmns_plas = temp(6,:)';
+    data.zmnc_plas = temp(7,:)';
+    data.lmnc_plas = temp(8,:)';
+    fgetl(fid);
+    fgetl(fid);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid); temp = sscanf(line,'%d',1);
+    data.mn_surf = temp(1);
+    fgetl(fid);
+    fgetl(fid);
+    temp = fscanf(fid,'%d %d %e %e %e %e',[6 data.mn_surf]);
+    data.xm_surf = temp(1,:);
+    data.xn_surf = temp(2,:).*data.nfp;
+    data.rmnc_surf = temp(3,:)';
+    data.zmns_surf = temp(4,:)';
+    data.rmns_surf = temp(5,:)';
+    data.zmnc_surf = temp(6,:)';
+elseif strfind(filename,'nescout')
+    fgetl(fid);
+    fgetl(fid);
+    data.iasym = 0;
+    line=fgetl(fid); temp = sscanf(line,'%d %d %d %d %d %d %*s',6);
+    if strfind(line,'T')
+        data.iasym = 1;
+    end
+    data.nu = temp(1);
+    data.nv = temp(2);
+    data.nu1 = temp(3);
+    data.nv1 = temp(4);
+    data.npol = temp(5);
+    data.ntor = temp(6);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid); temp = sscanf(line,'%d %d %d %d',4);
+    data.mf = temp(1);
+    data.nf = temp(2);
+    data.md = temp(3);
+    data.nd = temp(4);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid); temp = sscanf(line,'%d %f %e %f',4);
+    data.nfp = temp(1);
+    data.iotae = temp(2);
+    data.phipe = temp(3);
+    data.curpol = temp(4);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid); temp = sscanf(line,'%e %f %d',3);
+    data.cut = temp(1);
+    data.cup = temp(2);
+    data.ibex = temp(3);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid); temp = sscanf(line,'%d %d %d %d %e %e',6);
+    data.mstrt = temp(1);
+    data.mstep = temp(2);
+    data.mkeep = temp(3);
+    data.mdspw = temp(4);
+    data.curwt = temp(5);
+    data.trgwt = temp(6);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid); temp = sscanf(line,'%d %d %d %d %d %d',6);
+    data.w_psurf = temp(1);
+    data.w_csurf = temp(2);
+    data.w_bunv = temp(3);
+    data.w_jsurf = temp(4);
+    data.w_xerr = temp(5);
+    data.w_svd = temp(6);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid); temp = sscanf(line,'%d',1);
+    data.mn_plas = temp(1);
+    fgetl(fid);
+    fgetl(fid);
+    temp = fscanf(fid,'%d %d %e %e %e %e %e %e',[8 data.mn_plas]);
+    data.xm_plas = temp(1,:);
+    data.xn_plas = temp(2,:).*data.nfp;
+    data.rmnc_plas = temp(3,:)';
+    data.zmns_plas = temp(4,:)';
+    data.lmns_plas = temp(5,:)';
+    data.rmns_plas = temp(6,:)';
+    data.zmnc_plas = temp(7,:)';
+    data.lmnc_plas = temp(8,:)';
+    fgetl(fid);
+    fgetl(fid);
+    fgetl(fid);
+    line=fgetl(fid); temp = sscanf(line,'%d',1);
+    data.mn_surf = temp(1);
+    fgetl(fid);
+    fgetl(fid);
+    temp = fscanf(fid,'%d %d %e %e %e %e',[6 data.mn_surf]);
+    data.xm_surf = temp(1,:);
+    data.xn_surf = temp(2,:).*data.nfp;
+    data.rmnc_surf = temp(3,:)';
+    data.zmns_surf = temp(4,:)';
+    data.rmns_surf = temp(5,:)';
+    data.zmnc_surf = temp(6,:)';
+    % Now get the nescoil stuff
+    fgetl(fid);
+    for i = 1:19
+        fgetl(fid);
+    end
+    fgetl(fid);
+    data.mn_pot = (2*data.nf+1)*(data.mf + 1);
+    temp = fscanf(fid,'%d %d %e',[3 data.mn_pot]);
+    data.xm_pot = temp(1,:);
+    data.xn_pot = temp(2,:).*data.nfp;
+    data.phimns = temp(3,:)';
+    % Skip the end stuff
+    
+end
+fclose(fid);
+end
+
