@@ -27,7 +27,7 @@ function output = VMECcomp( filename,datatype )
 %      haxis=VMEComp('wout*','iota'); % Comparrision plot of iota
 %
 % Maintained by: Samuel Lazerson (lazerson@pppl.gov)
-% Version:       1.0
+% Version:       1.1
 
 if ~iscell(filename)
     file_struct=dir(filename);
@@ -69,6 +69,7 @@ switch datatype
         hold on
         curtor = [];
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'ctor'), continue; end
             curtor=[curtor; vmec_data{i}.ctor];
         end
         plot(1:nfiles,curtor,'o');
@@ -81,6 +82,7 @@ switch datatype
         hold on
         extcur = [];
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'extcur'), continue; end
             ns=vmec_data{i}.ns;
             extcur=[extcur; vmec_data{i}.extcur];
         end
@@ -94,6 +96,7 @@ switch datatype
     case 'iota'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'iotaf'), continue; end
             ns=vmec_data{i}.ns;
             iota=vmec_data{i}.iotaf;
             if (i == 1)
@@ -113,6 +116,7 @@ switch datatype
     case 'omega'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'omega'), continue; end
             ns=vmec_data{i}.ns;
             omega=vmec_data{i}.omega;
             if (i == 1)
@@ -132,6 +136,7 @@ switch datatype
     case 'q'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'itoaf'), continue; end
             ns=vmec_data{i}.ns;
             iota=vmec_data{i}.iotaf;
             if (i == 1)
@@ -151,6 +156,7 @@ switch datatype
     case 'pressure'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'presf'), continue; end
             ns=vmec_data{i}.ns;
             presf=vmec_data{i}.presf;
             if (i == 1)
@@ -170,6 +176,7 @@ switch datatype
     case 'jdotb'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'jdotb'), continue; end
             ns=vmec_data{i}.ns;
             jdotb=vmec_data{i}.jdotb;
             if (i == 1)
@@ -189,6 +196,7 @@ switch datatype
     case 'buco'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'buco'), continue; end
             ns=vmec_data{i}.ns;
             buco=vmec_data{i}.buco;
             if (i == 1)
@@ -208,6 +216,7 @@ switch datatype
     case 'bvco'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'bvco'), continue; end
             ns=vmec_data{i}.ns;
             bvco=vmec_data{i}.bvco;
             if (i == 1)
@@ -227,6 +236,7 @@ switch datatype
     case 'jcurv'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'jcurv'), continue; end
             ns=vmec_data{i}.ns;
             jcurv=vmec_data{i}.jcurv;
             if (i == 1)
@@ -246,6 +256,7 @@ switch datatype
     case 'jcurv_phi'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'jcurv'), continue; end
             ns=vmec_data{i}.ns;
             jcurv=vmec_data{i}.jcurv;
             phi = vmec_data{i}.phi;
@@ -266,6 +277,7 @@ switch datatype
     case 'jcuru'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'jcuru'), continue; end
             ns=vmec_data{i}.ns;
             jcuru=vmec_data{i}.jcuru;
             if (i == 1)
@@ -285,6 +297,7 @@ switch datatype
     case 'current'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'jcurv'), continue; end
             ns=vmec_data{i}.ns;
             jcurv=vmec_data{i}.jcurv;
             if (i == 1)
@@ -304,6 +317,7 @@ switch datatype
     case 'iota_press'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'iotaf'), continue; end
             ns=vmec_data{i}.ns;
             iotaf=vmec_data{i}.iotaf;
             presf=vmec_data{i}.presf;
@@ -324,6 +338,7 @@ switch datatype
     case 'iota_pprime'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'iotaf'), continue; end
             ns=vmec_data{i}.ns;
             iotaf=vmec_data{i}.iotaf;
             presf=vmec_data{i}.presf;
@@ -345,6 +360,7 @@ switch datatype
     case 'ac_aux'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'acauxf'), continue; end
             ns = find(vmec_data{i}.acauxs > 0.0,1,'last');
             ac_aux_s = vmec_data{i}.acauxs(1:ns);
             ac_aux_f = vmec_data{i}.acauxf(1:ns);
@@ -365,6 +381,7 @@ switch datatype
     case 'am_aux'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'amauxf'), continue; end
             ns = find(vmec_data{i}.amauxs > 0.0,1,'last');
             am_aux_s = vmec_data{i}.amauxs(1:ns);
             am_aux_f = vmec_data{i}.amauxf(1:ns);
@@ -386,6 +403,7 @@ switch datatype
         ntheta=90;
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'rmnc'), continue; end
             color = 'k';
             if i==1, color='b';end
             if i==nfiles, color='r';end
@@ -419,6 +437,7 @@ switch datatype
         ntheta=90;
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'rmnc'), continue; end
             color = 'k';
             if i==1, color='b';end
             if i==nfiles, color='r';end
@@ -451,6 +470,7 @@ switch datatype
         hold on
         zeta = 0;
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'rmnc'), continue; end
             color = 'k';
             if i==1, color='b';end
             if i==nfiles, color='r';end
@@ -480,6 +500,7 @@ switch datatype
         hold on
         zeta = 2*pi/4/vmec_data{i}.nfp;
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'rmnc'), continue; end
             color = 'k';
             if i==1, color='b';end
             if i==nfiles, color='r';end
@@ -509,6 +530,7 @@ switch datatype
         hold on
         zeta = pi/vmec_data{i}.nfp;
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'rmnc'), continue; end
             color = 'k';
             if i==1, color='b';end
             if i==nfiles, color='r';end
@@ -539,6 +561,7 @@ switch datatype
         ntheta=90;
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'rmnc'), continue; end
             nfp=vmec_data{i}.nfp;
             ns=vmec_data{i}.ns;
             rmnc=vmec_data{i}.rmnc;
@@ -564,6 +587,7 @@ switch datatype
         ntheta=90;
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'rmnc'), continue; end
             nfp=vmec_data{i}.nfp;
             ns=vmec_data{i}.ns;
             rmnc=vmec_data{i}.rmnc;
@@ -591,6 +615,7 @@ switch datatype
         sinph=sin(0:2*pi/(nzeta-1):2*pi);
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'rmnc'), continue; end
             nfp=vmec_data{i}.nfp;
             ns=vmec_data{i}.ns;
             rmnc=vmec_data{i}.rmnc;
@@ -610,6 +635,7 @@ switch datatype
     case 'g'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'gmnc'), continue; end
             nfp=vmec_data{i}.nfp;
             ns=vmec_data{i}.ns;
             xm=vmec_data{i}.xm;
@@ -637,6 +663,7 @@ switch datatype
     case 'modb'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'bmnc'), continue; end
             nfp=vmec_data{i}.nfp;
             ns=vmec_data{i}.ns;
             xm=vmec_data{i}.xm;
@@ -664,6 +691,7 @@ switch datatype
     case 'bsupu'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'bsupumnc'), continue; end
             nfp=vmec_data{i}.nfp;
             ns=vmec_data{i}.ns;
             xm=vmec_data{i}.xm;
@@ -691,6 +719,7 @@ switch datatype
     case 'bsupv'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'bsupvmnc'), continue; end
             nfp=vmec_data{i}.nfp;
             ns=vmec_data{i}.ns;
             xm=vmec_data{i}.xm;
@@ -718,6 +747,7 @@ switch datatype
     case 'special'
         hold on
         for i=1:nfiles
+            if ~isfield(vmec_data{i},'nfp'), continue; end
             mu0=pi*4E-7;
             nfp=vmec_data{i}.nfp;
             ns=vmec_data{i}.ns;
