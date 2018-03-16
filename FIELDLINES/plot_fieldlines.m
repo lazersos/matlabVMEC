@@ -56,6 +56,8 @@ if nargin > 1
                 plottype=8;
             case 'camera_AEA30_3D'
                 plottype=9;
+            case 'camview'
+                plottype=10;
             case 'color'
                 i=i+1;
                 line_color=varargin{i};
@@ -370,5 +372,57 @@ switch plottype
         set(ha,'FaceColor','blue');
         camlight left;
         axis equal;
+    case{10} % Camview
+        camera=[1024 768];
+        x_cam = campos;
+        a_cam = camva;
+        u_cam = camup;
+        t_cam = camtarget;
+        n_cam = t_cam-x_cam;
+        n_cam = n_cam./sqrt(sum(n_cam.*n_cam));
+        syn = zeros(camera);
+        X   = data.X_lines(:,2);
+        Y   = data.Y_lines(:,2);
+        Z   = data.Z_lines(:,2);
+        [x_im,  y_im] = points_to_camera(X(2:end),Y(2:end),Z(2:end),...
+            'camera',camera,...
+            'fov',a_cam,'camera_pos',x_cam,'camera_normal',n_cam,...
+            'camera_up',u_cam);
+        dex   = x_im <= camera(1);
+        x_im  = x_im(dex);
+        y_im  = y_im(dex);
+        dex   = y_im <= camera(2);
+        x_im  = x_im(dex);
+        y_im  = y_im(dex);
+        dex   = x_im >= 1;
+        x_im  = x_im(dex);
+        y_im  = y_im(dex);
+        dex   = y_im >= 1;
+        x_im  = x_im(dex);
+        y_im  = y_im(dex);
+        x_max = max(x_im);
+        y_max = max(y_im);
+        x_min = min(x_im);
+        y_min = min(y_im);
+        syn_temp=hist3([x_im y_im],'nbins',[round(x_max-x_min) round(y_max-y_min)]);
+        xb=linspace(x_min,x_max,size(syn_temp,1));
+        yb=linspace(y_min,y_max,size(syn_temp,2));
+        syn(round(xb),round(yb))=syn_temp./double(i)+syn(round(xb),round(yb));
+        
+        % Smooth
+        sigma = 1; % set sigma to the value you need
+        sz = 2*ceil(2.6 * sigma) + 1; % See note below
+        mask = fspecial('gauss', sz, sigma);
+        syn2 = conv2(syn, mask, 'same');
+        syn=syn2; syn2=[];
+        % New Stuff
+        pixplot(syn)
+        caxis([0 max(mean(syn))]);
+        set(gcf,'Units','pixels','Position',[1 1 camera]);
+        set(gca,'Units','pixels','Color','black','Position',[1 1 camera]);
+        xlim([1 camera(1)]);
+        ylim([1 camera(2)]);
+        colormap hot;
+        %hold on; plot([333 1336],[376 622],'r','LineWidth',4.0); % plot z=0
 end
 end
