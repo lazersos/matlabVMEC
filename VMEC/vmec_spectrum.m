@@ -3,9 +3,9 @@ function vmec_spectrum(data,varargin)
 %   Detailed explanation goes here
 
 lspec = 0;
-lvmec = 0;
+lvmec = 1;
 lnescoil = 0;
-lfocus = 1;
+lfocus = 0;
 lhardcode = 0; % For hardcoding things in matlab
 lflip = 0; % Flip the jacobian sign
 data_save = data;

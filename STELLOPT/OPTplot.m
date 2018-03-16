@@ -292,6 +292,7 @@ switch stemp
         hold on;
         plot(handles.data.BALLOON_k(1,:),handles.data.BALLOON_grate(1,:),cinitial,'LineWidth',2.0);
         plot(handles.data.BALLOON_k(end,:),handles.data.BALLOON_grate(end,:),cfinal,'LineWidth',2.0);
+        plot(handles.data.BALLOON_k(1,:),handles.data.BALLOON_target(end,:),'r','LineWidth',2.0);
         hold off;
         xlabel('Surface Number');
         ylabel('Ballooning Stability');
