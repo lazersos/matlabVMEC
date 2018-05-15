@@ -50,6 +50,10 @@ data.nfaces = temp(2);
 data.coords=fscanf(fid,'%E %E %E',[3 data.nvertex]);
 data.faces=fscanf(fid,'%d %d %d',[3 data.nfaces]);
 fclose(fid);
+% Fix if 0 index
+if min(min(data.faces)) == 0
+    data.faces = data.faces+1;
+end
 % Prep the wall
 vertex = data.coords;
 face   = data.faces;
