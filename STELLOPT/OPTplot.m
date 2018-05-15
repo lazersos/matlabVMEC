@@ -48,7 +48,11 @@ function OPTplot_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for OPTplot
 handles.phi0 = 0.0;
 handles.output = hObject;
-filename = dir('stellopt.*');
+if nargin > 0
+    filename(1).name = varargin{1};
+else
+    filename = dir('stellopt.*');
+end
 if (isempty(filename))
     return;
 end
