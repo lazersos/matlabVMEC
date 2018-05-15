@@ -89,6 +89,14 @@ switch plottype
         end
     case 'phi'
         if strcmp(data.datatype,'limiter_trimesh')
+            p1 = [0 0 0 cos(phi) sin(phi) 0 0 0 1];
+            polygoncell = xsecmesh(p1,data.coords',data.faces');
+            disp('test');
+            
+            
+        end
+    case 'phi2'
+        if strcmp(data.datatype,'limiter_trimesh')
             % Take from (http://www.mathworks.com/matlabcentral/newsreader/view_thread/29075)
             p0 = [cos(phi)  sin(phi)  0];
             p1 = [cos(phi); -sin(phi); 0.0]; % Vector points in phi direction
@@ -108,6 +116,7 @@ switch plottype
             edgelist=[];
             xyzp=[];
             j=0;
+            tri = data.faces';
             for i=k(1):k(end)
                 edgei=[];
                 % did we cross edge ab?
@@ -140,11 +149,15 @@ switch plottype
                 edgelist=[edgelist;edgei];
             end
             
-            hold on
-            plot3(data.coords(1,:),data.coords(2,:),data.coords(3,:),'.')
-            plot3(p0(1),p0(2),p0(3),'ms')
-            plot3(xyzp(:,1),xyzp(:,2),xyzp(:,3),'r.')
-            hold off
+            %hold on
+            %plot3(data.coords(1,:),data.coords(2,:),data.coords(3,:),'.')
+            %plot3(p0(1),p0(2),p0(3),'ms')
+            %plot3(xyzp(:,1),xyzp(:,2),xyzp(:,3),'r.')
+            %hold off
+            r = sqrt(xyzp(:,1).^2+xyzp(:,2).^2);
+            hold on;
+            plot(r,xyzp(:,3),'r');
+            hold off;
         else
             r2 = [];
             z2 = [];
