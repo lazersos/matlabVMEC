@@ -58,9 +58,11 @@ if strfind(filename,'answers_plot.')
     data.ne = data.ne.*1E20;
     data.ni = data.ni.*1E20;
     data.curtor = data.I(end);
-    data.ac_poly = fliplr(polyfit(data.s,data.dIds,fit_poly));
-    data.ac_poly = [data.ac_poly -sum(data.ac_poly)]; % assume J(1) = 0
-    data.j_fit   = polyval(fliplr(data.ac_poly),0:1/(length(data.j_grad_Ti)-1):1);
+    data.ac_poly = fliplr(polyfit([0 data.s 1.0],[0 data.I data.I(end)],fit_poly));
+    data.ac_poly = data.ac_poly(2:end);
+    %data.ac_poly = fliplr(polyfit(data.s,data.dIds,fit_poly));
+    %data.ac_poly = [data.ac_poly -sum(data.ac_poly)]; % assume J(1) = 0
+    data.j_fit   = polyval(fliplr(data.ac_poly),data.s);
 elseif strfind(filename,'answers.')
     data = read_namelist(fid,'BOOTIN');
     fgetl(fid);
