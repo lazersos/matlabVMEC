@@ -10,6 +10,7 @@ function [ output_args ] = plot_fieldlines(data,varargin)
 %       'camera_AEV30': W7-X AEV30 view (from AEQ21)
 %       'strike_2D':    Strike pattern
 %       'wall_strike':  Strucutre strike heat map
+%       'camview':      Use current view to construct a camer view
 %
 %   Usage:
 %       line_data=read_fieldlines('fieldlines_test.h5');
@@ -29,6 +30,9 @@ npoinc = data.npoinc;
 nsteps = data.nsteps;
 nlines = data.nlines;
 line_color='k';
+camera = [];
+skip=2;
+
 % Handle varargin
 if nargin > 1
     for i=1:nargin-1
@@ -61,6 +65,9 @@ if nargin > 1
             case 'color'
                 i=i+1;
                 line_color=varargin{i};
+            case 'resolution'
+                i=i+1;
+                camera=varargin{i};
         end
     end
 end
@@ -68,7 +75,7 @@ end
 switch plottype
     case{0}
         line_dex = nphi:npoinc:nsteps;
-        for i=1:nlines
+        for i=1:skip:nlines
             hold on;
             plot(data.R_lines(i,line_dex),data.Z_lines(i,line_dex),'.','Color',line_color,'MarkerSize',0.1);
             hold off;
@@ -86,7 +93,7 @@ switch plottype
         end
         axis equal
     case{1}
-        camera=[1024 1024];
+        if isempty(camera), camera=[1024 1024];end
         line_dex = nphi:npoinc:nsteps;
         r=data.R_lines(:,line_dex);
         z=data.Z_lines(:,line_dex);
@@ -105,7 +112,7 @@ switch plottype
         set(gca,'Color','black');
         %axis tight;
     case{2}
-        camera=[1300 1030];
+        if isempty(camera), camera=[1300 1030]; end
         cx=[0.53 0.91];
         cy=[-0.19 0.19];
         line_dex = nphi:npoinc:nsteps;
@@ -125,7 +132,7 @@ switch plottype
         xlim(cx);
         ylim(cy);
     case{3} % AEV30 W7-X
-        camera=[1392 1024];
+        if isempty(camera), camera=[1392 1024]; end
         n_cam = [-0.91206066 -0.37672560 -0.16193573];
         x_cam = [1.69477886 6.12453262 0.64880745];
         a_cam = 32.21906432;
@@ -167,7 +174,7 @@ switch plottype
         colormap hot;
         hold on; plot([333 1336],[376 622],'r','LineWidth',4.0); % plot z=0
     case{4} % AEV30 W7-X
-        camera=[1392 1024];
+        if isempty(camera), camera=[1392 1024]; end
         n_cam = [-0.91206066 -0.37672560 -0.16193573];
         x_cam = [1.69477886 6.12453262 0.64880745];
         a_cam = 32.21906432;
@@ -182,7 +189,7 @@ switch plottype
             X   = data.X_lines(dex,i);
             Y   = data.Y_lines(dex,i);
             Z   = data.Z_lines(dex,i);
-            if isempty(X), continue; end;
+            if isempty(X), continue; end
             [x_im,  y_im] = points_to_camera(X(2:end),Y(2:end),Z(2:end),...
                 'camera',camera,...
                 'fov',a_cam,'camera_pos',x_cam,'camera_normal',n_cam,...
@@ -199,7 +206,7 @@ switch plottype
             dex   = y_im >= 1;
             x_im  = x_im(dex);
             y_im  = y_im(dex);
-            if isempty(x_im), continue; end;
+            if isempty(x_im), continue; end
             x_max = max(x_im);
             y_max = max(y_im);
             x_min = min(x_im);
@@ -275,8 +282,7 @@ switch plottype
         n_cam=[16.957,-12.488,12.257];
         n_cam = n_cam./sqrt(sum(n_cam.^2));
         u_cam=[ -0.3501    0.2578    0.7470];
-        camera=[1344 768];
-        camera=[480 440];
+        if isempty(camera), camera=[480 440]; end
         a_cam = 4.0; %50 mm
         X = data.X_lines(:,2);
         Y = data.Y_lines(:,2);
@@ -323,7 +329,6 @@ switch plottype
     case{9}
         figure('Color','white','Position',[1 -100 1024 768]);
         x_cam=[-6899 5012 -1549]./1000;
-        c_cam=[-6899 5012 -1449]./1000;
         n_cam=[16.957,-12.488,12.257];
         n_cam = n_cam./sqrt(sum(n_cam.^2));
         a_cam = 100.0; %50 mm
@@ -373,7 +378,7 @@ switch plottype
         camlight left;
         axis equal;
     case{10} % Camview
-        camera=[1024 768];
+        if isempty(camera), camera=[1024 768]; end
         x_cam = campos;
         a_cam = camva;
         u_cam = camup;
