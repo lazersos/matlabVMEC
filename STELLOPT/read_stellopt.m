@@ -860,7 +860,7 @@ while ~feof(fid);
         switch tstr
             % Single Values
             case {'ASPECT','ASPECT_MAX','BETA','CURTOR','KAPPA','PHIEDGE',...
-                    'VOLUME','WP','RBTOR','R0','Z0','BETATOR','BETAPOL'}
+                    'VOLUME','WP','RBTOR','R0','Z0','BETATOR','BETAPOL','B0'}
                 data.([tstr '_target'])(niter,:) = temp(1);
                 data.([tstr '_sigma'])(niter,:) = temp(2);
                 data.([tstr '_equil'])(niter,:) = temp(3);
@@ -927,7 +927,7 @@ while ~feof(fid);
                 data.([tstr '_sigma'])(niter,:) = sigma;
                 data.([tstr '_equil'])(niter,:) = equil;
             % LINE MEASUREMENTS
-            case {'NELINE','TELINE','TILINE','FARADAY','SXR','XICS','XICS_BRIGHT'}
+            case {'NELINE','TELINE','TILINE','FARADAY','SXR','XICS','XICS_BRIGHT','XICS_V','XICS_W3'}
                 data.([tstr '_target'])(niter,:) = temp(:,1);
                 data.([tstr '_sigma'])(niter,:) = temp(:,2);
                 data.([tstr '_equil'])(niter,:) = temp(:,3);

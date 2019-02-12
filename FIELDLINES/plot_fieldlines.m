@@ -4,6 +4,7 @@ function [ output_args ] = plot_fieldlines(data,varargin)
 %   are various plotting options.
 %   Options:
 %       'basic':        Poincare plot on the first cutplane.
+%       '3D':           Same as 'basic' but in 3D space.
 %       'color':        Specify color ('color','r')
 %       'cutplane':     Poincare plot on specific cutplane ('cutplane',5)    
 %       'camera':       Make a camera image by binning poincare points.
@@ -35,10 +36,13 @@ skip=2;
 
 % Handle varargin
 if nargin > 1
-    for i=1:nargin-1
+    i = 1;
+    while i < nargin
         switch varargin{i}
             case 'basic'
                 plottype=0;
+            case '3D'
+                plottype=101;
             case 'camera'
                 plottype=1;
             case 'camera_frame'
@@ -69,6 +73,7 @@ if nargin > 1
                 i=i+1;
                 camera=varargin{i};
         end
+        i=i+1;
     end
 end
 
@@ -91,6 +96,21 @@ switch plottype
             plot(data.Rhc_lines(1,nphi),data.Zhc_lines(1,nphi),'+r');
             hold off
         end
+        axis equal
+    case{101}
+        line_dex = nphi:npoinc:nsteps;
+        R = data.R_lines(1:skip:nlines,line_dex);
+        Z = data.Z_lines(1:skip:nlines,line_dex);
+        phi = data.PHI_lines(1,78);
+        X = R.*cos(phi);
+        Y = R.*sin(phi);
+        hold on;
+        plot3(X,Y,Z,'.','Color',line_color,'MarkerSize',0.1);
+        %for i=1:skip:nlines
+        %    hold on;
+        %    %plot3(data.X_lines(i,line_dex),data.Y_lines(i,line_dex),data.Z_lines(i,line_dex),'.','Color',line_color,'MarkerSize',0.1);
+        %    hold off;
+        %end
         axis equal
     case{1}
         if isempty(camera), camera=[1024 1024];end
@@ -389,10 +409,12 @@ switch plottype
         X   = data.X_lines(:,2);
         Y   = data.Y_lines(:,2);
         Z   = data.Z_lines(:,2);
-        [x_im,  y_im] = points_to_camera(X(2:end),Y(2:end),Z(2:end),...
+        [x_temp] = points_to_camera(X(2:end),Y(2:end),Z(2:end),...
             'camera',camera,...
             'fov',a_cam,'camera_pos',x_cam,'camera_normal',n_cam,...
             'camera_up',u_cam);
+        x_im = x_temp(:,1);
+        y_im = x_temp(:,2);
         dex   = x_im <= camera(1);
         x_im  = x_im(dex);
         y_im  = y_im(dex);

@@ -88,13 +88,22 @@ switch plottype
             hpatach=plot3(x,y,z,varargin_temp{:});
         end
     case 'phi'
-        if strcmp(data.datatype,'limiter_trimesh')
-            p1 = [0 0 0 cos(phi) sin(phi) 0 0 0 1];
-            polygoncell = xsecmesh(p1,data.coords',data.faces');
-            disp('test');
-            
-            
-        end
+        r = sqrt(x.*x+y.*y);
+        rmax=max(r).*1.2;
+        rmin=min(r)*.8;
+        zmax=max(z).*1.2;
+        zmin=min(z).*1.2;
+        surf1.vertices = data.coords';
+        surf1.faces = data.faces';
+        surf2.vertices=[rmin.*cos(phi) rmin.*sin(phi) zmax; rmax.*cos(phi) rmax.*sin(phi) zmax;...
+            rmin.*cos(phi) rmin.*sin(phi) zmin; rmax.*cos(phi) rmax.*sin(phi) zmin];
+        surf2.faces = [1 2 3; 3 2 4];
+        [intMatrix, intSurface] = SurfaceIntersection(surf1, surf2);
+        x2 = intSurface.vertices(:,1);
+        y2 = intSurface.vertices(:,2);
+        z2 = intSurface.vertices(:,3);
+        r2 = sqrt(x2.*x2+y2.*y2);
+        plot(r2(intSurface.edges'),z2(intSurface.edges'),'k')
     case 'phi2'
         if strcmp(data.datatype,'limiter_trimesh')
             % Take from (http://www.mathworks.com/matlabcentral/newsreader/view_thread/29075)

@@ -35,6 +35,10 @@ function phandle=plot_vessel(data,varargin)
 %   Date:           1/11/11
 
 
+%
+disp('Please use plot_divertor');
+return;
+
 % Defaults
 plottype='wire';
 nfp=1;
@@ -102,6 +106,16 @@ switch plottype
         % Simple plot
         hpatch=plot3(x,y,z);
     case 'phi'
+        surf1.vertices = data.coords;
+        surf1.faces = data.faces;
+        rmax = max(surf1.vertices(1,:));
+        rmin = min(surf1.vertices(1,:));
+        zmax = max(surf1.vertices(3,:));
+        zmin = min(surf1.vertices(3,:));
+        surf2.vertices=[rmin.*cos(phi) rmin.*sin(phi) zmax; rmax.*cos(phi) rmax.*sin(phi) zmax;...
+            rmin.*cos(phi) rmin.*sin(phi) zmin; rmax.*cos(phi) rmax.*sin(phi) zmin];
+        surf2.faces = [1 2 3; 3 2 4];
+    case 'phi_old'
         % Handle phi > maxphi
         maxphi=max(data.coords(:,3));
         if phi>maxphi
