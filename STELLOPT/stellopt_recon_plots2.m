@@ -15,7 +15,7 @@ ntheta = 128;
 files=dir('stellopt.*');
 data = read_stellopt(files.name);
 ext = files.name(10:end);
-files=dir('wout_*.*****.nc');
+files=dir('wout_*.*.nc');
 vmec_data=read_vmec(files(end).name);
 files=dir('jacobian.*');
 if isempty(files)
@@ -61,7 +61,7 @@ end
 % Cycle through options
 if isfield(data,'TE_target')
     if isempty(tprof)
-        files = dir('tprof.*.*****');
+        files = dir('tprof.*.*');
         tprof=importdata(files(end).name);
         tprof=tprof.data;
     end
@@ -120,7 +120,7 @@ end
 
 if isfield(data,'NE_target')
     if isempty(tprof)
-        files = dir('tprof.*.*****');
+        files = dir('tprof.*.*');
         tprof=importdata(files(end).name);
         tprof=tprof.data;
     end
@@ -179,7 +179,7 @@ end
 
 if isfield(data,'NELINE_target')
     if isempty(tprof)
-        files = dir('tprof.*.*****');
+        files = dir('tprof.*.*');
         tprof=importdata(files(end).name);
         tprof=tprof.data;
     end
@@ -222,7 +222,7 @@ end
 
 if isfield(data,'XICS_BRIGHT_target')
     if isempty(dprof)
-        files = dir('dprof.*.*****');
+        files = dir('dprof.*.*');
         dprof=importdata(files(end).name);
         dprof=dprof.data;
     end
@@ -281,7 +281,7 @@ end
 
 if isfield(data,'XICS_target')
     if isempty(tprof)
-        files = dir('tprof.*.*****');
+        files = dir('tprof.*.*');
         tprof=importdata(files(end).name);
         tprof=tprof.data;
     end
@@ -340,7 +340,7 @@ end
 
 if isfield(data,'XICS_W3_target')
     if isempty(tprof)
-        files = dir('tprof.*.*****');
+        files = dir('tprof.*.*');
         tprof=importdata(files(end).name);
         tprof=tprof.data;
     end
@@ -400,16 +400,16 @@ end
 
 
 if isfield(data,'XICS_V_target')
-    if isempty(tprof)
-        files = dir('dprof.*.*****');
-        tprof=importdata(files(end).name);
-        tprof=tprof.data;
+    if isempty(dprof)
+        files = dir('dprof.*.*');
+        dprof=importdata(files(end).name);
+        dprof=dprof.data;
     end
     zeta = mean(data.XICS_V_PHI0(1,:));
     theta = 0:2*pi./(ntheta-1):2*pi;
     r = cfunct(theta,zeta,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
     z = sfunct(theta,zeta,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
-    f = pchip(tprof(:,1),tprof(:,3)./1E3,vmec_data.phi./vmec_data.phi(end));
+    f = pchip(dprof(:,1),dprof(:,3)./1E3,vmec_data.phi./vmec_data.phi(end));
     f = repmat(f',[1 ntheta]);
     fig = figure('Position',[1 1 1024 768],'Color','white');
     subplot(1,2,2);
@@ -428,8 +428,8 @@ if isfield(data,'XICS_V_target')
     ylabel(ha,'\phi [kV]');
     subplot(1,2,1);
     hold on;
-    plot(1:length(data.XICS_V_target(end,:)),data.XICS_V_target(end,:),'ok','MarkerSize',8,'LineWidth',2);
-    plot(1:length(data.XICS_V_target(end,:)),data.XICS_V_equil(end,:),'+b','MarkerSize',8,'LineWidth',2);
+    plot(1:length(data.XICS_V_target(end,:)),data.XICS_V_target(end,:)./1E3,'ok','MarkerSize',8,'LineWidth',2);
+    plot(1:length(data.XICS_V_target(end,:)),data.XICS_V_equil(end,:)./1E3,'+b','MarkerSize',8,'LineWidth',2);
     %%%%%%%%% Red lines
     if ljac
         IndexC=strfind(jac_data.target_name,'XICS Perp. Velocity');
@@ -441,7 +441,7 @@ if isfield(data,'XICS_V_target')
             n = n +1;
         end
         s=1:length(data.XICS_V_target(end,:));
-        fill([s fliplr(s)],[yup fliplr(ydn)],'blue','EdgeColor','none','FaceAlpha',0.33);
+        fill([s fliplr(s)],[yup fliplr(ydn)]./1E3,'blue','EdgeColor','none','FaceAlpha',0.33);
     end
     %%%%%%%%%
     hold off;
@@ -449,7 +449,7 @@ if isfield(data,'XICS_V_target')
     xlim([0 length(data.XICS_V_target(end,:))+1]);
     set(gca,'FontSize',24);
     xlabel('Channel');
-    ylabel('\int v dl   [arb]');
+    ylabel('\int v dl   [k.Rad]');
     legend('Exp.','Recon.');
     set(gca,'Position',[0.162 0.237 0.303 0.576]);
     annotation('textbox',[0.1 0.85 0.8 0.1],'string','XICS V Reconstruction','FontSize',24,'LineStyle','none','HorizontalAlignment','center');
