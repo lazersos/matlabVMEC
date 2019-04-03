@@ -88,6 +88,23 @@ switch plottype
             hpatach=plot3(x,y,z,varargin_temp{:});
         end
     case 'phi'
+        r = sqrt(x.*x+y.*y);
+        rmax=max(r).*1.2;
+        rmin=min(r)*.8;
+        zmax=max(z).*1.2;
+        zmin=min(z).*1.2;
+        surf1.vertices = data.coords';
+        surf1.faces = data.faces';
+        surf2.vertices=[rmin.*cos(phi) rmin.*sin(phi) zmax; rmax.*cos(phi) rmax.*sin(phi) zmax;...
+            rmin.*cos(phi) rmin.*sin(phi) zmin; rmax.*cos(phi) rmax.*sin(phi) zmin];
+        surf2.faces = [1 2 3; 3 2 4];
+        [intMatrix, intSurface] = SurfaceIntersection(surf1, surf2);
+        x2 = intSurface.vertices(:,1);
+        y2 = intSurface.vertices(:,2);
+        z2 = intSurface.vertices(:,3);
+        r2 = sqrt(x2.*x2+y2.*y2);
+        plot(r2(intSurface.edges'),z2(intSurface.edges'),'k')
+    case 'phi2'
         if strcmp(data.datatype,'limiter_trimesh')
             % Take from (http://www.mathworks.com/matlabcentral/newsreader/view_thread/29075)
             p0 = [cos(phi)  sin(phi)  0];
@@ -108,6 +125,7 @@ switch plottype
             edgelist=[];
             xyzp=[];
             j=0;
+            tri = data.faces';
             for i=k(1):k(end)
                 edgei=[];
                 % did we cross edge ab?
@@ -140,11 +158,15 @@ switch plottype
                 edgelist=[edgelist;edgei];
             end
             
-            hold on
-            plot3(data.coords(1,:),data.coords(2,:),data.coords(3,:),'.')
-            plot3(p0(1),p0(2),p0(3),'ms')
-            plot3(xyzp(:,1),xyzp(:,2),xyzp(:,3),'r.')
-            hold off
+            %hold on
+            %plot3(data.coords(1,:),data.coords(2,:),data.coords(3,:),'.')
+            %plot3(p0(1),p0(2),p0(3),'ms')
+            %plot3(xyzp(:,1),xyzp(:,2),xyzp(:,3),'r.')
+            %hold off
+            r = sqrt(xyzp(:,1).^2+xyzp(:,2).^2);
+            hold on;
+            plot(r,xyzp(:,3),'r');
+            hold off;
         else
             r2 = [];
             z2 = [];

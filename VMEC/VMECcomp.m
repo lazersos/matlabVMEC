@@ -113,6 +113,26 @@ switch datatype
         zlabel('Rotational Transform');
         view(3);
         output=gca;
+    case 'iota_flip'
+        hold on
+        for i=1:nfiles
+            if ~isfield(vmec_data{i},'iotaf'), continue; end
+            ns=vmec_data{i}.ns;
+            iota=-vmec_data{i}.iotaf;
+            if (i == 1)
+                plot3(0:1/(ns-1):1,i.*ones(1,ns),iota,'b','LineWidth',2.0);
+            elseif (i == nfiles)
+                plot3(0:1/(ns-1):1,i.*ones(1,ns),iota,'r','LineWidth',2.0);
+            else
+                plot3(0:1/(ns-1):1,i.*ones(1,ns),iota,'k');
+            end
+        end
+        xlabel('Normalized Flux');
+        set(gca,'YTick',1:nfiles);
+        set(gca,'YTickLabel',filename);
+        zlabel('Rotational Transform');
+        view(3);
+        output=gca;
     case 'omega'
         hold on
         for i=1:nfiles
@@ -562,19 +582,28 @@ switch datatype
         hold on
         for i=1:nfiles
             if ~isfield(vmec_data{i},'rmnc'), continue; end
-            nfp=vmec_data{i}.nfp;
+            color = 'k';
+            if i==1, color='b';end
+            if i==nfiles, color='r';end
             ns=vmec_data{i}.ns;
             rmnc=vmec_data{i}.rmnc;
             zmns=vmec_data{i}.zmns;
             xm=vmec_data{i}.xm;
             xn=vmec_data{i}.xn;
+            nfp=vmec_data{i}.nfp;
             r=cfunct(0:2*pi/(ntheta-1):2*pi,pi/2/nfp,rmnc,xm,xn);
             z=sfunct(0:2*pi/(ntheta-1):2*pi,pi/2/nfp,zmns,xm,xn);
-            for j=10:10:ns
-                plot3(r(j,:),i.*ones(1,ntheta),z(j,:),'k');
+            if (vmec_data{i}.iasym)
+                rmns=vmec_data{i}.rmns;
+                zmnc=vmec_data{i}.zmnc;
+                r=r+sfunct(0:2*pi/(ntheta-1):2*pi,pi/2/nfp,rmns,xm,xn);
+                z=z+cfunct(0:2*pi/(ntheta-1):2*pi,pi/2/nfp,zmnc,xm,xn);
             end
-            plot3(r(1,1),i,z(1,1),'+k');
-            plot3(r(ns,:),i.*ones(1,ntheta),z(ns,:),'k');
+            for j=10:10:ns
+                plot3(r(j,:),i.*ones(1,ntheta),z(j,:),color);
+            end
+            plot3(r(1,1),i,z(1,1),'+','Color',color);
+            plot3(r(ns,:),i.*ones(1,ntheta),z(ns,:),color);
         end
         xlabel('R [m]');
         set(gca,'YTick',1:nfiles);
@@ -588,19 +617,28 @@ switch datatype
         hold on
         for i=1:nfiles
             if ~isfield(vmec_data{i},'rmnc'), continue; end
-            nfp=vmec_data{i}.nfp;
+            color = 'k';
+            if i==1, color='b';end
+            if i==nfiles, color='r';end
             ns=vmec_data{i}.ns;
             rmnc=vmec_data{i}.rmnc;
             zmns=vmec_data{i}.zmns;
             xm=vmec_data{i}.xm;
             xn=vmec_data{i}.xn;
+            nfp=vmec_data{i}.nfp;
             r=cfunct(0:2*pi/(ntheta-1):2*pi,pi/nfp,rmnc,xm,xn);
             z=sfunct(0:2*pi/(ntheta-1):2*pi,pi/nfp,zmns,xm,xn);
-            for j=10:10:ns
-                plot3(r(j,:),i.*ones(1,ntheta),z(j,:),'k');
+            if (vmec_data{i}.iasym)
+                rmns=vmec_data{i}.rmns;
+                zmnc=vmec_data{i}.zmnc;
+                r=r+sfunct(0:2*pi/(ntheta-1):2*pi,pi/nfp,rmns,xm,xn);
+                z=z+cfunct(0:2*pi/(ntheta-1):2*pi,pi/nfp,zmnc,xm,xn);
             end
-            plot3(r(1,1),i,z(1,1),'+k');
-            plot3(r(ns,:),i.*ones(1,ntheta),z(ns,:),'k');
+            for j=10:10:ns
+                plot3(r(j,:),i.*ones(1,ntheta),z(j,:),color);
+            end
+            plot3(r(1,1),i,z(1,1),'+','Color',color);
+            plot3(r(ns,:),i.*ones(1,ntheta),z(ns,:),color);
         end
         xlabel('R [m]');
         set(gca,'YTick',1:nfiles);

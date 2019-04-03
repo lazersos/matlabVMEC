@@ -4,12 +4,14 @@ function [ output_args ] = plot_fieldlines(data,varargin)
 %   are various plotting options.
 %   Options:
 %       'basic':        Poincare plot on the first cutplane.
+%       '3D':           Same as 'basic' but in 3D space.
 %       'color':        Specify color ('color','r')
 %       'cutplane':     Poincare plot on specific cutplane ('cutplane',5)    
 %       'camera':       Make a camera image by binning poincare points.
 %       'camera_AEV30': W7-X AEV30 view (from AEQ21)
 %       'strike_2D':    Strike pattern
 %       'wall_strike':  Strucutre strike heat map
+%       'camview':      Use current view to construct a camer view
 %
 %   Usage:
 %       line_data=read_fieldlines('fieldlines_test.h5');
@@ -29,12 +31,18 @@ npoinc = data.npoinc;
 nsteps = data.nsteps;
 nlines = data.nlines;
 line_color='k';
+camera = [];
+skip=2;
+
 % Handle varargin
 if nargin > 1
-    for i=1:nargin-1
+    i = 1;
+    while i < nargin
         switch varargin{i}
             case 'basic'
                 plottype=0;
+            case '3D'
+                plottype=101;
             case 'camera'
                 plottype=1;
             case 'camera_frame'
@@ -56,17 +64,23 @@ if nargin > 1
                 plottype=8;
             case 'camera_AEA30_3D'
                 plottype=9;
+            case 'camview'
+                plottype=10;
             case 'color'
                 i=i+1;
                 line_color=varargin{i};
+            case 'resolution'
+                i=i+1;
+                camera=varargin{i};
         end
+        i=i+1;
     end
 end
 
 switch plottype
     case{0}
         line_dex = nphi:npoinc:nsteps;
-        for i=1:nlines
+        for i=1:skip:nlines
             hold on;
             plot(data.R_lines(i,line_dex),data.Z_lines(i,line_dex),'.','Color',line_color,'MarkerSize',0.1);
             hold off;
@@ -83,8 +97,23 @@ switch plottype
             hold off
         end
         axis equal
+    case{101}
+        line_dex = nphi:npoinc:nsteps;
+        R = data.R_lines(1:skip:nlines,line_dex);
+        Z = data.Z_lines(1:skip:nlines,line_dex);
+        phi = data.PHI_lines(1,78);
+        X = R.*cos(phi);
+        Y = R.*sin(phi);
+        hold on;
+        plot3(X,Y,Z,'.','Color',line_color,'MarkerSize',0.1);
+        %for i=1:skip:nlines
+        %    hold on;
+        %    %plot3(data.X_lines(i,line_dex),data.Y_lines(i,line_dex),data.Z_lines(i,line_dex),'.','Color',line_color,'MarkerSize',0.1);
+        %    hold off;
+        %end
+        axis equal
     case{1}
-        camera=[1024 1024];
+        if isempty(camera), camera=[1024 1024];end
         line_dex = nphi:npoinc:nsteps;
         r=data.R_lines(:,line_dex);
         z=data.Z_lines(:,line_dex);
@@ -103,7 +132,7 @@ switch plottype
         set(gca,'Color','black');
         %axis tight;
     case{2}
-        camera=[1300 1030];
+        if isempty(camera), camera=[1300 1030]; end
         cx=[0.53 0.91];
         cy=[-0.19 0.19];
         line_dex = nphi:npoinc:nsteps;
@@ -123,7 +152,7 @@ switch plottype
         xlim(cx);
         ylim(cy);
     case{3} % AEV30 W7-X
-        camera=[1392 1024];
+        if isempty(camera), camera=[1392 1024]; end
         n_cam = [-0.91206066 -0.37672560 -0.16193573];
         x_cam = [1.69477886 6.12453262 0.64880745];
         a_cam = 32.21906432;
@@ -165,7 +194,7 @@ switch plottype
         colormap hot;
         hold on; plot([333 1336],[376 622],'r','LineWidth',4.0); % plot z=0
     case{4} % AEV30 W7-X
-        camera=[1392 1024];
+        if isempty(camera), camera=[1392 1024]; end
         n_cam = [-0.91206066 -0.37672560 -0.16193573];
         x_cam = [1.69477886 6.12453262 0.64880745];
         a_cam = 32.21906432;
@@ -180,7 +209,7 @@ switch plottype
             X   = data.X_lines(dex,i);
             Y   = data.Y_lines(dex,i);
             Z   = data.Z_lines(dex,i);
-            if isempty(X), continue; end;
+            if isempty(X), continue; end
             [x_im,  y_im] = points_to_camera(X(2:end),Y(2:end),Z(2:end),...
                 'camera',camera,...
                 'fov',a_cam,'camera_pos',x_cam,'camera_normal',n_cam,...
@@ -197,7 +226,7 @@ switch plottype
             dex   = y_im >= 1;
             x_im  = x_im(dex);
             y_im  = y_im(dex);
-            if isempty(x_im), continue; end;
+            if isempty(x_im), continue; end
             x_max = max(x_im);
             y_max = max(y_im);
             x_min = min(x_im);
@@ -273,8 +302,7 @@ switch plottype
         n_cam=[16.957,-12.488,12.257];
         n_cam = n_cam./sqrt(sum(n_cam.^2));
         u_cam=[ -0.3501    0.2578    0.7470];
-        camera=[1344 768];
-        camera=[480 440];
+        if isempty(camera), camera=[480 440]; end
         a_cam = 4.0; %50 mm
         X = data.X_lines(:,2);
         Y = data.Y_lines(:,2);
@@ -321,7 +349,6 @@ switch plottype
     case{9}
         figure('Color','white','Position',[1 -100 1024 768]);
         x_cam=[-6899 5012 -1549]./1000;
-        c_cam=[-6899 5012 -1449]./1000;
         n_cam=[16.957,-12.488,12.257];
         n_cam = n_cam./sqrt(sum(n_cam.^2));
         a_cam = 100.0; %50 mm
@@ -370,5 +397,59 @@ switch plottype
         set(ha,'FaceColor','blue');
         camlight left;
         axis equal;
+    case{10} % Camview
+        if isempty(camera), camera=[1024 768]; end
+        x_cam = campos;
+        a_cam = camva;
+        u_cam = camup;
+        t_cam = camtarget;
+        n_cam = t_cam-x_cam;
+        n_cam = n_cam./sqrt(sum(n_cam.*n_cam));
+        syn = zeros(camera);
+        X   = data.X_lines(:,2);
+        Y   = data.Y_lines(:,2);
+        Z   = data.Z_lines(:,2);
+        [x_temp] = points_to_camera(X(2:end),Y(2:end),Z(2:end),...
+            'camera',camera,...
+            'fov',a_cam,'camera_pos',x_cam,'camera_normal',n_cam,...
+            'camera_up',u_cam);
+        x_im = x_temp(:,1);
+        y_im = x_temp(:,2);
+        dex   = x_im <= camera(1);
+        x_im  = x_im(dex);
+        y_im  = y_im(dex);
+        dex   = y_im <= camera(2);
+        x_im  = x_im(dex);
+        y_im  = y_im(dex);
+        dex   = x_im >= 1;
+        x_im  = x_im(dex);
+        y_im  = y_im(dex);
+        dex   = y_im >= 1;
+        x_im  = x_im(dex);
+        y_im  = y_im(dex);
+        x_max = max(x_im);
+        y_max = max(y_im);
+        x_min = min(x_im);
+        y_min = min(y_im);
+        syn_temp=hist3([x_im y_im],'nbins',[round(x_max-x_min) round(y_max-y_min)]);
+        xb=linspace(x_min,x_max,size(syn_temp,1));
+        yb=linspace(y_min,y_max,size(syn_temp,2));
+        syn(round(xb),round(yb))=syn_temp./double(i)+syn(round(xb),round(yb));
+        
+        % Smooth
+        sigma = 1; % set sigma to the value you need
+        sz = 2*ceil(2.6 * sigma) + 1; % See note below
+        mask = fspecial('gauss', sz, sigma);
+        syn2 = conv2(syn, mask, 'same');
+        syn=syn2; syn2=[];
+        % New Stuff
+        pixplot(syn)
+        caxis([0 max(mean(syn))]);
+        set(gcf,'Units','pixels','Position',[1 1 camera]);
+        set(gca,'Units','pixels','Color','black','Position',[1 1 camera]);
+        xlim([1 camera(1)]);
+        ylim([1 camera(2)]);
+        colormap hot;
+        %hold on; plot([333 1336],[376 622],'r','LineWidth',4.0); % plot z=0
 end
 end

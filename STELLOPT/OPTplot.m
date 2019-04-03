@@ -48,15 +48,19 @@ function OPTplot_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for OPTplot
 handles.phi0 = 0.0;
 handles.output = hObject;
-filename = dir('stellopt.*');
+if nargin > 3
+    filename(1).name = varargin{1};
+else
+    filename = dir('stellopt.*');
+end
 if (isempty(filename))
     return;
 end
 handles.chi_types={'ASPECT','BETA','CURTOR','EXTCUR','SEPARATRIX',...
-    'PHIEDGE','RBTOR','R0','Z0','VOLUME','WP','KAPPA',...
+    'PHIEDGE','RBTOR','R0','Z0','B0','VOLUME','WP','KAPPA',...
     'B_PROBES','FARADAY','FLUXLOOPS','SEGROG','MSE',...
     'NE','NELINE','TE','TELINE','TI','TILINE',...
-    'XICS','XICS_BRIGHT','SXR','VPHI',...
+    'XICS','XICS_BRIGHT','XICS_V','XICS_W3','SXR','VPHI','VACIOTA',...
     'IOTA','BALLOON','BOOTSTRAP','DKES','HELICITY','HELICITY_FULL',...
     'KINK','ORBIT','JDOTB','J_STAR','NEO','TXPORT','ECEREFLECT'...
     };
@@ -101,15 +105,21 @@ if isfield(handles.data,'SEGROG_chisq')
 end
 if isfield(handles.data,'NE_chisq')
     handles.plot_types = [handles.plot_types; 'NE_evolution'];
+    handles.plot_types = [handles.plot_types; 'NE_R'];
+    handles.plot_types = [handles.plot_types; 'NE_Z'];
 end
 if isfield(handles.data,'PRESS_chisq')
     handles.plot_types = [handles.plot_types; 'PRESS_evolution'];
 end
 if isfield(handles.data,'TE_chisq')
     handles.plot_types = [handles.plot_types; 'TE_evolution'];
+    handles.plot_types = [handles.plot_types; 'TE_R'];
+    handles.plot_types = [handles.plot_types; 'TE_Z'];
 end
 if isfield(handles.data,'TI_chisq')
     handles.plot_types = [handles.plot_types; 'TI_evolution'];
+    handles.plot_types = [handles.plot_types; 'TI_R'];
+    handles.plot_types = [handles.plot_types; 'TI_Z'];
 end
 if isfield(handles.data,'NELINE_chisq')
     handles.plot_types = [handles.plot_types; 'NELINE_evolution'];
@@ -126,6 +136,12 @@ end
 if isfield(handles.data,'XICS_BRIGHT_chisq')
     handles.plot_types = [handles.plot_types; 'XICS_BRIGHT_evolution'];
 end
+if isfield(handles.data,'XICS_V_chisq')
+    handles.plot_types = [handles.plot_types; 'XICS_V_evolution'];
+end
+if isfield(handles.data,'XICS_W3_chisq')
+    handles.plot_types = [handles.plot_types; 'XICS_W3_evolution'];
+end
 if isfield(handles.data,'IOTA_chisq')
     handles.plot_types = [handles.plot_types; 'IOTA_evolution'];
 end
@@ -140,8 +156,12 @@ end
 if isfield(handles.data,'SXR_chisq')
     handles.plot_types = [handles.plot_types; 'SXR_evolution'];
 end
-% Here we create the ability to plot equilibria
+% For targets that need both
 filename = dir('wout*.*.nc');
+if isfield(handles.data,'SEPARATRIX_chisq') && ~isempty(filename)
+    handles.plot_types = [handles.plot_types; 'SEPARATRIX_evolution'];
+end
+% Here we create the ability to plot equilibria
 if ~isempty(filename)
     handles.plot_types = [handles.plot_types; '-----WOUT-----'];
     handles.plot_types = [handles.plot_types; 'FLUX0'];
@@ -161,10 +181,13 @@ if ~isempty(filename_prof)
     handles.plot_types = [handles.plot_types; 'TI'];
     handles.plot_types = [handles.plot_types; 'NE'];
     handles.plot_types = [handles.plot_types; 'ZEFF'];
+    handles.plot_types = [handles.plot_types; 'P'];
 end
 filename_prof = dir('dprof.*.*');
 if ~isempty(filename_prof)
     handles.plot_types = [handles.plot_types; 'EMIS_XICS'];
+    handles.plot_types = [handles.plot_types; 'PHI'];
+    handles.plot_types = [handles.plot_types; 'Erad'];
 end
 filename_prof = dir('gist_genet_*.*');
 if ~isempty(filename_prof)
@@ -279,7 +302,7 @@ switch stemp
             'BALLOON_chisq','NEO_chisq','HELICITY_chisq',...
             'HELICITY_FULL_chisq','NELINE_chisq',...
             'TELINE_chisq','TILINE_chisq','SXR_chisq','ECEREFLECT_chisq',...
-            'KINK_chisq','XICS_chisq','XICS_BRIGHT_chisq'}
+            'KINK_chisq','XICS_chisq','XICS_BRIGHT_chisq','XICS_V_chisq','XICS_W3_chisq'}
         f = sum(handles.data.(stemp),2);
         plot(handles.data.iter,f,marker,'MarkerSize',18,'LineWidth',4.0);
         set(gca,'YScale','log');
@@ -292,6 +315,7 @@ switch stemp
         hold on;
         plot(handles.data.BALLOON_k(1,:),handles.data.BALLOON_grate(1,:),cinitial,'LineWidth',2.0);
         plot(handles.data.BALLOON_k(end,:),handles.data.BALLOON_grate(end,:),cfinal,'LineWidth',2.0);
+        plot(handles.data.BALLOON_k(1,:),handles.data.BALLOON_target(end,:),'r','LineWidth',2.0);
         hold off;
         xlabel('Surface Number');
         ylabel('Ballooning Stability');
@@ -441,6 +465,26 @@ switch stemp
         xlabel('Normalized Flux');
         ylabel('Electron Density');
         title('n_e Reconstruction');
+    case{'NE_R'}
+        errorbar(handles.data.NE_R(1,:),handles.data.NE_target(1,:),handles.data.NE_sigma(1,:),'ok');
+        hold on;
+        plot(handles.data.NE_R(:,:)',handles.data.NE_equil(:,:)','.k');
+        plot(handles.data.NE_R(1,:),handles.data.NE_equil(1,:),'+b','LineWidth',2.0);
+        plot(handles.data.NE_R(end,:),handles.data.NE_equil(end,:),'+g','LineWidth',2.0);
+        hold off;
+        xlabel('R [m]');
+        ylabel('Electron Density');
+        title('n_e Reconstruction');
+    case{'NE_Z'}
+        errorbar(handles.data.NE_Z(1,:),handles.data.NE_target(1,:),handles.data.NE_sigma(1,:),'ok');
+        hold on;
+        plot(handles.data.NE_Z(:,:)',handles.data.NE_equil(:,:)','.k');
+        plot(handles.data.NE_Z(1,:),handles.data.NE_equil(1,:),'+b','LineWidth',2.0);
+        plot(handles.data.NE_Z(end,:),handles.data.NE_equil(end,:),'+g','LineWidth',2.0);
+        hold off;
+        xlabel('Z [m]');
+        ylabel('Electron Density');
+        title('n_e Reconstruction');
     case{'TE_evolution'}
         errorbar(handles.data.TE_S(1,:),handles.data.TE_target(1,:),handles.data.TE_sigma(1,:),'ok');
         hold on;
@@ -450,6 +494,26 @@ switch stemp
         hold off;
         xlim([0 1]);
         xlabel('Normalized Flux');
+        ylabel('Electron Temperature');
+        title('T_e Reconstruction');
+    case{'TE_R'}
+        errorbar(handles.data.TE_R(1,:),handles.data.TE_target(1,:),handles.data.TE_sigma(1,:),'ok');
+        hold on;
+        plot(handles.data.TE_R(:,:)',handles.data.TE_equil(:,:)','.k');
+        plot(handles.data.TE_R(1,:),handles.data.TE_equil(1,:),'+b','LineWidth',2.0);
+        plot(handles.data.TE_R(end,:),handles.data.TE_equil(end,:),'+g','LineWidth',2.0);
+        hold off;
+        xlabel('R [m]');
+        ylabel('Electron Temperature');
+        title('T_e Reconstruction');
+    case{'TE_Z'}
+        errorbar(handles.data.TE_Z(1,:),handles.data.TE_target(1,:),handles.data.TE_sigma(1,:),'ok');
+        hold on;
+        plot(handles.data.TE_Z(:,:)',handles.data.TE_equil(:,:)','.k');
+        plot(handles.data.TE_Z(1,:),handles.data.TE_equil(1,:),'+b','LineWidth',2.0);
+        plot(handles.data.TE_Z(end,:),handles.data.TE_equil(end,:),'+g','LineWidth',2.0);
+        hold off;
+        xlabel('Z [m]');
         ylabel('Electron Temperature');
         title('T_e Reconstruction');
     case{'ECE_evolution'}
@@ -495,6 +559,26 @@ switch stemp
         hold off;
         xlim([0 1]);
         xlabel('Normalized Flux');
+        ylabel('Ion Temperature');
+        title('T_i Reconstruction');
+    case{'TI_R'}
+        errorbar(handles.data.TI_R(1,:),handles.data.TI_target(1,:),handles.data.TI_sigma(1,:),'ok');
+        hold on;
+        plot(handles.data.TI_R(:,:)',handles.data.TI_equil(:,:)','.k');
+        plot(handles.data.TI_R(1,:),handles.data.TI_equil(1,:),'+b','LineWidth',2.0);
+        plot(handles.data.TI_R(end,:),handles.data.TI_equil(end,:),'+g','LineWidth',2.0);
+        hold off;
+        xlabel('R [m]');
+        ylabel('Ion Temperature');
+        title('T_i Reconstruction');
+    case{'TI_Z'}
+        errorbar(handles.data.TI_Z(1,:),handles.data.TI_target(1,:),handles.data.TI_sigma(1,:),'ok');
+        hold on;
+        plot(handles.data.TI_Z(:,:)',handles.data.TI_equil(:,:)','.k');
+        plot(handles.data.TI_Z(1,:),handles.data.TI_equil(1,:),'+b','LineWidth',2.0);
+        plot(handles.data.TI_Z(end,:),handles.data.TI_equil(end,:),'+g','LineWidth',2.0);
+        hold off;
+        xlabel('Z [m]');
         ylabel('Ion Temperature');
         title('T_i Reconstruction');
     case{'IOTA_evolution'}
@@ -568,6 +652,30 @@ switch stemp
         xlabel('Channel');
         ylabel('XICS Brightness');
         title('Line Int. XICS Emis Reconstruction');
+    case{'XICS_V_evolution'}
+        nchan = size(handles.data.XICS_V_target,2);
+        errorbar(1:nchan,handles.data.XICS_V_target(1,:),handles.data.XICS_V_sigma(1,:),'ok');
+        hold on;
+        plot(1:nchan,handles.data.XICS_V_equil(:,:)','xk');
+        plot(1:nchan,handles.data.XICS_V_equil(1,:),['x' cinitial],'LineWidth',2.0);
+        plot(1:nchan,handles.data.XICS_V_equil(end,:),['+' cfinal],'LineWidth',2.0);
+        xlim([0 nchan+1]);
+        hold off;
+        xlabel('Channel');
+        ylabel('XICS Velocity');
+        title('Line Int. XICS Velocity Reconstruction');
+    case{'XICS_W3_evolution'}
+        nchan = size(handles.data.XICS_W3_target,2);
+        errorbar(1:nchan,handles.data.XICS_W3_target(1,:),handles.data.XICS_W3_sigma(1,:),'ok');
+        hold on;
+        plot(1:nchan,handles.data.XICS_W3_equil(:,:)','xk');
+        plot(1:nchan,handles.data.XICS_W3_equil(1,:),['x' cinitial],'LineWidth',2.0);
+        plot(1:nchan,handles.data.XICS_W3_equil(end,:),['+' cfinal],'LineWidth',2.0);
+        xlim([0 nchan+1]);
+        hold off;
+        xlabel('Channel');
+        ylabel('XICS W3 Faactor (Te)');
+        title('Line Int. XICS W3 Reconstruction');
     case{'SXR_evolution'}
         nchan = size(handles.data.SXR_target,2);
         errorbar(1:nchan,handles.data.SXR_target(1,:),handles.data.SXR_sigma(1,:),'ok');
@@ -590,6 +698,48 @@ switch stemp
         xlabel('R [m]');
         ylabel('Pitch Angle');
         title('MSE Reconstruction');
+    case{'SEPARATRIX_evolution'}
+        files = dir('wout*.*.nc');
+        theta=0:2*pi/180:2*pi;
+        phi = handles.data.SEPARATRIX_PHI(1,:);
+        [uphi] = unique(handles.data.SEPARATRIX_PHI(1,:));
+        for i=1:length(uphi)
+            temp = phi == uphi(i);
+            plot(handles.data.SEPARATRIX_R(1,temp),handles.data.SEPARATRIX_Z(1,temp),'ok');
+            if i==1, hold on; end
+            for j=1:length(temp)
+                plot(handles.data.SEPARATRIX_R(1,temp(i))+handles.data.SEPARATRIX_target(1,temp(i)).*cosd(0:2:360),...
+                    handles.data.SEPARATRIX_Z(1,temp(i))+handles.data.SEPARATRIX_target(1,temp(i)).*sind(0:2:360),'k');
+            end
+            for j=2:length(files)-1
+                vmec_data=read_vmec(files(j).name);
+                r = cfunct(theta,uphi(i),vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
+                z = sfunct(theta,uphi(i),vmec_data.zmns,vmec_data.xm,vmec_data.xn);
+                plot(r(end,:,1),z(end,:,1),'k');
+                plot(r(2,:,1),z(2,:,1),'k');
+                plot(r(1,1,1),z(1,1,1),'k+');
+                title(['Loading ' num2str(j)]);
+                axis equal
+            end
+            vmec_data=read_vmec(files(1).name);
+            r = cfunct(theta,uphi(i),vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
+            z = sfunct(theta,uphi(i),vmec_data.zmns,vmec_data.xm,vmec_data.xn);
+            plot(r(end,:,1),z(end,:,1),'b','LineWidth',2.0);
+            plot(r(2,:,1),z(2,:,1),'b','LineWidth',2.0);
+            plot(r(1,1,1),z(1,1,1),'b+','LineWidth',2.0);
+            vmec_data=read_vmec(files(end).name);
+            r = cfunct(theta,uphi(i),vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
+            z = sfunct(theta,uphi(i),vmec_data.zmns,vmec_data.xm,vmec_data.xn);
+            plot(r(end,:,1),z(end,:,1),'g','LineWidth',2.0);
+            plot(r(2,:,1),z(2,:,1),'g','LineWidth',2.0);
+            plot(r(1,1,1),z(1,1,1),'g+','LineWidth',2.0);
+        end
+        hold off;
+        axis tight;
+        axis equal;
+        xlabel('R [m]');
+        ylabel('Z [m]');
+        title('Separatrix Reconstruction');
     case{'FLUX0'}
         files = dir('wout*.*.nc');
         theta=0:2*pi/180:2*pi;
@@ -860,6 +1010,25 @@ switch stemp
         title('Ion Temperature Profile');
         xlabel('Normalized Toroidal Flux');
         ylabel('T_i [keV]');
+    case{'P'}
+        files = dir('tprof.*.*');
+        cla;
+        xlim([0 1]);
+        ylim([0 1]);
+        for i=1:length(files)
+            prof_data=importdata(files(i).name);
+            f(:,i) = prof_data.data(:,6)./1E3;
+        end
+        s = prof_data.data(:,1);
+        plot(s,f,'k');
+        hold on;
+        plot(s,f(:,1),cinitial,'LineWidth',2.0);
+        plot(s,f(:,end),cfinal,'LineWidth',2.0);
+        hold off;
+        axis tight;
+        title('Pressure Profile');
+        xlabel('Normalized Toroidal Flux');
+        ylabel('P [kPa]');
     case{'ZEFF'}
         files = dir('tprof.*.*');
         cla;
@@ -876,14 +1045,15 @@ switch stemp
         plot(s,f(:,end),cfinal,'LineWidth',2.0);
         hold off;
         axis tight;
-        title('Zeff Profile');
+        title('Z_{effective} Profile');
         xlabel('Normalized Toroidal Flux');
-        ylabel('Zeff');
+        ylabel('Z_{eff}');
     case{'EMIS_XICS'}
         files = dir('dprof.*.*');
         cla;
         xlim([0 1]);
         ylim([0 1]);
+        f=[];
         for i=1:length(files)
             prof_data=importdata(files(i).name);
             f(:,i) = prof_data.data(:,2);
@@ -898,6 +1068,45 @@ switch stemp
         title('Emissivity (XICS) Profile');
         xlabel('Normalized Toroidal Flux');
         ylabel('Emissivity');
+    case{'PHI'}
+        files = dir('dprof.*.*');
+        cla;
+        xlim([0 1]);
+        ylim([0 1]);
+        for i=1:length(files)
+            prof_data=importdata(files(i).name);
+            f(:,i) = prof_data.data(:,3)./1000;
+        end
+        s = prof_data.data(:,1);
+        plot(s,f,'k');
+        hold on;
+        plot(s,f(:,1),cinitial,'LineWidth',2.0);
+        plot(s,f(:,end),cfinal,'LineWidth',2.0);
+        hold off;
+        axis tight;
+        title('E-Static Potential Profile');
+        xlabel('Normalized Toroidal Flux');
+        ylabel('\phi [kV]');
+    case{'Erad'}
+        files = dir('dprof.*.*');
+        cla;
+        xlim([0 1]);
+        ylim([0 1]);
+        f=[];
+        for i=1:length(files)
+            prof_data=importdata(files(i).name);
+            f(:,i) =[0; 1E-3.* diff(prof_data.data(:,3))./diff(prof_data.data(:,1))];
+        end
+        s = prof_data.data(:,1);
+        plot(s,f,'k');
+        hold on;
+        plot(s,f(:,1),cinitial,'LineWidth',2.0);
+        plot(s,f(:,end),cfinal,'LineWidth',2.0);
+        hold off;
+        axis tight;
+        title('Radial Electric Field Profile');
+        xlabel('Normalized Toroidal Flux');
+        ylabel('E [kV/normflux]');
     case{'G11'}
         files = dir('gist_genet_*.*');
         cla;

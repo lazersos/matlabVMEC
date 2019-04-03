@@ -363,7 +363,11 @@ if isfield(f,'protmns'), f.protmns = f.protmns ./ (pi*4.0E-7); end;
 if isfield(f,'protrsqmns'), f.protrsqmns = f.protrsqmns ./ (pi*4.0E-7); end;
 if isfield(f,'prprmns'), f.prprmns = f.prprmns ./ (pi*4.0E-7); end;
 % Calculate the stored energy
-f.eplasma=1.5*pi*pi*sum(f.vp.*f.presf)./f.ns;
+if (numel(f.vp) == f.ns)
+    f.eplasma=1.5*pi*pi*sum(f.vp.*f.presf)./f.ns;
+else
+    f.eplasma=1.5*pi*pi*sum(f.vp.*f.pres)./(f.ns-1);
+end
 % Set some defaults
 f.nu=2.*(f.mpol+1)+6;
 f.datatype='wout';
@@ -1241,7 +1245,10 @@ else
     fmt10='%g,%g,%g,%g,%g,%g,%g';
 end
 if isempty(strfind(fmt,','))
-    f.mgrid_file=fscanf(fid,'%s',1);
+    temp=fgetl(fid);
+    temp=fgetl(fid);
+    f.mgrid_file=strtrim(temp);
+    %f.mgrid_file=fscanf(fid,'%s',1);
     fmt2='%g%g';
     fmt3='%g%g%g';
     fmt6='%g%g%g%g%g%g';
@@ -2100,7 +2107,7 @@ end
 if isfield(f,'beta_vol'), f.beta_vol=h2f(f.beta_vol,f.ns); end
 f.buco=h2f(f.buco,f.ns);
 f.bvco=h2f(f.bvco,f.ns);
-f.vp=h2f_special(f.vp,f.ns);
+f.vp=h2f_special(f.vp,length(f.vp));
 f.overr=h2f(f.overr,f.ns);
 f.specw=h2f(f.specw,f.ns);
 if(length(f.jdotb) == f.ns)

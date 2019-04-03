@@ -53,6 +53,13 @@ phiend = max(phi);
 if phistart == -1, phistart=0; end
 phinew = phistart:(phiend-phistart)/(npts-1):phiend;
 
+% Random distribution
+%plot(mod(phinew,2*pi),'o');
+phinew = phinew + rand(size(phinew))-0.5;
+phinew(phinew>phiend) = phinew(phinew>phiend) - phiend;
+%hold on;
+%plot(mod(phinew,2*pi),'+');
+
 % Spline to new coordinate
 Rnew = pchip(phi,r,phinew);
 Znew = pchip(phi,z,phinew);
@@ -66,12 +73,15 @@ if lplot
     hold off;
 end
 
+
+
+
 % Adjust so no particle starts greater than 2*pi
 phinew = mod(phinew,2*pi);
 
 % Output file
 fid = fopen(filename,'w');
-fprintf(fid,'  PHI_END = %i*%-20.10E \n',length(Rnew),2*pi*10000);
+fprintf(fid,'  PHI_END = %i*%-20.10E \n',length(Rnew),2*pi*1000000);
 for i=1:length(Rnew)
     fprintf(fid,'  R_start(%i) = %-20.10E ',i,Rnew(i));
     fprintf(fid,'  Z_start(%i) = %-20.10E ',i,Znew(i));
