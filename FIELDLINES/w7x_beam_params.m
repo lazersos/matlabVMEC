@@ -9,6 +9,7 @@ function w7x_beam_params( source ,varargin)
 %       'H2':               Hydrogen Beams
 %       'D2':               Deterium Beams    
 %       'plots':            Generate Geometry Plots
+%       'ruidx':            Include Rudix Geometry
 %       'write_beams3d':    Generate BEAMS3D Input
 %       'grid':             Specify Accelerating Voltage (60 or 100)
 %
@@ -21,6 +22,7 @@ function w7x_beam_params( source ,varargin)
 
 % Defaults
 lplots = 0;
+lrudix = 0;
 lwrite_beams3d = 0;
 grid = 60;
 species ='H2';
@@ -43,6 +45,8 @@ if nargin > 1
             case 'grid'
                 i=i+1;
                 grid=varargin{i};
+            case {'Rudix','RUDIX','rudix'}
+                lrudix=1;
         end
     end
 end
@@ -50,6 +54,8 @@ end
 % Geometry 
 xo_NI20 =  3.68581; yo_NI20 =  5.65498; zo_NI20 = -0.305; %Origin locations
 xo_NI21 =  0.34219; yo_NI21 =  6.74132; zo_NI21 =  0.305;
+xo_RUDI = -3.81740; yo_RUDI = -7.05885; zo_RUDI = -0.70729; %RUDIX
+xt_RUDI = -2.38456; yt_RUDI = -4.72680; zt_RUDI =  0.19521; %RUDIX
 
 alpha_NI20 = 7.4441; %deg
 alpha_NI21 = 7.4441; %deg
@@ -162,7 +168,11 @@ end
 
 if (lwrite_beams3d)
     disp('!--------Universal Beam Parameters------');
-    beam_str = num2str(length(source)*3,'%2.2i');
+    if lrudix
+        beam_str = num2str(length(source)*3+3,'%2.2i');
+    else
+        beam_str = num2str(length(source)*3+3,'%2.2i');
+    end
     disp(['  T_END_IN(1:' beam_str ') = ' beam_str '*0.001']);
     disp(['  DIV_BEAMS(1:' beam_str ') = ' beam_str '*' num2str(div,'%20.10E')]);
     disp(['  ADIST_BEAMS(1:' beam_str ') = ' beam_str '*' num2str(adist,'%20.10E')]);
@@ -194,6 +204,8 @@ for i=1:length(source)
         plot3([sx tx],[sy ty],[sz tz],'k');
         plot3(tx,ty,tz,'xk');
         hold off;
+        if lrudix
+        end
     end
     if lwrite_beams3d
         sr = sqrt(sx*sx+sy*sy);
@@ -214,6 +226,39 @@ for i=1:length(source)
         end
         
     end
+end
+if lrudix
+    i = length(source);
+    Energy = [1 0.5 1./3].*55E3;
+    P_FRAC = [55 22 22];
+    P_RUDI = 10E6;
+    p=atan2(yo_RUDI,xo_RUDI);
+    r=sqrt(xo_RUDI.^2+yo_RUDI.^2);
+    r0=[r p zo_RUDI];
+    p=atan2(yt_RUDI,xt_RUDI);
+    r=sqrt(xt_RUDI.^2+yt_RUDI.^2);
+    r1=[r p zt_RUDI];
+    if lplots
+        hold on;
+        plot3([xo_RUDI xt_RUDI],[yo_RUDI yt_RUDI],[zo_RUDI zt_RUDI],'k');
+        hold off;
+    end
+    if lwrite_beams3d
+        for j = 1:3
+            beam_str = num2str(i*3+j,'%2.2i');
+            disp(['!----------BEAM RUDIX (' species ' ' E_str{j} ') ----------']);
+            disp(['  DIV_BEAMS(' beam_str ') = ' num2str(deg2rad(0.7),'%20.10E')]);
+            disp(['  E_BEAMS(' beam_str ') = ' num2str(Energy(j),'%20.10E')]);
+            disp(['  P_BEAMS(' beam_str ') = ' num2str(P_RUDI*P_FRAC(j),'%20.10E')]);
+            disp(['  R_BEAMS(' beam_str,',1) = ' num2str(r0(1),'%20.10E')]);
+            disp(['  PHI_BEAMS(' beam_str,',1) = ' num2str(r0(2),'%20.10E')]);
+            disp(['  Z_BEAMS(' beam_str,',1) = ' num2str(r0(3),'%20.10E')]);
+            disp(['  R_BEAMS(' beam_str,',2) = ' num2str(r1(1),'%20.10E')]);
+            disp(['  PHI_BEAMS(' beam_str,',2) = ' num2str(r1(2),'%20.10E')]);
+            disp(['  Z_BEAMS(' beam_str,',2) = ' num2str(r1(3),'%20.10E')]);
+        end
+    end
+        
 end
 
 return;

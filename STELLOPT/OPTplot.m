@@ -1088,14 +1088,17 @@ switch stemp
         xlabel('Normalized Toroidal Flux');
         ylabel('\phi [kV]');
     case{'Erad'}
-        files = dir('dprof.*.*');
+        files      = dir('dprof.*.*');
+        files_wout = dir('wout*.*.nc');
         cla;
         xlim([0 1]);
         ylim([0 1]);
         f=[];
         for i=1:length(files)
             prof_data=importdata(files(i).name);
-            f(:,i) =[0; 1E-3.* diff(prof_data.data(:,3))./diff(prof_data.data(:,1))];
+            vmec_data=read_vmec(files_wout(i).name);
+            f1 = gradient(prof_data.data(:,3),diff(prof_data.data(1:2,1)));
+            f(:,i) = -2E-3.*sqrt(prof_data.data(:,1)).*f1./vmec_data.Aminor;
         end
         s = prof_data.data(:,1);
         plot(s,f,'k');
@@ -1106,14 +1109,14 @@ switch stemp
         axis tight;
         title('Radial Electric Field Profile');
         xlabel('Normalized Toroidal Flux');
-        ylabel('E [kV/normflux]');
+        ylabel('E [kV/m]');
     case{'G11'}
         files = dir('gist_genet_*.*');
         cla;
         xlim([0 1]);
         ylim([0 1]);
         for i=1:length(files)
-            prof_data=importdata(files(i).name,' ',9);
+            prof_data=importdata(files(i).name,' ',10);
             f(:,i) = prof_data.data(:,1);
         end
         ns = size(f,1);
@@ -1133,7 +1136,7 @@ switch stemp
         xlim([0 1]);
         ylim([0 1]);
         for i=1:length(files)
-            prof_data=importdata(files(i).name,' ',9);
+            prof_data=importdata(files(i).name,' ',10);
             f(:,i) = prof_data.data(:,2);
         end
         ns = size(f,1);
@@ -1153,7 +1156,7 @@ switch stemp
         xlim([0 1]);
         ylim([0 1]);
         for i=1:length(files)
-            prof_data=importdata(files(i).name,' ',9);
+            prof_data=importdata(files(i).name,' ',10);
             f(:,i) = prof_data.data(:,3);
         end
         ns = size(f,1);
@@ -1173,7 +1176,7 @@ switch stemp
         xlim([0 1]);
         ylim([0 1]);
         for i=1:length(files)
-            prof_data=importdata(files(i).name,' ',9);
+            prof_data=importdata(files(i).name,' ',10);
             f(:,i) = prof_data.data(:,4);
         end
         ns = size(f,1);
@@ -1193,7 +1196,7 @@ switch stemp
         xlim([0 1]);
         ylim([0 1]);
         for i=1:length(files)
-            prof_data=importdata(files(i).name,' ',9);
+            prof_data=importdata(files(i).name,' ',10);
             f(:,i) = prof_data.data(:,5);
         end
         ns = size(f,1);
@@ -1213,7 +1216,7 @@ switch stemp
         xlim([0 1]);
         ylim([0 1]);
         for i=1:length(files)
-            prof_data=importdata(files(i).name,' ',9);
+            prof_data=importdata(files(i).name,' ',10);
             f(:,i) = prof_data.data(:,7);
         end
         ns = size(f,1);
@@ -1233,7 +1236,7 @@ switch stemp
         xlim([0 1]);
         ylim([0 1]);
         for i=1:length(files)
-            prof_data=importdata(files(i).name,' ',9);
+            prof_data=importdata(files(i).name,' ',10);
             f(:,i) = prof_data.data(:,6);
         end
         ns = size(f,1);
@@ -1253,7 +1256,7 @@ switch stemp
         xlim([0 1]);
         ylim([0 1]);
         for i=1:length(files)
-            prof_data=importdata(files(i).name,' ',9);
+            prof_data=importdata(files(i).name,' ',10);
             f(:,i) = prof_data.data(:,8);
         end
         ns = size(f,1);
