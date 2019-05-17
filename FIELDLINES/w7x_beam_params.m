@@ -25,7 +25,7 @@ lwrite_beams3d = 0;
 grid = 60;
 species ='H2';
 ec = 1.602176565E-19;
-div = deg2rad(4.5);
+div = deg2rad(1);
 adist = 1.0;
 asize = 0.5;
 charge = 1.60217733E-19;
@@ -39,7 +39,7 @@ if nargin > 1
             case 'plots'
                 lplots=1;
             case 'write_beams3d'
-                lwrite_beams3d=2;
+                lwrite_beams3d=1;
             case 'grid'
                 i=i+1;
                 grid=varargin{i};
@@ -54,58 +54,129 @@ xo_NI21 =  0.34219; yo_NI21 =  6.74132; zo_NI21 =  0.305;
 alpha_NI20 = 7.4441; %deg
 alpha_NI21 = 7.4441; %deg
 
-% Calculate U
-nx_NI20 = -xo_NI20; ny_NI20 = -yo_NI20; nz_NI20 = 0.0;
-nx_NI21 = -xo_NI21; ny_NI21 = -yo_NI21; nz_NI21 = 0.0;
-ux_NI20 = xo_NI20-cosd(alpha_NI20); uy_NI20 = yo_NI20-sind(alpha_NI20);
-ux_NI21 = xo_NI21+cosd(alpha_NI21); uy_NI21 = yo_NI21+sind(alpha_NI21);
+% Now define unit vector for u
+ro_NI20 = sqrt(xo_NI20*xo_NI20+yo_NI20*yo_NI20);
+ro_NI21 = sqrt(xo_NI21*xo_NI21+yo_NI21*yo_NI21);
+po_NI20 = atan2d(yo_NI20,xo_NI20);
+po_NI21 = atan2d(yo_NI21,xo_NI21);
+nx_NI20 = ro_NI20*cosd(po_NI20+alpha_NI20);
+nx_NI21 = ro_NI20*cosd(po_NI21-alpha_NI21);
+ny_NI20 = ro_NI20*sind(po_NI20+alpha_NI20);
+ny_NI21 = ro_NI20*sind(po_NI21-alpha_NI21);
+nz_NI20 = 0.0;
+nz_NI21 = 0.0;
+l_NI20=sqrt(nx_NI20*nx_NI20+ny_NI20*ny_NI20+nz_NI20*nz_NI20);
+l_NI21=sqrt(nx_NI21*nx_NI21+ny_NI21*ny_NI21+nz_NI21*nz_NI20);
+nx_NI20 = nx_NI20./l_NI20;
+nx_NI21 = nx_NI21./l_NI21;
+ny_NI20 = ny_NI20./l_NI20;
+ny_NI21 = ny_NI21./l_NI21;
+nz_NI20 = nz_NI20./l_NI20;
+nz_NI21 = nz_NI21./l_NI21;
 
-% Calculate V
-vx_NI20 = -uy_NI20; vy_NI20 = ux_NI20;
-vx_NI21 = -uy_NI21; vy_NI21 = ux_NI21;
+% Define v and w
 
-% Normalize
-ln_NI20 = sqrt(nx_NI20.*nx_NI20+ny_NI20.*ny_NI20);
-ln_NI21 = sqrt(nx_NI21.*nx_NI21+ny_NI21.*ny_NI21);
-lu_NI20 = sqrt(ux_NI20.*ux_NI20+uy_NI20.*uy_NI20);
-lu_NI21 = sqrt(ux_NI21.*ux_NI21+uy_NI21.*uy_NI21);
-lv_NI20 = sqrt(vx_NI20.*vx_NI20+vy_NI20.*vy_NI20);
-lv_NI21 = sqrt(vx_NI21.*vx_NI21+vy_NI21.*vy_NI21);
-nx_NI20 = nx_NI20./ln_NI20; ny_NI20 = ny_NI20./ln_NI20;
-nx_NI21 = nx_NI21./ln_NI21; ny_NI21 = ny_NI21./ln_NI21;
-ux_NI20 = ux_NI20./lu_NI20; uy_NI20 = uy_NI20./lu_NI20;
-ux_NI21 = ux_NI21./lu_NI21; uy_NI21 = uy_NI21./lu_NI21;
-vx_NI20 = vx_NI20./lv_NI20; vy_NI20 = vy_NI20./lv_NI20;
-vx_NI21 = vx_NI21./lv_NI21; vy_NI21 = vy_NI21./lv_NI21;
+ux_NI20 = nx_NI20; uy_NI20 = ny_NI20;
+ux_NI21 = nx_NI21; uy_NI21 = ny_NI21;
+vx_NI20 = -uy_NI20; vy_NI20 = ux_NI20; vz_NI20 = 0;
+vx_NI21 = -uy_NI21; vy_NI21 = ux_NI21; vz_NI21 = 0;
 
-% order [Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8]
-su = [6.5   6.5   6.5   6.5   6.5   6.5   6.5   6.5];
-sv = [0.47 -0.47 -0.47  0.47 -0.47  0.47  0.47 -0.47];
-sw = [0.60  0.60 -0.60 -0.60 -0.60 -0.60  0.60  0.60];
+% Now locate the injectors
+u_q1 = 6.5; u_q2 = 6.5; u_q3=6.5; u_q4=6.5;
+u_q5 = 6.5; u_q6 = 6.5; u_q7=6.5; u_q8=6.5;
+v_q1 = 0.47; v_q2 = -0.47; v_q3 = -0.47; v_q4 = 0.47;
+v_q5 =-0.47; v_q6 =  0.47; v_q7 =  0.47; v_q8 = -0.47;
+w_q1 = 0.6; w_q2 = 0.6; w_q3 = -0.6; w_q4 = -0.6;
+w_q5 = -0.6; w_q6 = -0.6; w_q7 = 0.6; w_q8 = 0.6;
 
-% Targets
-tu = [-0.5000 -0.5000 -0.5000 -0.5000 -0.5000 -0.5000 -0.5000 -0.5000];
-tv = [-0.0362  0.0362  0.0362 -0.0362  0.0362 -0.0362 -0.0362  0.0362];
-tw = [0 0 0 0 0 0 0 0];
+% Final injector position
+x_q1 = u_q1*ux_NI20+v_q1*vx_NI20+xo_NI20; y_q1 = u_q1*uy_NI20+v_q1*vy_NI20+yo_NI20; z_q1 = w_q1+zo_NI20;
+x_q2 = u_q2*ux_NI20+v_q2*vx_NI20+xo_NI20; y_q2 = u_q2*uy_NI20+v_q2*vy_NI20+yo_NI20; z_q2 = w_q2+zo_NI20;
+x_q3 = u_q3*ux_NI20+v_q3*vx_NI20+xo_NI20; y_q3 = u_q3*uy_NI20+v_q3*vy_NI20+yo_NI20; z_q3 = w_q3+zo_NI20;
+x_q4 = u_q4*ux_NI20+v_q4*vx_NI20+xo_NI20; y_q4 = u_q4*uy_NI20+v_q4*vy_NI20+yo_NI20; z_q4 = w_q4+zo_NI20;
+x_q5 = u_q5*ux_NI21+v_q5*vx_NI21+xo_NI21; y_q5 = u_q5*uy_NI21+v_q5*vy_NI21+yo_NI21; z_q5 = w_q5+zo_NI21;
+x_q6 = u_q6*ux_NI21+v_q6*vx_NI21+xo_NI21; y_q6 = u_q6*uy_NI21+v_q6*vy_NI21+yo_NI21; z_q6 = w_q6+zo_NI21;
+x_q7 = u_q7*ux_NI21+v_q7*vx_NI21+xo_NI21; y_q7 = u_q7*uy_NI21+v_q7*vy_NI21+yo_NI21; z_q7 = w_q7+zo_NI21;
+x_q8 = u_q8*ux_NI21+v_q8*vx_NI21+xo_NI21; y_q8 = u_q8*uy_NI21+v_q8*vy_NI21+yo_NI21; z_q8 = w_q8+zo_NI21;
 
+xstart=[x_q1, x_q2, x_q3, x_q4, x_q5, x_q6, x_q7, x_q8];
+ystart=[y_q1, y_q2, y_q3, y_q4, y_q5, y_q6, y_q7, y_q8];
+zstart=[z_q1, z_q2, z_q3, z_q4, z_q5, z_q6, z_q7, z_q8];
+rstart=sqrt(xstart.^2+ystart.^2);
+pstart=atan2(ystart,xstart);
+
+
+% Target points
+u_s14 = -0.5; v_s14 = -0.362; w_s14=0;
+u_s23 = -0.5; v_s23 =  0.362; w_s23=0;
+u_s67 = -0.5; v_s67 = -0.362; w_s67=0;
+u_s58 = -0.5; v_s58 =  0.362; w_s58=0;
+x_s14 = u_s14*ux_NI20+v_s14*vx_NI20+xo_NI20; y_s14 = u_s14*uy_NI20+v_s14*vy_NI20+yo_NI20; z_s14=zo_NI20;
+x_s23 = u_s23*ux_NI20+v_s23*vx_NI20+xo_NI20; y_s23 = u_s23*uy_NI20+v_s23*vy_NI20+yo_NI20; z_s23=zo_NI20;
+x_s58 = u_s58*ux_NI21+v_s58*vx_NI21+xo_NI21; y_s58 = u_s58*uy_NI21+v_s58*vy_NI21+yo_NI21; z_s58=zo_NI21;
+x_s67 = u_s67*ux_NI21+v_s67*vx_NI21+xo_NI21; y_s67 = u_s67*uy_NI21+v_s67*vy_NI21+yo_NI21; z_s67=zo_NI21;
+
+xtarget=[x_s14, x_s23, x_s23, x_s14, x_s58, x_s67, x_s67, x_s58];
+ytarget=[y_s14, y_s23, y_s23, y_s14, y_s58, y_s67, y_s67, y_s58];
+ztarget=[z_s14, z_s23, z_s23, z_s14, z_s58, z_s67, z_s67, z_s58];
+rtarget=sqrt(xtarget.^2+ytarget.^2);
+ptarget=atan2(ytarget,xtarget);
 
 if lplots
-    plot3([0 xo_NI20*1.25],[0 yo_NI20*1.25],[0 0],'k--');
-    xlim([-15 15]);
-    ylim([-15 15]);
-    zlim([-15 15]);
+    % plot box geometry
     hold on;
-    plot3([0 xo_NI21*1.25],[0 yo_NI21*1.25], [0 0],'k--');
-    quiver3(xo_NI20,yo_NI20,0.0,nx_NI20,ny_NI20,0.0,'r','MaxHeadSize',4)
-    quiver3(xo_NI20,yo_NI20,0.0,ux_NI20,uy_NI20,0.0,'m','MaxHeadSize',4)
-    quiver3(xo_NI20,yo_NI20,0.0,vx_NI20,vy_NI20,0.0,'m','MaxHeadSize',4)
-    quiver3(xo_NI20,yo_NI20,0.0,0,0,1.0,'m','MaxHeadSize',4)
-    quiver3(xo_NI21,yo_NI21,0.0,nx_NI21,ny_NI21,0.0,'b','MaxHeadSize',4)
-    quiver3(xo_NI21,yo_NI21,0.0,ux_NI21,uy_NI21,0.0,'c','MaxHeadSize',4)
-    quiver3(xo_NI21,yo_NI21,0.0,vx_NI21,vy_NI21,0.0,'c','MaxHeadSize',4)
-    quiver3(xo_NI21,yo_NI21,0.0,0,0,1.0,'c','MaxHeadSize',4)
-    axis square;
-    hold off;
+    if (any(source < 5))
+        plot3([0 xo_NI20],[0 yo_NI20],[0 zo_NI20],'-k')
+        plot3(xo_NI20,yo_NI20,zo_NI20,'ok')
+        quiver3(xo_NI20,yo_NI20,zo_NI20,ux_NI20,uy_NI20,0,6.5,'r')
+        quiver3(xo_NI20,yo_NI20,zo_NI20,vx_NI20,vy_NI20,0,1,'r')
+        quiver3(xo_NI20,yo_NI20,zo_NI20,0,0,1,1,'r')
+        plot3(x_s14,y_s14,z_s14,'+k')
+        plot3(x_s23,y_s23,z_s23,'+k')
+    end
+    if (any(source > 4))
+        plot3([0 xo_NI21],[0 yo_NI21],[0 zo_NI21],'-k')
+        plot3(xo_NI21,yo_NI21,zo_NI21,'ok')
+        quiver3(xo_NI21,yo_NI21,zo_NI21,ux_NI21,uy_NI21,0,6.5,'r')
+        quiver3(xo_NI21,yo_NI21,zo_NI21,vx_NI21,vy_NI21,0,1,'r')
+        quiver3(xo_NI21,yo_NI21,zo_NI21,0,0,1,1,'r')
+        plot3(x_s58,y_s58,z_s58,'+k')
+        plot3(x_s67,y_s67,z_s67,'+k')
+    end
+    d = 0.15;
+    if (find(source == 1))
+        plot3(x_q1,y_q1,z_q1,'ok'); text(x_q1,y_q1,z_q1+d,'Q1');
+        quiver3(x_q1,y_q1,z_q1,[x_s14-x_q1],[y_s14-y_q1],[z_s14-z_q1],'b')
+    end
+    if (find(source == 2))
+        plot3(x_q2,y_q2,z_q2,'ok'); text(x_q2,y_q2,z_q2+d,'Q2');
+        quiver3(x_q2,y_q2,z_q2,[x_s23-x_q2],[y_s23-y_q2],[z_s23-z_q2],'b')
+    end
+    if (find(source == 3))
+        plot3(x_q3,y_q3,z_q3,'ok'); text(x_q3,y_q3,z_q3+d,'Q3');
+        quiver3(x_q3,y_q3,z_q3,[x_s23-x_q3],[y_s23-y_q3],[z_s23-z_q3],'b')
+    end
+    if (find(source == 4))
+        plot3(x_q4,y_q4,z_q4,'ok'); text(x_q4,y_q4,z_q4+d,'Q4');
+        quiver3(x_q4,y_q4,z_q4,[x_s14-x_q4],[y_s14-y_q4],[z_s14-z_q4],'b')
+    end
+    if (find(source == 5))
+        plot3(x_q5,y_q5,z_q5,'ok'); text(x_q5,y_q5,z_q5+d,'Q5');
+        quiver3(x_q5,y_q5,z_q5,[x_s58-x_q5],[y_s58-y_q5],[z_s58-z_q5],'b')
+    end
+    if (find(source == 6))
+        plot3(x_q6,y_q6,z_q6,'ok'); text(x_q6,y_q6,z_q6+d,'Q6');
+        quiver3(x_q6,y_q6,z_q6,[x_s67-x_q6],[y_s67-y_q6],[z_s67-z_q6],'b')
+    end
+    if (find(source == 7))
+        plot3(x_q7,y_q7,z_q7,'ok'); text(x_q7,y_q7,z_q7+d,'Q7');
+        quiver3(x_q7,y_q7,z_q7,[x_s67-x_q7],[y_s67-y_q7],[z_s67-z_q7],'b')
+    end
+    if (find(source == 8))
+        plot3(x_q8,y_q8,z_q8,'ok'); text(x_q8,y_q8,z_q8+d,'Q8');
+        quiver3(x_q8,y_q8,z_q8,[x_s58-x_q8],[y_s58-y_q8],[z_s58-z_q8],'b')
+    end
+    axis tight; axis equal;
 end
 
 % Energy
@@ -173,44 +244,19 @@ if (lwrite_beams3d)
 end
 
 for i=1:length(source)
-    if (source(i) < 5)
-        xo = xo_NI20; yo = yo_NI20; zo = zo_NI20;
-        ux = ux_NI20; uy = uy_NI20;
-        vx = vx_NI20; vy = vy_NI20;
-    else
-        xo = xo_NI21; yo = yo_NI21; zo = zo_NI21;
-        ux = ux_NI21; uy = uy_NI21;
-        vx = vx_NI21; vy = vy_NI21;
-    end
-    sx = su(source(i))*ux + sv(source(i))*vx + xo;
-    sy = su(source(i))*uy + sv(source(i))*vy + yo;
-    sz = sw(source(i)) + zo;
-    tx = tu(source(i))*ux + tv(source(i))*vx + xo;
-    ty = tu(source(i))*uy + tv(source(i))*vy + yo;
-    tz = tw(source(i)) + zo;
-    if lplots
-        hold on;
-        plot3(sx,sy,sz,'ok');
-        plot3([sx tx],[sy ty],[sz tz],'k');
-        plot3(tx,ty,tz,'xk');
-        hold off;
-    end
+    dex_beam = source(i);
     if lwrite_beams3d
-        sr = sqrt(sx*sx+sy*sy);
-        sp = atan2(sy,sx);
-        tr = sqrt(tx*tx+ty*ty);
-        tp = atan2(ty,tx);
         for j = 1:3
             beam_str = num2str((i-1)*3+j,'%2.2i');
             disp(['!----------BEAM ' NAME_BEAM{source(i)} ' (' species ' ' E_str{j} ') ----------']);
             disp(['  E_BEAMS(' beam_str ') = ' num2str(Energy(j),'%20.10E')]);
-            disp(['  P_BEAMS(' beam_str ') = ' num2str(P_BEAM(source(i))*P_FRAC(j),'%20.10E')]);
-            disp(['  R_BEAMS(' beam_str,',1) = ' num2str(sr,'%20.10E')]);
-            disp(['  PHI_BEAMS(' beam_str,',1) = ' num2str(sp,'%20.10E')]);
-            disp(['  Z_BEAMS(' beam_str,',1) = ' num2str(sz,'%20.10E')]);
-            disp(['  R_BEAMS(' beam_str,',2) = ' num2str(tr,'%20.10E')]);
-            disp(['  PHI_BEAMS(' beam_str,',2) = ' num2str(tp,'%20.10E')]);
-            disp(['  Z_BEAMS(' beam_str,',2) = ' num2str(tz,'%20.10E')]);
+            disp(['  P_BEAMS(' beam_str ') = ' num2str(P_BEAM(dex_beam)*P_FRAC(j),'%20.10E')]);
+            disp(['  R_BEAMS(' beam_str,',1) = ' num2str(rstart(dex_beam),'%20.10E')]);
+            disp(['  PHI_BEAMS(' beam_str,',1) = ' num2str(pstart(dex_beam),'%20.10E')]);
+            disp(['  Z_BEAMS(' beam_str,',1) = ' num2str(zstart(dex_beam),'%20.10E')]);
+            disp(['  R_BEAMS(' beam_str,',2) = ' num2str(rtarget(dex_beam),'%20.10E')]);
+            disp(['  PHI_BEAMS(' beam_str,',2) = ' num2str(ptarget(dex_beam),'%20.10E')]);
+            disp(['  Z_BEAMS(' beam_str,',2) = ' num2str(ztarget(dex_beam),'%20.10E')]);
         end
         
     end
