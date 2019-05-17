@@ -26,6 +26,7 @@ function [ output_args ] = plot_fieldlines(data,varargin)
 
 % Initialize some variables
 plottype=0;
+phi0=0;
 nphi=1;
 npoinc = data.npoinc;
 nsteps = data.nsteps;
@@ -56,6 +57,10 @@ if nargin > 1
             case 'cutplane'
                 i=i+1;
                 nphi=varargin{i};
+            case 'phi'
+                i=i+1;
+                phi0=varargin{i};
+                plottype=102;
             case 'strike_2D'
                 plottype=6;
             case 'wall_strike'
@@ -111,6 +116,24 @@ switch plottype
         %    %plot3(data.X_lines(i,line_dex),data.Y_lines(i,line_dex),data.Z_lines(i,line_dex),'.','Color',line_color,'MarkerSize',0.1);
         %    hold off;
         %end
+        axis equal
+    case{102}
+        phi2 = phi0:max(data.phiaxis):max(max(data.PHI_lines));
+        R=zeros(data.nlines,length(phi2));
+        Z=zeros(data.nlines,length(phi2));
+        for i=1:data.nlines
+            n = find(data.R_lines(i,:)==0,1,'first')-1;
+            phi = data.PHI_lines(i,1:n);
+            n2 = find(phi2 > max(phi),1,'first')-1;
+            if isempty(n2); n2=length(phi2)-1; end
+            R(i,1:n2) = pchip(phi,data.R_lines(i,1:n),phi2(1:n2));
+            Z(i,1:n2) = pchip(phi,data.Z_lines(i,1:n),phi2(1:n2));
+            %hold on;
+            %plot(R(i,:),Z(i,:),'.','Color',line_color,'MarkerSize',0.1);
+            %hold off;
+            %drawnow;
+        end
+        plot(R,Z,'.','Color',line_color,'MarkerSize',0.1);
         axis equal
     case{1}
         if isempty(camera), camera=[1024 1024];end
