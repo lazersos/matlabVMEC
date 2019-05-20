@@ -66,9 +66,9 @@ ro_NI21 = sqrt(xo_NI21*xo_NI21+yo_NI21*yo_NI21);
 po_NI20 = atan2d(yo_NI20,xo_NI20);
 po_NI21 = atan2d(yo_NI21,xo_NI21);
 nx_NI20 = ro_NI20*cosd(po_NI20+alpha_NI20);
-nx_NI21 = ro_NI20*cosd(po_NI21-alpha_NI21);
+nx_NI21 = ro_NI21*cosd(po_NI21-alpha_NI21);
 ny_NI20 = ro_NI20*sind(po_NI20+alpha_NI20);
-ny_NI21 = ro_NI20*sind(po_NI21-alpha_NI21);
+ny_NI21 = ro_NI21*sind(po_NI21-alpha_NI21);
 nz_NI20 = 0.0;
 nz_NI21 = 0.0;
 l_NI20=sqrt(nx_NI20*nx_NI20+ny_NI20*ny_NI20+nz_NI20*nz_NI20);
@@ -113,10 +113,10 @@ pstart=atan2(ystart,xstart);
 
 
 % Target points
-u_s14 = -0.5; v_s14 = -0.362; w_s14=0;
-u_s23 = -0.5; v_s23 =  0.362; w_s23=0;
-u_s67 = -0.5; v_s67 = -0.362; w_s67=0;
-u_s58 = -0.5; v_s58 =  0.362; w_s58=0;
+u_s14 = -0.5; v_s14 = -0.0362; w_s14=0;
+u_s23 = -0.5; v_s23 =  0.0362; w_s23=0;
+u_s67 = -0.5; v_s67 = -0.0362; w_s67=0;
+u_s58 = -0.5; v_s58 =  0.0362; w_s58=0;
 x_s14 = u_s14*ux_NI20+v_s14*vx_NI20+xo_NI20; y_s14 = u_s14*uy_NI20+v_s14*vy_NI20+yo_NI20; z_s14=zo_NI20;
 x_s23 = u_s23*ux_NI20+v_s23*vx_NI20+xo_NI20; y_s23 = u_s23*uy_NI20+v_s23*vy_NI20+yo_NI20; z_s23=zo_NI20;
 x_s58 = u_s58*ux_NI21+v_s58*vx_NI21+xo_NI21; y_s58 = u_s58*uy_NI21+v_s58*vy_NI21+yo_NI21; z_s58=zo_NI21;
@@ -242,7 +242,7 @@ if (lwrite_beams3d)
     if lrudix
         beam_str = num2str(length(source)*3+3,'%2.2i');
     else
-        beam_str = num2str(length(source)*3+3,'%2.2i');
+        beam_str = num2str(length(source)*3,'%2.2i');
     end
     disp(['  T_END_IN(1:' beam_str ') = ' beam_str '*0.001']);
     disp(['  DIV_BEAMS(1:' beam_str ') = ' beam_str '*' num2str(div,'%20.10E')]);
