@@ -63,7 +63,7 @@ handles.chi_types={'ASPECT','BETA','CURTOR','EXTCUR','SEPARATRIX',...
     'XICS','XICS_BRIGHT','XICS_V','XICS_W3','SXR','VPHI','VACIOTA',...
     'IOTA','BALLOON','BOOTSTRAP','DKES','HELICITY','HELICITY_FULL',...
     'KINK','ORBIT','JDOTB','J_STAR','NEO','TXPORT','ECEREFLECT'...
-    };
+    'S11','S12','S21','S22'};
 handles.data = read_stellopt(filename(1).name);  % Read the file
 handles.plot_types={'Chi-Squared';'Chi-Stacked'};
 for i=1:length(handles.chi_types)
@@ -83,6 +83,18 @@ if isfield(handles.data,'ORBIT_chisq')
 end
 if isfield(handles.data,'NEO_chisq')
     handles.plot_types = [handles.plot_types; 'NEO_evolution'];
+end
+if isfield(handles.data,'S11_chisq')
+    handles.plot_types = [handles.plot_types; 'S11_evolution'];
+end
+if isfield(handles.data,'S12_chisq')
+    handles.plot_types = [handles.plot_types; 'S12_evolution'];
+end
+if isfield(handles.data,'S21_chisq')
+    handles.plot_types = [handles.plot_types; 'S21_evolution'];
+end
+if isfield(handles.data,'S22_chisq')
+    handles.plot_types = [handles.plot_types; 'S22_evolution'];
 end
 if isfield(handles.data,'HELICITY_chisq')
     handles.plot_types = [handles.plot_types; 'HELICITY_evolution'];
@@ -302,7 +314,8 @@ switch stemp
             'BALLOON_chisq','NEO_chisq','HELICITY_chisq',...
             'HELICITY_FULL_chisq','NELINE_chisq',...
             'TELINE_chisq','TILINE_chisq','SXR_chisq','ECEREFLECT_chisq',...
-            'KINK_chisq','XICS_chisq','XICS_BRIGHT_chisq','XICS_V_chisq','XICS_W3_chisq'}
+            'KINK_chisq','XICS_chisq','XICS_BRIGHT_chisq','XICS_V_chisq','XICS_W3_chisq',...
+            'S11_chisq','S12_chisq','S21_chisq','S22_chisq'}
         f = sum(handles.data.(stemp),2);
         plot(handles.data.iter,f,marker,'MarkerSize',18,'LineWidth',4.0);
         set(gca,'YScale','log');
@@ -356,6 +369,46 @@ switch stemp
         xlabel('Flux Surface');
         ylabel('Epsilon Effective');
         title('Neoclassical (NEO) Transport Evolution');
+    case{'S11_evolution'}
+        plot(handles.data.S11_s(:,:)',handles.data.S11_equil(:,:)','k');
+        hold on;
+        plot(handles.data.S11_s(1,:),handles.data.S11_equil(1,:),cinitial,'LineWidth',2.0);
+        plot(handles.data.S11_s(end,:),handles.data.S11_equil(end,:),cfinal,'LineWidth',2.0);
+        hold off;
+        %xlim([0 1]);
+        xlabel('Flux Surface');
+        ylabel('S_{11}');
+        title('Susceptance Coefficient (S11) Evolution');
+    case{'S12_evolution'}
+        plot(handles.data.S12_s(:,:)',handles.data.S12_equil(:,:)','k');
+        hold on;
+        plot(handles.data.S12_s(1,:),handles.data.S12_equil(1,:),cinitial,'LineWidth',2.0);
+        plot(handles.data.S12_s(end,:),handles.data.S12_equil(end,:),cfinal,'LineWidth',2.0);
+        hold off;
+        %xlim([0 1]);
+        xlabel('Flux Surface');
+        ylabel('S_{12}');
+        title('Susceptance Coefficient (S12) Evolution');
+    case{'S21_evolution'}
+        plot(handles.data.S21_s(:,:)',handles.data.S21_equil(:,:)','k');
+        hold on;
+        plot(handles.data.S21_s(1,:),handles.data.S21_equil(1,:),cinitial,'LineWidth',2.0);
+        plot(handles.data.S21_s(end,:),handles.data.S21_equil(end,:),cfinal,'LineWidth',2.0);
+        hold off;
+        %xlim([0 1]);
+        xlabel('Flux Surface');
+        ylabel('S_{21}');
+        title('Susceptance Coefficient (S21) Evolution');
+    case{'S22_evolution'}
+        plot(handles.data.S22_s(:,:)',handles.data.S22_equil(:,:)','k');
+        hold on;
+        plot(handles.data.S22_s(1,:),handles.data.S22_equil(1,:),cinitial,'LineWidth',2.0);
+        plot(handles.data.S22_s(end,:),handles.data.S22_equil(end,:),cfinal,'LineWidth',2.0);
+        hold off;
+        %xlim([0 1]);
+        xlabel('Flux Surface');
+        ylabel('S_{22}');
+        title('Susceptance Coefficient (S22) Evolution');
     case{'HELICITY_evolution'}
         if isfield(handles.data,'HELICITY2_target')
             plot(handles.data.HELICITY2_equil(:,:)','k');

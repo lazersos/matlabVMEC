@@ -1038,6 +1038,13 @@ while ~feof(fid);
                 data.([tstr '_equil'])(niter,:) = temp(:,3);
                 data.([tstr '_chisq'])(niter,:) = ((temp(:,1)-temp(:,3))./(temp(:,2))).^2;
                 data.([tstr '_s'])(niter,:) = temp(:,4);
+            % S11
+            case {'S11','S12','S21','S22'}
+                data.([tstr '_target'])(niter,:) = temp(:,1);
+                data.([tstr '_sigma'])(niter,:) = temp(:,2);
+                data.([tstr '_equil'])(niter,:) = temp(:,3);
+                data.([tstr '_chisq'])(niter,:) = ((temp(:,1)-temp(:,3))./(temp(:,2))).^2;
+                data.([tstr '_s'])(niter,:) = temp(:,4);
             % J*
             case {'J_STAR'}
                 data.([tstr '_target'])(niter,:) = temp(:,1);
