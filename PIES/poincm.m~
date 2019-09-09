@@ -1,0 +1,61 @@
+function poincm(rbc,zbs,vrhobc,vthebc,vphibc,cr,cthe,cphi,rmaj,nfp)
+%POINCM(vr,vz,cr,cz) Poincaire plot
+%   Creates a poinciare plot given a vector field
+
+maxiter=1000;
+stepsize=.05;
+hold on;
+%  We track each particle
+for i=1:max(size(cr))
+    % Start each particle at it's beginning point
+    pr=cr(i);
+    bigr=pr*cos(cthe(i));
+    bigz=pr*sin(cthe(i));
+    pthe=cthe(i);
+    pzeta=cphi(i);
+    partstop=0;
+    n=1;
+    plot(bigr,bigz,'.');
+    pause(.1);
+    while ~partstop
+        % Calculate the fields at a point
+        rt=cfunct(pthe,-pzeta,rbc,nfp)+rmaj;
+        zt=sfunct(pthe,-pzeta,zbs,nfp);
+        radius=sqrt(rt.*rt+zt.*zt);
+        vrho=cfunct(pthe,-pzeta,vrhobc,nfp);
+        vthe=cfunct(pthe,-pzeta,vthebc,nfp);
+        vphi=cfunct(pthe,-pzeta,vphibc,nfp);
+        % Spline to r position
+        vrhoa=spline(radius,vrho,pr);
+        vthea=spline(radius,vthe,pr);
+        vphia=spline(radius,vphi,pr);
+        % Now update position
+        dx=(vrhoa*cos(pthe)-vthea*sin(pthe))*vphia;
+        dy=(vthea*cos(pthe)+vrhoa*sin(pthe))*vphia;
+        dphi=atan(vphia/pr);
+        bigr=bigr+dx*stepsize;
+        bigz=bigz+dy*stepsize;
+        pr=sqrt(bigr*bigr+bigz*bigz);
+        pthe=atan(bigz/bigr);
+        pzeta=pzeta+dphi*stepsize;
+        % Check to see if we've crossed the phi=2*pi plane
+        if pzeta >= 2*pi/nfp
+            plot(bigr,bigz,'.k');
+            pzeta=0;
+            pause(.001);
+        else
+            plot(bigr,bigz,'.r');
+            pause(.0001);
+        end
+        % update number n
+        n=n+1;
+        % Check for exit
+        if (n>maxiter)
+            partstop=1;
+            plot(bigr,bigz,'+k');
+        end
+    end
+end
+
+end
+
