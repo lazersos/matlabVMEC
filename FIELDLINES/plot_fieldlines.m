@@ -10,6 +10,7 @@ function [ output_args ] = plot_fieldlines(data,varargin)
 %       'camera':       Make a camera image by binning poincare points.
 %       'camera_AEV30': W7-X AEV30 view (from AEQ21)
 %       'strike_2D':    Strike pattern
+%       'skip':         Skip this many fieldlines in plot
 %       'wall_strike':  Strucutre strike heat map
 %       'camview':      Use current view to construct a camer view
 %
@@ -33,7 +34,7 @@ nsteps = data.nsteps;
 nlines = data.nlines;
 line_color='k';
 camera = [];
-skip=2;
+skip=1;
 
 % Handle varargin
 if nargin > 1
@@ -77,6 +78,9 @@ if nargin > 1
             case 'resolution'
                 i=i+1;
                 camera=varargin{i};
+            case 'skip'
+                i=i+1;
+                skip=varargin{i};
         end
         i=i+1;
     end

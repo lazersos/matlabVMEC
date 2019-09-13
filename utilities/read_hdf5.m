@@ -64,7 +64,8 @@ for i = 1: nvars
     data.([data_info.Datasets(i).Name]) = h5read(filename,[rootdir '/' data_info.Datasets(i).Name]);
     natts = length(data_info.Datasets(i).Attributes);
     for j=1:natts
-        data.([data_info.Datasets(i).Attributes(j).Name]) = data_info.Datasets(i).Attributes(j).Value{1};
+        %data.([data_info.Datasets(i).Attributes(j).Name]) = data_info.Datasets(i).Attributes(j).Value{1};
+        data.([data_info.Datasets(i).Attributes(j).Name]) = data_info.Datasets(i).Attributes(j).Value;
     end
 end
 
