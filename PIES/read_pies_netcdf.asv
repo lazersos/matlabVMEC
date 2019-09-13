@@ -1,0 +1,63 @@
+function f = read_pies_netcdf(varargin)
+%READ_PIES_NETCDF(filename,[varname]) Read NetCDF data from PIES
+%   REAR_PIES_NETCDF(filename,[varname])
+%   This fuction extracts the information about a given variable from a
+%   netCDF file into a strucure.  If no varname is specified then it 
+%   prints a list of variable names stored in filename to the workspace.
+%   If no arguments are specified then it returns 1.
+%   Written by: Samuel Lazerson (lazerson@pppl.gov)
+%   Created:    06/11/10
+%   Last Edit:  06/11/10 -SAL
+%   Do some Error Checking
+if nargin == 2
+    filename=varargin{1};
+    varname=varargin{2};
+elseif nargin <2
+    filename=varargin{1};
+    ncid = netcdf.open(filename,'NC_NOWRITE');
+    [ndims, nvars, ngatts, unlmdimid] = netcdf.inq(ncid);
+    for i=0:nvars-1
+        [varname,xtype,dimids,natts] = netcdf.inqVar(ncid,i);
+        fprintf(1,'varname= %-23s xtype= %i\n',varname, xtype);
+    end
+    f=0;
+    netcdf.close(ncid);
+    return
+else
+    f=1;
+    return
+end
+%   Open file
+ncid = netcdf.open(filename,'NC_NOWRITE');
+%   Get Information
+[ndims, nvars, ngatts, unlmdimid] = netcdf.inq(ncid);
+%   Get Variable ID
+varid = netcdf.inqVarID(ncid,varname);
+%   Extract Variable and information
+[f.varname f.xtype dimids natts] = netcdf.inqVar(ncid,varid);
+f.var=netcdf.getvar(ncid,varid);
+%   Extract Dimensional Information
+for i=1:size(dimids,2)
+    [f.dimname{i} f.dimlen(i)]=netcdf.inqDim(ncid,dimids(i));
+end
+%   Extract Global Attribute Information
+if (ngatts >0)
+    for i=1:natts
+        f.gattname{i}=netcdf(ncid,varid,attnum-1);
+        f.gattval{i}=netcdf.getAtt(ncid,varid,attname);
+    end
+end
+%   Extract Varriable Attribute Information
+if (natts > 0)
+    for i=1:natts
+        f.attname{i}=netcdf.inqAttName(ncid,varid,0);
+        f.attval{i}=netcdf.getAtt(ncid,varid,attname{i});
+        [f.attxtype(i) f.attlen(i)] = netcdf.inqAtt(ncid,...
+            varid,'description');
+    end 
+end
+    
+netcdf.close(ncid);
+return
+end
+

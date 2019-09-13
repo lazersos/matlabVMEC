@@ -25,7 +25,7 @@ beam_dex = 1:6; % Use to downselect beams
 adas_path = '/Users/slazerso/Documents/MATLAB/bme10#h_h1.dat';
 
 % Handle varargin
-if nargin > 1
+if nargin > 2
     for i=1:nargin-1
         switch varargin{i}
             case 'plots'
