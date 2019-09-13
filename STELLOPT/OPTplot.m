@@ -312,7 +312,7 @@ switch stemp
         title(tstr);
     case{'TXPORT_chisq','B_PROBES_chisq','FLUXLOOPS_chisq',...
             'BALLOON_chisq','NEO_chisq','HELICITY_chisq',...
-            'HELICITY_FULL_chisq','NELINE_chisq',...
+            'HELICITY_FULL_chisq','NELINE_chisq','IOTA_chisq',...
             'TELINE_chisq','TILINE_chisq','SXR_chisq','ECEREFLECT_chisq',...
             'KINK_chisq','XICS_chisq','XICS_BRIGHT_chisq','XICS_V_chisq','XICS_W3_chisq',...
             'S11_chisq','S12_chisq','S21_chisq','S22_chisq'}
@@ -416,10 +416,10 @@ switch stemp
             plot(handles.data.HELICITY2_equil(1,:),cinitial,'LineWidth',2.0);
             plot(handles.data.HELICITY2_equil(end,:),cfinal,'LineWidth',2.0);
         else
-            plot(handles.data.HELICITY_equil(:,:)','k');
+            plot(handles.data.HELICITY_FULL_equil(:,:)','k');
             hold on;
-            plot(handles.data.HELICITY_equil(1,:),cinitial,'LineWidth',2.0);
-            plot(handles.data.HELICITY_equil(end,:),cfinal,'LineWidth',2.0);
+            plot(handles.data.HELICITY_FULL_equil(1,:),cinitial,'LineWidth',2.0);
+            plot(handles.data.HELICITY_FULL_equil(end,:),cfinal,'LineWidth',2.0);
         end
         hold off;
         %xlim([0 1]);

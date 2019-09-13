@@ -998,9 +998,10 @@ while ~feof(fid);
                 for i = 1:length(surfs)
                     k=surfs(i);
                     data.HELICITY2_target(niter,i) = 0.0;
-                    data.HELICITY2_sigma(niter,i) = mean(data.HELICITY_FULL_chisq(niter,temp(:,5)==k));
-                    data.HELICITY2_equil(niter,i) = sqrt(abs(sum(data.HELICITY_FULL_equil(niter,temp(:,5)==k))));
-                    data.HELICITY2_chisq(niter,i) = sum(data.HELICITY_FULL_chisq(niter,temp(:,5)==k));
+                    kdex=temp(:,5)==k;
+                    data.HELICITY2_sigma(niter,i) = mean(data.HELICITY_FULL_chisq(niter,kdex));
+                    data.HELICITY2_equil(niter,i) = sqrt(abs(sum(data.HELICITY_FULL_equil(niter,kdex))));
+                    data.HELICITY2_chisq(niter,i) = sum(data.HELICITY_FULL_chisq(niter,kdex));
                 end
             % TXPORT
             case {'TXPORT'}
