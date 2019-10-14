@@ -7,6 +7,7 @@ function plot_coils(coildata,varargin)
 %   plot_coils(coil_data);  % Plots each fillament
 %   plot_coils(coil_data,'plane');  %Plots intersection of coils (phi=0)
 %   plot_coils(coil_data,'simple'); %Plots volumetric rendering of groups
+%   plot_coils(coil_data,'field_period'); %Plots only for field period
 %   plot_coils(coil_data,'tube'); %Plots coils as volumetric tubes.
 %   plot_coils(coil_data,'tube','nedges',20,'tubewidth',0.2); %Plots coils 
 %       as volumetric tubes of width tubewidth and having nedges edges.
@@ -37,6 +38,7 @@ colors{7}=[.5 .1 .1];
 colors{8}=[.1 .1 .5];
 colors{9}=[.1 .5 .5];
 colors{10}=[.1 .5 .1];
+lfield_period=0;
 nedges=4;
 tubewidth=0.15;
 for i=11:100
@@ -70,8 +72,35 @@ if nargin >numdefargs
             case {'tubewidth'}
                 i=i+1;
                 tubewidth=varargin{i};
+            case {'field_period'}
+                lfield_period=1;
         end
     end
+end
+% Handle Simplification
+coildata_save=coildata;
+if (lfield_period)
+    nfp=coildata.periods;
+    ncoils=max(coildata.vert(5,:));
+    vert=[];
+    name={};
+    j=1;
+    for i=1:ncoils
+        dex = coildata.vert(5,:)==i;
+        x=coildata.vert(1,dex);
+        y=coildata.vert(2,dex);
+        z=coildata.vert(3,dex);
+        c=coildata.vert(4,dex);
+        d=coildata.vert(5,dex);
+        p=atan2(y,x);
+        if (mean(p) < 2*pi/nfp && mean(p) >= 0.0)
+            vert=[vert [x; y; z; c; d.*0.0+j]];
+            name=[name; coildata.current_name{i}];
+            j=j+1;
+        end
+    end
+    coildata.vert=vert;
+    coildata.current_name=name;
 end
 data=coildata.vert;
 % We should sort the Array by Coil Type
@@ -319,6 +348,7 @@ title([machine_string 'Coils']);
 xlabel('X');
 ylabel('Y');
 zlabel('Z');
+coildata=coildata_save;
 end
 
 % The following two functions are shamelessly lifted from streamtube

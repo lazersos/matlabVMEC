@@ -14,7 +14,7 @@ z=reshape(data.zsurf,[1 numel(data.zsurf)]);
 b=reshape(data.Bn,[1 numel(data.Bn)]);
 s=ones(1,numel(data.Bn));
 
-plot_coils(coil_data);
+plot_coils(coil_data,'field_period');
 hold on;
 scatter3(x,y,z,s,b);
 colormap hot;
