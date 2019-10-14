@@ -110,9 +110,9 @@ if isfield(data,'TE_target')
     set(ha,'FontSize',24);
     ylabel(ha,'T_e [keV]');
     subplot(1,2,1);
-    plot(sqrt(data.TE_R(1,:)),data.TE_target(end,:)./1000,'ok','MarkerSize',8,'LineWidth',2);
+    plot(data.TE_R(1,:),data.TE_target(end,:)./1000,'ok','MarkerSize',8,'LineWidth',2);
     hold on;
-    plot(sqrt(data.TE_R(1,:)),data.TE_equil(end,:)./1000,'+b','MarkerSize',8,'LineWidth',2);
+    plot(data.TE_R(1,:),data.TE_equil(end,:)./1000,'+b','MarkerSize',8,'LineWidth',2);
     %plot(sqrt(tprof(:,1)),tprof(:,3)./1000,'b','LineWidth',4);
     %%%%%%%%% Red lines
     if ljac
@@ -124,7 +124,7 @@ if isfield(data,'TE_target')
             ydn(n) = y_fit(i) - 1.96.*real(sigma_y(i));
             n = n +1;
         end
-        s=sqrt(data.TE_R(1,:));
+        s=data.TE_R(1,:);
         [~,dex]=sort(s,'ascend');
         fill([s(dex) fliplr(s(dex))],[yup(dex) fliplr(ydn(dex))]./1E3,'blue','EdgeColor','none','FaceAlpha',0.33);
     end
@@ -171,9 +171,9 @@ if isfield(data,'NE_target')
     set(ha,'FontSize',24);
     ylabel(ha,'n_e x10^{19} [m^{-3}]');
     subplot(1,2,1);
-    plot(sqrt(data.NE_R(end,:)),max(tprof(:,2)).*data.NE_target(end,:)./1E19,'ok','MarkerSize',8,'LineWidth',2);
+    plot(data.NE_R(end,:),max(tprof(:,2)).*data.NE_target(end,:)./1E19,'ok','MarkerSize',8,'LineWidth',2);
     hold on;
-    plot(sqrt(data.NE_R(end,:)),max(tprof(:,2)).*data.NE_equil(end,:)./1E19,'+b','MarkerSize',8,'LineWidth',2);
+    plot(data.NE_R(end,:),max(tprof(:,2)).*data.NE_equil(end,:)./1E19,'+b','MarkerSize',8,'LineWidth',2);
     %plot(sqrt(tprof(:,1)),tprof(:,2)./1E19,'b','LineWidth',4);
     %%%%%%%%% Red lines
     if ljac
@@ -186,7 +186,7 @@ if isfield(data,'NE_target')
             ydn(n) = y_fit(i) - 1.96.*real(sigma_y(i));
             n = n +1;
         end
-        s=sqrt(data.NE_R(end,:));
+        s=data.NE_R(end,:);
         [~,dex]=sort(s,'ascend');
         fill([s(dex) fliplr(s(dex))],max(tprof(:,2)).*[yup(dex) fliplr(ydn(dex))]./1E19,'blue','EdgeColor','none','FaceAlpha',0.33);
     end
@@ -276,9 +276,9 @@ if isfield(data,'TI_target')
     set(ha,'FontSize',24);
     ylabel(ha,'T_i [keV]');
     subplot(1,2,1);
-    plot(sqrt(data.TI_R(end,:)),data.TI_target(end,:)./1000,'ok','MarkerSize',8,'LineWidth',2);
+    plot(data.TI_R(end,:),data.TI_target(end,:)./1000,'ok','MarkerSize',8,'LineWidth',2);
     hold on;
-    plot(sqrt(data.TI_R(end,:)),data.TI_equil(end,:)./1000,'+b','MarkerSize',8,'LineWidth',2);
+    plot(data.TI_R(end,:),data.TI_equil(end,:)./1000,'+b','MarkerSize',8,'LineWidth',2);
     %plot(sqrt(tprof(:,1)),tprof(:,3)./1000,'b','LineWidth',4);
     %%%%%%%%% Red lines
     if ljac
@@ -290,7 +290,7 @@ if isfield(data,'TI_target')
             ydn(n) = y_fit(i) - 1.96.*real(sigma_y(i));
             n = n +1;
         end
-        s=sqrt(data.TI_R(1,:));
+        s=data.TI_R(1,:);
         [~,dex]=sort(s,'ascend');
         fill([s(dex) fliplr(s(dex))],[yup(dex) fliplr(ydn(dex))]./1E3,'blue','EdgeColor','none','FaceAlpha',0.33);
     end
@@ -615,24 +615,31 @@ if isfield(data,'FLUXLOOPS_target')
         text(0.2,0.5,'No JPROF');
     end
     subplot(2,2,[3 4]);
-    %f=data.FLUXLOOPS_equil(end,:)./data.FLUXLOOPS_target(end,:);
     f=(data.FLUXLOOPS_equil(end,:)-data.FLUXLOOPS_target(end,:))./data.FLUXLOOPS_target(end,:);
     f(data.FLUXLOOPS_target(end,:)==0) = 0;
     bar(1:length(data.FLUXLOOPS_target(end,:)),f.*100,'k');
-    %plot(1:length(data.FLUXLOOPS_target(end,:)),data.FLUXLOOPS_target(end,:).*1000,'ok','MarkerSize',8,'LineWidth',2);
-    %hold on;
-    %plot(1:length(data.FLUXLOOPS_equil(end,:)),data.FLUXLOOPS_equil(end,:).*1000,'+b','MarkerSize',8,'LineWidth',2);
-    %hold off;
     set(gca,'FontSize',24);
     xlabel('Flux Loop Index');
-    %ylabel('Signal [mWb]');
     ylabel('Signal [% Diff.]');
     axis tight;
-    %ylim([-20 max(ylim)]);
-    %legend('Exp.','Recon.');
     annotation('textbox',[0.1 0.9 0.8 0.1],'string','Flux Loop Reconstruction','FontSize',24,'LineStyle','none','HorizontalAlignment','center');
     saveas(fig,['recon_fluxloop_' ext '.fig']);
     saveas(fig,['recon_fluxloop_' ext '.png']);
+    close(fig);
+    fig = figure('Position',[1 1 1024 768],'Color','white');
+    dex = find(data.FLUXLOOPS_target(end,:)~=0);
+    f = data.FLUXLOOPS_equil(end,dex);
+    plot(dex,data.FLUXLOOPS_target(end,dex).*1000,'ok','MarkerSize',8,'LineWidth',2);
+    hold on;
+    plot(dex,f.*1000,'+b','MarkerSize',8,'LineWidth',2);
+    hold off;
+    set(gca,'FontSize',24);
+    xlabel('Flux Loop Index');
+    ylabel('Signal [mWb]');
+    title('Flux Loop Reconstruction');
+    legend('Exp.','Recon.');
+    saveas(fig,['recon_fluxloop_act_' ext '.fig']);
+    saveas(fig,['recon_fluxloop_act_' ext '.png']);
     close(fig);
 end
 
@@ -665,13 +672,8 @@ if isfield(data,'SEGROG_target')
     f=(data.SEGROG_equil(end,:)-data.SEGROG_target(end,:))./data.SEGROG_target(end,:);
     f(data.SEGROG_target(end,:)==0) = 0;
     bar(1:length(data.SEGROG_target(end,:)),f.*100,'k');
-    %plot(1:length(data.SEGROG_target(end,:)),data.SEGROG_target(end,:).*1000,'ok','MarkerSize',8,'LineWidth',2);
-    %hold on;
-    %plot(1:length(data.SEGROG_equil(end,:)),data.SEGROG_equil(end,:).*1000,'+b','MarkerSize',8,'LineWidth',2);
-    %hold off;
     set(gca,'FontSize',24);
     xlabel('Rogowski Index');
-    %ylabel('Signal [mT-m]');
     ylabel('Signal [% Diff.]');
     axis tight;
     ylim([-100 100]);
@@ -679,6 +681,21 @@ if isfield(data,'SEGROG_target')
     annotation('textbox',[0.1 0.9 0.8 0.1],'string','Rogowski Reconstruction','FontSize',24,'LineStyle','none','HorizontalAlignment','center');
     saveas(fig,['recon_segrog_' ext '.fig']);
     saveas(fig,['recon_segrog_' ext '.png']);
+    close(fig);
+    fig = figure('Position',[1 1 1024 768],'Color','white');
+    dex = find(data.SEGROG_target(end,:)~=0);
+    f = data.SEGROG_equil(end,dex);
+    plot(dex,data.SEGROG_target(end,dex).*1000,'ok','MarkerSize',8,'LineWidth',2);
+    hold on;
+    plot(dex,f.*1000,'+b','MarkerSize',8,'LineWidth',2);
+    hold off;
+    set(gca,'FontSize',24);
+    xlabel('Rogowski Index');
+    ylabel('Signal [mT-m]');
+    title('Rogowski Reconstruction');
+    legend('Exp.','Recon.');
+    saveas(fig,['recon_segrog_act_' ext '.fig']);
+    saveas(fig,['recon_segrog_act_' ext '.png']);
     close(fig);
 end
 
@@ -786,8 +803,8 @@ if ~isempty(boot_data)  && ~isempty(vmec_data)
     ylabel('dI/d\rho [kA/m^{-2}]');
     title('BOOTSTRAP Profile');
     legend('BOOTSJ','FIT (power\_series)','VMEC');
-    text(0.05,max(ylim)-0.10*diff(ylim),['VMEC Current : ' num2str(vmec_data.Itor./1E3) ' [kA'],'FontSize',18);
-    text(0.05,max(ylim)-0.15*diff(ylim),['BOOTSJ Current : ' num2str(boot_data.curtor./(mu0.*1E3)) ' [kA'],'FontSize',18);
+    text(0.05,max(ylim)-0.10*diff(ylim),['VMEC Current : ' num2str(vmec_data.Itor./1E3) ' [kA]'],'FontSize',18);
+    text(0.05,max(ylim)-0.15*diff(ylim),['BOOTSJ Current : ' num2str(boot_data.curtor./(mu0.*1E3)) ' [kA]'],'FontSize',18);
     saveas(fig,['recon_bootstrap_' ext '.fig']);
     saveas(fig,['recon_bootstrap_' ext '.png']);
     close(fig);
@@ -799,7 +816,7 @@ if ~isempty(boot_data)  && ~isempty(vmec_data)
     fprintf(fid,' %20.10E ',boot_data.ac_poly);
     fprintf(fid,'\n');
     fprintf(fid,'!  CURTOR = %20.10E !FROM BOOTSJ\n',boot_data.curtor/mu0);
-    fprintf(fid,'! FOR STELLOPT');
+    fprintf(fid,'! FOR STELLOPT\n');
     fprintf(fid,'  BOOTJ_TYPE = ''power_series''\n');
     fprintf(fid,'  BOOTJ_AUX_F =');
     fprintf(fid,' %20.10E ',boot_data.ac_poly);
