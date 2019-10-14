@@ -546,6 +546,7 @@ switch stemp
         plot(handles.data.TE_S(end,:),handles.data.TE_equil(end,:),'+g','LineWidth',2.0);
         hold off;
         xlim([0 1]);
+        ylim([0 1.5*max(handles.data.TE_target(1,:))]);
         xlabel('Normalized Flux');
         ylabel('Electron Temperature');
         title('T_e Reconstruction');
@@ -556,6 +557,7 @@ switch stemp
         plot(handles.data.TE_R(1,:),handles.data.TE_equil(1,:),'+b','LineWidth',2.0);
         plot(handles.data.TE_R(end,:),handles.data.TE_equil(end,:),'+g','LineWidth',2.0);
         hold off;
+        ylim([0 1.5*max(handles.data.TE_target(1,:))]);
         xlabel('R [m]');
         ylabel('Electron Temperature');
         title('T_e Reconstruction');
@@ -566,6 +568,7 @@ switch stemp
         plot(handles.data.TE_Z(1,:),handles.data.TE_equil(1,:),'+b','LineWidth',2.0);
         plot(handles.data.TE_Z(end,:),handles.data.TE_equil(end,:),'+g','LineWidth',2.0);
         hold off;
+        ylim([0 1.5*max(handles.data.TE_target(1,:))]);
         xlabel('Z [m]');
         ylabel('Electron Temperature');
         title('T_e Reconstruction');
@@ -610,6 +613,7 @@ switch stemp
         plot(handles.data.TI_S(1,:),handles.data.TI_equil(1,:),'+b','LineWidth',2.0);
         plot(handles.data.TI_S(end,:),handles.data.TI_equil(end,:),'+g','LineWidth',2.0);
         hold off;
+        ylim([0 1.5*max(handles.data.TI_target(1,:))]);
         xlim([0 1]);
         xlabel('Normalized Flux');
         ylabel('Ion Temperature');
@@ -621,6 +625,7 @@ switch stemp
         plot(handles.data.TI_R(1,:),handles.data.TI_equil(1,:),'+b','LineWidth',2.0);
         plot(handles.data.TI_R(end,:),handles.data.TI_equil(end,:),'+g','LineWidth',2.0);
         hold off;
+        ylim([0 1.5*max(handles.data.TI_target(1,:))]);
         xlabel('R [m]');
         ylabel('Ion Temperature');
         title('T_i Reconstruction');
@@ -631,6 +636,7 @@ switch stemp
         plot(handles.data.TI_Z(1,:),handles.data.TI_equil(1,:),'+b','LineWidth',2.0);
         plot(handles.data.TI_Z(end,:),handles.data.TI_equil(end,:),'+g','LineWidth',2.0);
         hold off;
+        ylim([0 1.5*max(handles.data.TI_target(1,:))]);
         xlabel('Z [m]');
         ylabel('Ion Temperature');
         title('T_i Reconstruction');

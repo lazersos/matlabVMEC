@@ -75,7 +75,12 @@ if ngroups > 0
         group_name = data_info.Groups(i).Name;
         dex = strfind(group_name,'/');
         group_name = [group_name(dex(end)+1:end)];
-        data.(group_name) = getGroup(filename,['/' data_info.Groups(i).Name]);
+        try
+            data.(group_name) = getGroup(filename,['/' data_info.Groups(i).Name]);
+        catch
+            group_name=['GID_' group_name];
+            data.(group_name) = getGroup(filename,['/' data_info.Groups(i).Name]);
+        end
     end
 end
 return
