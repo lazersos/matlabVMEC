@@ -59,8 +59,9 @@ if strfind(filename,'answers_plot.')
     data.ne = data.ne.*1E20;
     data.ni = data.ni.*1E20;
     data.curtor = data.I(end);
-    fit_fun=@(coefs,s) polyval(coefs,s);
+    fit_fun=@(coefs,s) polyval([-sum(coefs) coefs],s);
     x0=[0 0 0 0 4 0 -4].*data.curtor;
+    x0=[0 4 0 -4].*data.curtor;
     Ifull(1) = 1.5*data.I(1)-0.5*data.I(2);
     ns = length(data.I)+1;
     Ifull(2:ns-1)=0.5 *(data.I(1:ns-2)+data.I(2:ns-1));
@@ -68,6 +69,22 @@ if strfind(filename,'answers_plot.')
     [x,~,~,~,~]=lsqcurvefit( fit_fun,x0,data.s,diff(Ifull));
     data.ac_poly = [fliplr(x) -sum(x)];
     data.j_fit   = polyval(fliplr(data.ac_poly),data.s);
+%    x0=[0 0 0 0 0.5 0.5 0].*data.curtor;
+%    [x,~,~,~,~]=lsqcurvefit( fit_fun,x0,data.s,data.I);    
+%    subplot(1,2,1);
+%    plot(data.s,data.I,'o');
+%    hold on;
+%    plot(data.s,polyval(x,data.s));
+%    subplot(1,2,2);
+%    plot(data.s,data.dIds./(4*pi*1E-6),'o');
+%    hold on;
+%    s=0:0.01:1;
+%    x2 = x(1:end-1);
+%    x2(end) = mean(data.dIds(1:5));
+%    x2 = [-sum(x2) x2];
+%    plot(s,polyval(x2,s)./(4*pi*1E-6))
+%    data.ac_poly = fliplr(x2);
+%    data.j_fit   = polyval(fliplr(data.ac_poly),data.s);
 elseif strfind(filename,'answers.')
     data = read_namelist(fid,'BOOTIN');
     fgetl(fid);
