@@ -31,6 +31,7 @@ function data = read_wall( filename )
 %   Written by:     S.Lazerson (lazerson@pppl.gov)
 %   Version:        1.0
 %   Date:           9/29/16
+
 % Check arguments
 if nargin<1
     disp('ERROR: read_vessel requires filename');
