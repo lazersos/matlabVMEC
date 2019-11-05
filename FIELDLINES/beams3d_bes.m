@@ -22,11 +22,11 @@ ec = 1.60217662E-19;
 lplot = 0;
 geo_dex = 6:2:38; % Use for downselecting to actual channels of ILS Red AEA
 beam_dex = 1:6; % Use to downselect beams
-adas_path = '/Users/slazerso/Documents/MATLAB/bme10#h_h1.dat';
 
 % Handle varargin
 if nargin > 2
-    for i=1:nargin-1
+    i=1;
+    while i < nargin-2
         switch varargin{i}
             case 'plots'
                 lplot=1;
@@ -37,6 +37,7 @@ if nargin > 2
                 i=i+1;
                 geo_dex=varargin{i};
         end
+        i=i+1;
     end
 end
 
@@ -75,8 +76,9 @@ E_BEAM = E_BEAM(dex);
 B_BEAM = beam_data.Beam(dex)';
 
 % Downselect beams
-dex = B_BEAM == beam_dex(1);
-for i = beam_dex(2:end)
+ntotal = [];
+dex = zeros(1,length(B_BEAM));
+for i = beam_dex(1:end)
     dex = dex + (B_BEAM == i);
 end
 dex = dex > 0;
@@ -90,15 +92,16 @@ if lplot
     plot3(X_BEAM,Y_BEAM,Z_BEAM,'.r','MarkerSize',0.1);
 end
 
-% Get ADAS Data
-adas22=read_openadas22(adas_path);
-
 % Construct path and count particles
 nsteps = 64;
 d_lim = 0.01;
 bes = [];
+bes_sig=[];
 rplot=[];
-phiend = max(beam_data.phiaxis);
+vol=[];
+eplot=zeros(size(geo,1),max(beam_dex));
+rplot=zeros(size(geo,1),max(beam_dex));
+bes=zeros(size(geo,1),max(beam_dex));
 for i = 1:size(geo,1)
     x = geo(i,1)-X_BEAM;
     y = geo(i,2)-Y_BEAM;
@@ -117,6 +120,7 @@ for i = 1:size(geo,1)
         d  = sqrt(dx.^2+dy.^2+dz.^2);
         dex = or(dex,d < d_lim);
     end
+        
     dx = []; dy = []; dz = []; d = [];
     % Now calc BES data
     for j = beam_dex
@@ -134,21 +138,19 @@ for i = 1:size(geo,1)
         eplot(i,j) = mean(energy);
         r = sqrt(x.^2+y.^2);
         rplot(i,j) = mean(r);
-        p = mod(atan2(y,x),phiend);
-        dense = interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
-            permute(beam_data.NE,[2 1 3]),r,p,z);
-        Q = interp2(adas22.be,adas22.tdens,adas22.sved,energy,dense.*1E-6);
-        bes(i,j) = sum(dense.*Q)./sum(dex);
-        %bes(i,j) = sum(dex);
+        bes(i,j) = sum(dex2);
     end
 end
+% Now switch to beam density
+bes = cumsum(bes,1);
+ntotal = 100.*max(bes,[],1)./(100-beam_data.Shinethrough');
+bes = ntotal-bes;
 
 if lplot
     for i = beam_dex
         figure;
         shine = beam_data.Shinethrough(i).*1E-2;
         r = rplot(:,i);
-        %plot(rplot(:,i),bes(:,i),'ok');
         plot(rplot(:,i),sum(bes(:,i))/(1-shine)-cumsum(bes(:,i)),'ok');
         set(gcf,'Position',[1 1 1024 768],'Color','white');
         set(gca,'FontSize',24);
@@ -162,6 +164,8 @@ end
 data.bes = bes;
 data.r   = rplot;
 data.Energy = eplot;
+data.bes_sig = bes_sig;
+data.bes_total = ntotal;
 
 return;
 
