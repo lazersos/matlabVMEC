@@ -62,6 +62,10 @@ if nargin > 1
                 i=i+1;
                 phi0=varargin{i};
                 plottype=102;
+            case 'phi3D'
+                i=i+1;
+                phi0=varargin{i};
+                plottype=103;
             case 'strike_2D'
                 plottype=6;
             case 'wall_strike'
@@ -138,6 +142,23 @@ switch plottype
             %drawnow;
         end
         plot(R,Z,'.','Color',line_color,'MarkerSize',0.1);
+        axis equal
+    case{103}
+        phi2 = phi0:2*pi:max(max(data.PHI_lines));
+        R=zeros(data.nlines,length(phi2));
+        Z=zeros(data.nlines,length(phi2));
+        for i=1:data.nlines
+            n = find(data.R_lines(i,:)==0,1,'first')-1;
+            phi = data.PHI_lines(i,1:n);
+            n2 = find(phi2 > max(phi),1,'first')-1;
+            if isempty(n2); n2=length(phi2)-1; end
+            R(i,1:n2) = pchip(phi,data.R_lines(i,1:n),phi2(1:n2));
+            Z(i,1:n2) = pchip(phi,data.Z_lines(i,1:n),phi2(1:n2));
+        end
+        X = R.*cos(phi2);
+        Y = R.*sin(phi2);
+        hold on;
+        plot3(X,Y,Z,'.','Color',line_color,'MarkerSize',0.1);
         axis equal
     case{1}
         if isempty(camera), camera=[1024 1024];end
