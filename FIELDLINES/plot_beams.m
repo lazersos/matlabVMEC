@@ -33,7 +33,7 @@ if nargin > 1
             case {'overview','lost_len','lost_inital','lost_flux',...
                     'deposition','injection','birth_image','birth_xyz',...
                     'birth_xyz_s','birth_xyz_b','wall_loss','benchmark',...
-                    'grid','grid_s','dist','dist_initial','E-alpha','pitch',...
+                    'grid','grid_s','dist','dist_initial','e-alpha','pitch',...
                     'camview'}
                 plot_type=varargin{i};
             case 'beam'
@@ -165,9 +165,11 @@ else
                 therm_dex(i) = dex;
             end
         end
-        lost_dex(shine_dex>0) = 0;
-        therm_dex(shine_dex>0) = 0;
-        therm_dex(last_dex == beam_data.npoinc+1) = 0;
+        if isfield(beam_data,'Beam')
+            lost_dex(shine_dex>0) = 0;
+            therm_dex(shine_dex>0) = 0;
+            therm_dex(last_dex == beam_data.npoinc+1) = 0;
+        end
     else
         last_dex(:) = 2;
     end
@@ -367,14 +369,21 @@ else
             dex =mu > 0;
             vll = vll(dex);
             vperp = vperp(dex);
-            beam  = beam_data.Beam(dex);
-            leg_text=[];
-            for i = 1:max(beam)
-                dex = beam==i;
+            if isfield(beam_data,'Beam')
+                beam  = beam_data.Beam(dex);
+                leg_text=[];
+                for i = 1:max(beam)
+                    dex = beam==i;
+                    hold on;
+                    plot(vll(dex)./1E3,vperp(dex)./1E3,'.');
+                    hold off;
+                    leg_text=[leg_text; ['Beam #' num2str(i,'%i')]];
+                end
+            else
                 hold on;
-                plot(vll(dex)./1E3,vperp(dex)./1E3,'.');
+                plot(vll(:)./1E3,vperp(:)./1E3,'.');
                 hold off;
-                leg_text=[leg_text; ['Beam #' num2str(i,'%i')]];
+                leg_text='Particles';
             end
             vmax = max(ylim);
             vmax = max([vmax max(abs(xlim))]);
