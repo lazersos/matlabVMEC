@@ -89,11 +89,11 @@ vx_NI21 = -uy_NI21; vy_NI21 = ux_NI21; vz_NI21 = 0;
 
 % Now locate the injectors
 u_q1 = 6.5; u_q2 = 6.5; u_q3=6.5; u_q4=6.5;
-u_q5 = 6.5; u_q6 = 6.5; u_q7=6.5; u_q8=6.5;
+u_q7 = 6.5; u_q8 = 6.5; u_q5=6.5; u_q6=6.5;
 v_q1 = 0.47; v_q2 = -0.47; v_q3 = -0.47; v_q4 = 0.47;
-v_q5 =-0.47; v_q6 =  0.47; v_q7 =  0.47; v_q8 = -0.47;
+v_q7 = 0.47; v_q8 = -0.47; v_q5 = -0.47; v_q6 = 0.47;
 w_q1 = 0.6; w_q2 = 0.6; w_q3 = -0.6; w_q4 = -0.6;
-w_q5 = -0.6; w_q6 = -0.6; w_q7 = 0.6; w_q8 = 0.6;
+w_q7 = 0.6; w_q8 = 0.6; w_q5 = -0.6; w_q6 = -0.6;
 
 % Final injector position
 x_q1 = u_q1*ux_NI20+v_q1*vx_NI20+xo_NI20; y_q1 = u_q1*uy_NI20+v_q1*vy_NI20+yo_NI20; z_q1 = w_q1+zo_NI20;
@@ -259,6 +259,7 @@ for i=1:length(source)
         for j = 1:3
             beam_str = num2str((i-1)*3+j,'%2.2i');
             disp(['!----------BEAM ' NAME_BEAM{source(i)} ' (' species ' ' E_str{j} ') ----------']);
+            disp(['  DEX_BEAMS(' beam_str ') = ' num2str(source(i),'%2i')]);
             disp(['  E_BEAMS(' beam_str ') = ' num2str(Energy(j),'%20.10E')]);
             disp(['  P_BEAMS(' beam_str ') = ' num2str(P_BEAM(dex_beam)*P_FRAC(j),'%20.10E')]);
             disp(['  R_BEAMS(' beam_str,',1) = ' num2str(rstart(dex_beam),'%20.10E')]);
@@ -291,6 +292,7 @@ if lrudix
         for j = 1:3
             beam_str = num2str(i*3+j,'%2.2i');
             disp(['!----------BEAM RUDIX (' species ' ' E_str{j} ') ----------']);
+            %disp(['  DEX_BEAMS(' beam_str ') = ' num2str(deg2rad(0.7),'%20.10E')]);
             disp(['  DIV_BEAMS(' beam_str ') = ' num2str(deg2rad(0.7),'%20.10E')]);
             disp(['  E_BEAMS(' beam_str ') = ' num2str(Energy(j),'%20.10E')]);
             disp(['  P_BEAMS(' beam_str ') = ' num2str(P_RUDI*P_FRAC(j),'%20.10E')]);
