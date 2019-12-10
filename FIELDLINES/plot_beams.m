@@ -16,10 +16,12 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      plot_beams(beam_data,'injection');
 %      plot_beams(beam_data,'birth_image');
 %      plot_beams(beam_data,'birth_xyz');
+%      plot_beams(beam_data,'birth_xyz_b');
+%      plot_beams(beam_data,'birth_xyz_s');
 %      plot_beams(beam_data,'wall_loss');
 %      plot_beams(beam_data,'benchmark');
 %
-% Maintained by: Samuel Lazerson (lazerson@pppl.gov)
+% Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.50
 
 ec=1.6021773300E-19; % Charge of an electron (leave alone)
@@ -32,7 +34,7 @@ if nargin > 1
         switch varargin{i}
             case {'overview','lost_len','lost_inital','lost_flux',...
                     'deposition','injection','birth_image','birth_xyz',...
-                    'birth_xyz_s','birth_xyz_b','wall_loss','benchmark',...
+                    'birth_xyz_s','birth_xyz_b','wall_loss','benchmarks',...
                     'grid','grid_s','dist','dist_initial','e-alpha','pitch',...
                     'camview'}
                 plot_type=varargin{i};
@@ -138,41 +140,54 @@ if isfield(beam_data,'vlldist')
         xlabel('Time (ms)');
     end
 else
-    % Calculate which particles just shine through
-    % 1: Launch Point
-    % 2: Last point or wall point
-    % 3: Only recorded if particle hits the wall
+    % First determine type of run
     shine_dex = zeros(1,beam_data.nparticles);
-    shine_dex(beam_data.neut_lines(2,:) > 0) = 2;
-    ep_start_dex = ones(1,beam_data.nparticles)+1;
-    if any(shine_dex > 0)
-        ep_start_dex(shine_dex) = 0;
-    end
-    % Calculate the last index of each particle
-    % Note that the indicies run from 1 to npoinc+1
-    % Note that the last point recorded is the wall point
     last_dex = zeros(1,beam_data.nparticles)+double(beam_data.npoinc);
     lost_dex = zeros(1,beam_data.nparticles);
     therm_dex = zeros(1,beam_data.nparticles);
-    offset = 1;
-    if beam_data.npoinc > 2
+    % Set last dex
+    % Calculate the last index of each particle
+    % Note that the indicies run from 1 to npoinc+1
+    % Note that the last point recorded is the wall point
+    for i = 1:beam_data.nparticles
+        dex = find(beam_data.R_lines(:,i)>0,1,'last');
+        last_dex(i) = dex;
+    end
+    % Handle Injection vs. non-Injection
+    if any(beam_data.neut_lines(1,:) > 0) %then NBI run
+        % Mark Shinethrough Particles
+        % Calculate which particles just shine through
+        % 1: Launch Point
+        % 2: Last point or wall point
+        % 3: Only recorded if particle hits the wall
+        shine_dex(beam_data.neut_lines(2,:) > 0) = 2;
         for i=1:beam_data.nparticles
-            dex = find(beam_data.R_lines(:,i)>0,1,'last');
-            last_dex(i) = dex;
-            if beam_data.S_lines(dex,i)>0.95 % this is weak but necessary because S_lines may not be 1 is using plasma wall
-                lost_dex(i) = dex;
-            else
-                therm_dex(i) = dex;
+            s = beam_data.S_lines(last_dex(i),i);
+            if (s>1.1)
+                lost_dex(i) = last_dex(i);
+            elseif last_dex(i) < beam_data.npoinc
+                therm_dex(i) = last_dex(i);
             end
         end
-        if isfield(beam_data,'Beam')
-            lost_dex(shine_dex>0) = 0;
-            therm_dex(shine_dex>0) = 0;
-            therm_dex(last_dex == beam_data.npoinc+1) = 0;
+        dex = shine_dex==2;
+        lost_dex(dex) = 0;
+        % Handle a depo run
+        if beam_data.ldepo
+            lost_dex = zeros(1,beam_data.nparticles);
+            therm_dex = zeros(1,beam_data.nparticles);
         end
-    else
-        last_dex(:) = 2;
+    else % non-nbi run
+        for i=1:beam_data.nparticles
+            s = beam_data.S_lines(last_dex(i),i);
+            if (s>1.1)
+                lost_dex(i) = last_dex(i);
+            elseif last_dex(i) < beam_data.npoinc
+                therm_dex(i) = last_dex(i);
+            end
+        end
     end
+    
+% Now handle plots
     switch lower(plot_type)
         case 'overview' % Simple endpoint plot
             x=[]; y=[]; z=[];
@@ -186,9 +201,9 @@ else
                         y_shine = [y_shine beam_data.Y_lines(shine_dex(i),i)];
                         z_shine = [z_shine beam_data.Z_lines(shine_dex(i),i)];
                     elseif lost_dex(i)
-                        x_lost = [x_lost beam_data.X_lines(last_dex(i),i)];
-                        y_lost = [y_lost beam_data.Y_lines(last_dex(i),i)];
-                        z_lost = [z_lost beam_data.Z_lines(last_dex(i),i)];
+                        x_lost = [x_lost beam_data.X_lines(lost_dex(i),i)];
+                        y_lost = [y_lost beam_data.Y_lines(lost_dex(i),i)];
+                        z_lost = [z_lost beam_data.Z_lines(lost_dex(i),i)];
                     elseif therm_dex(i)
                         x_therm = [x_therm beam_data.X_lines(last_dex(i),i)];
                         y_therm = [y_therm beam_data.Y_lines(last_dex(i),i)];
@@ -263,10 +278,10 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vll=[]; vperp=[]; mass=[];
             for i=1:beam_data.nparticles
-                if (lost_dex(i) == 0)
-                    vll = [vll beam_data.vll_lines(end,i)]; 
-                    mu = beam_data.moment_lines(end,i);
-                    b  = beam_data.B_lines(end,i);
+                if and(lost_dex(i) == 0,shine_dex(i)==0)
+                    vll = [vll beam_data.vll_lines(last_dex(i),i)]; 
+                    mu = beam_data.moment_lines(last_dex(i),i);
+                    b  = beam_data.B_lines(last_dex(i),i);
                     vperp = [vperp sqrt(2.*mu.*b./beam_data.mass(i))];
                     mass = [mass beam_data.mass(i)];
                 end
@@ -290,10 +305,10 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vll=[]; vperp=[]; mass=[];
             for i=1:beam_data.nparticles
-                if (lost_dex(i) == 0)
-                    vll = [vll beam_data.vll_lines(end,i)]; 
-                    mu = beam_data.moment_lines(end,i);
-                    b  = beam_data.B_lines(end,i);
+                if and(lost_dex(i) == 0,shine_dex(i)==0)
+                    vll = [vll beam_data.vll_lines(last_dex(i),i)]; 
+                    mu = beam_data.moment_lines(last_dex(i),i);
+                    b  = beam_data.B_lines(last_dex(i),i);
                     vperp = [vperp sqrt(2.*mu.*b./beam_data.mass(i))];
                     mass = [mass beam_data.mass(i)];
                 end
@@ -302,7 +317,7 @@ else
             E     = 0.5.*mass.*(vll.^2+vperp.^2)./ec;
             x_size=[0 max(E).*1.25];
             y_size=[-180 180];
-            nres = 128;
+            nres = 256;
             edges={x_size(1):diff(x_size)./nres:x_size(2) ...
                 y_size(1):diff(y_size)./nres:y_size(2)};
             vals = hist3([E; pitch]',edges);
@@ -329,17 +344,17 @@ else
             vll_therm =[]; vperp_therm=[];
             vll_other =[]; vperp_other=[];
             for i=1:beam_data.nparticles
-                if last_dex(i) < beam_data.npoinc
+                if last_dex(i) <= beam_data.npoinc
                     if lost_dex(i) > 0
                         vll_lost = [vll_lost beam_data.vll_lines(lost_dex(i),i)];
                         vperp_lost  = [vperp_lost  beam_data.moment_lines(lost_dex(i),i).*2.*beam_data.B_lines(lost_dex(i),i)./beam_data.mass(i)];
                     elseif therm_dex(i) > 0
                         vll_therm = [vll_therm beam_data.vll_lines(therm_dex(i),i)];
                         vperp_therm  = [vperp_therm  beam_data.moment_lines(therm_dex(i),i).*2.*beam_data.B_lines(therm_dex(i),i)./beam_data.mass(i)];
+                    elseif (shine_dex(i) ==0)
+                        vll_other = [vll_other beam_data.vll_lines(last_dex(i),i)];
+                        vperp_other  = [vperp_other  beam_data.moment_lines(last_dex(i),i).*2.*beam_data.B_lines(last_dex(i),i)./beam_data.mass(i)];
                     end
-                else
-                    vll_other = [vll_other beam_data.vll_lines(last_dex(i),i)];
-                    vperp_other  = [vperp_other  beam_data.moment_lines(last_dex(i),i).*2.*beam_data.B_lines(last_dex(i),i)./beam_data.mass(i)];
                 end
             end
             hold on;
@@ -396,43 +411,6 @@ else
             xlabel('Parallel Velocity [km/s]');
             ylabel('Perp. Velocity [km/s]');
             title('Initial Particle Distribution');
-        case 'dist_initial_old'
-            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
-            vll_lost =[]; vperp_lost=[];
-            vll_therm =[]; vperp_therm=[];
-            vll_other =[]; vperp_other=[];
-            dex1 = 1;
-            if any(shine_dex > 0), dex1=3; end
-            for i=1:beam_data.nparticles
-                if last_dex(i) < beam_data.npoinc
-                    if lost_dex(i)
-                        vll_lost = [vll_lost beam_data.vll_lines(dex1,i)];
-                        vperp_lost  = [vperp_lost  beam_data.moment_lines(dex1,i).*2.*beam_data.B_lines(dex1,i)./beam_data.mass(i)];
-                    elseif therm_dex(i)
-                        vll_therm = [vll_therm beam_data.vll_lines(dex1,i)];
-                        vperp_therm  = [vperp_therm  beam_data.moment_lines(dex1,i).*2.*beam_data.B_lines(dex1,i)./beam_data.mass(i)];
-                    end
-                else
-                    vll_other = [vll_other beam_data.vll_lines(dex1,i)];
-                    vperp_other  = [vperp_other  beam_data.moment_lines(dex1,i).*2.*beam_data.B_lines(dex1,i)./beam_data.mass(i)];
-                end
-            end
-            hold on;
-            leg_text={};
-            if ~isempty(vll_therm), plot(vll_therm./1E3,sqrt(vperp_therm)./1E3,'.b'); leg_text=[leg_text; 'Thermalized'];end
-            if ~isempty(vll_lost), plot(vll_lost./1E3,sqrt(vperp_lost)./1E3,'.r'); leg_text=[leg_text; 'Lost'];end
-            if ~isempty(vll_other), plot(vll_other./1E3,sqrt(vperp_other)./1E3,'ok'); leg_text=[leg_text; 'Circulating'];end
-            vmax = max(ylim);
-            vmax = max([vmax max(abs(xlim))]);
-            ylim([0 vmax]);
-            xlim([-1 1].*max(ylim));
-            axis equal;
-            axis square;
-            legend(leg_text);
-            set(gca,'FontSize',18);
-            xlabel('Parallel Velocity [km/s]');
-            ylabel('Perp. Velocity [km/s]');
-            title('Initial Particle Distribution');
         case 'lost_flux'
             u=[]; v=[]; line_len=[];
             dex1 = 1;
@@ -459,91 +437,6 @@ else
             ylabel('Toroidal Angle (\phi) [rad]');
             ha = colorbar;
             ylabel(ha,'Connection Length [km]');
-        case 'distribution_old'
-            lneed_B = 0;
-            if ~isfield(beam_data,'B_lines'), lneed_B = 1; end
-            if lneed_B
-                for j=1:beam_data.nphi
-                    BX(j,:,:) = beam_data.B_R(:,j,:).*cos(beam_data.phiaxis(j))-beam_data.B_PHI(:,j,:).*sin(beam_data.phiaxis(j));
-                    BY(j,:,:) = beam_data.B_R(:,j,:).*sin(beam_data.phiaxis(j))+beam_data.B_PHI(:,j,:).*cos(beam_data.phiaxis(j));
-                    BZ(j,:,:) = beam_data.B_Z(:,j,:);
-                end
-                B = sqrt(BX.^2 + BY.^2 + BZ.^2);
-                [x1, y1, z1] = meshgrid(min(beam_data.raxis):(max(beam_data.raxis)-min(beam_data.raxis))./(length(beam_data.raxis)-1):max(beam_data.raxis),...
-                    min(beam_data.phiaxis):(max(beam_data.phiaxis)-min(beam_data.phiaxis))./(length(beam_data.phiaxis)-1):max(beam_data.phiaxis),...
-                    min(beam_data.zaxis):(max(beam_data.zaxis)-min(beam_data.zaxis))./(length(beam_data.zaxis)-1):max(beam_data.zaxis));
-            end
-            mass = 1.6726231E-27;
-            ec=1.60217733E-19;
-            ymax = 0.5*mass*max(max(beam_data.vll_lines.^2))/1000./ec;
-            % First plot all
-            for i=1:beam_data.nparticles
-                dex = find(beam_data.R_lines(:,i)==0,1,'first');
-                if isempty(dex)
-                    dex = beam_data.npoinc-1;
-                    if lneed_B
-                        B_vals= interp3(x1,y1,z1,B,beam_data.R_lines(dex,i),mod(beam_data.PHI_lines(dex,i),beam_data.phiaxis(end)),beam_data.Z_lines(dex,i));
-                    else
-                        B_vals = beam_data.B_lines(dex,i);
-                    end
-                    hold on;
-                    plot(0.5*beam_data.moment_lines(dex,i)./B_vals./ec./1000,0.5*mass.*beam_data.vll_lines(dex,i).^2./ec./1000,'og');
-                    if lneed_B
-                        B_vals= interp3(x1,y1,z1,B,beam_data.R_lines(1,i),mod(beam_data.PHI_lines(1,i),beam_data.phiaxis(end)),beam_data.Z_lines(1,i));
-                    else
-                        B_vals = beam_data.B_lines(1,i);
-                    end
-                    plot(0.5*beam_data.moment_lines(1,i)./B_vals./ec./1000,0.5*mass.*beam_data.vll_lines(1,i).^2./ec./1000,'sg');
-                    hold off;
-                end
-            end
-            % Now we overplot the losses
-            for i=1:beam_data.nparticles
-                dex = find(beam_data.R_lines(:,i)==0,1,'first');
-                if ~isempty(dex)
-                    dex = dex - offset;
-                    if lneed_B
-                        B_vals= interp3(x1,y1,z1,B,beam_data.R_lines(dex,i),mod(beam_data.PHI_lines(dex,i),beam_data.phiaxis(end)),beam_data.Z_lines(dex,i));
-                    else
-                        B_vals = beam_data.B_lines(dex,i);
-                    end
-                    hold on;
-                    plot(0.5*beam_data.moment_lines(dex,i)./B_vals./ec./1000,0.5*mass.*beam_data.vll_lines(dex,i).^2./ec./1000,'or');
-                    if (lneed_B)
-                        B_vals= interp3(x1,y1,z1,B,beam_data.R_lines(1,i),mod(beam_data.PHI_lines(1,i),beam_data.phiaxis(end)),beam_data.Z_lines(1,i));
-                    else
-                        B_vals = beam_data.B_lines(1,i);
-                    end
-                    plot(0.5*beam_data.moment_lines(1,i)./B_vals./ec./1000,0.5*mass.*beam_data.vll_lines(1,i).^2./ec./1000,'sk');
-                    %polar(beam_data.U_lines(1:dex,i),beam_data.S_lines(1:dex,i),'k');
-                    hold off;
-                end
-            end
-            axis square;
-            ylim([0 ymax]);
-            xlim([0 0.25*ymax]);
-            ylabel('E_{||} [keV]');
-            xlabel('E_\perp [keV]');
-            title('Distribution function lost particles');
-        case 'distribution'
-            mass = 1.6726231E-27;
-            ec=1.60217733E-19;
-            vperp_lines = sqrt(abs(2.*beam_data.moment_lines.*beam_data.B_lines./mass));
-            plot(beam_data.vll_lines(1,:)./1E6,vperp_lines(1,:)./1E6,'og');
-            hold on;
-            dex = beam_data.R_lines(beam_data.npoinc+1,:) == 0;
-            vperp_lost = []; vll_lost=[];
-            for i=1:beam_data.nparticles
-                if dex(i)
-                    dex_lost = find(beam_data.R_lines(:,i)==0,1,'first')-1;
-                    vperp_lost = [vperp_lost; vperp_lines(dex_lost,i)];
-                    vll_lost = [vll_lost; beam_data.vll_lines(dex_lost,i)];
-                end
-            end
-            plot(vll_lost./1E6,vperp_lost./1E6,'xr');
-            xlabel('v_{||} x10^6 [m/s]');
-            ylabel('v_\perp x10^6 [m/s]');
-            title('Distribution function lost particles');
         case 'deposition'
             slen = size(beam_data.ndot_prof,2);
             s    = 0:1.0/(slen-1):1;
@@ -810,7 +703,7 @@ else
             for i=1:beam_data.nbeams
                 dex = and(depo_dex',beam_dex(:,i));
                 E_birth=0.5.*(beam_data.mass(dex)'.*beam_data.vll_lines(3,dex).^2+...
-                    beam_data.moment_lines(3,dex).*beam_data.B_lines(3,dex));
+                    abs(beam_data.moment_lines(3,dex).*beam_data.B_lines(3,dex)));
                 [counts,bins]=hist(1E-3.*E_birth./beam_data.charge(dex)',100);
                 hold on;
                 plot(bins,counts,'color',cmap(i,:));
