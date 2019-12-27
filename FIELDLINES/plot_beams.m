@@ -19,6 +19,7 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      plot_beams(beam_data,'birth_xyz_b');
 %      plot_beams(beam_data,'birth_xyz_s');
 %      plot_beams(beam_data,'wall_loss');
+%      plot_beams(beam_data,'wall_heat'); %norm to 1
 %      plot_beams(beam_data,'benchmark');
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
@@ -36,7 +37,7 @@ if nargin > 1
                     'deposition','injection','birth_image','birth_xyz',...
                     'birth_xyz_s','birth_xyz_b','wall_loss','benchmarks',...
                     'grid','grid_s','dist','dist_initial','e-alpha','pitch',...
-                    'camview'}
+                    'camview','wall_heat'}
                 plot_type=varargin{i};
             case 'beam'
                 beamdex = varargin{i+1};
@@ -521,6 +522,20 @@ else
             scatter3(x,y,z,b.*0.0+1,b,'.')
         case 'wall_loss'
             output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',beam_data.wall_strikes,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
+        case 'wall_heat'
+            d1 = beam_data.wall_faces(:,1);
+            d2 = beam_data.wall_faces(:,2);
+            d3 = beam_data.wall_faces(:,3);
+            p21 = [beam_data.wall_vertex(d2,1) - beam_data.wall_vertex(d1,1) ...
+                beam_data.wall_vertex(d2,2) - beam_data.wall_vertex(d1,2)...
+                beam_data.wall_vertex(d2,3) - beam_data.wall_vertex(d1,3)];
+            p31 = [beam_data.wall_vertex(d3,1) - beam_data.wall_vertex(d1,1) ...
+                beam_data.wall_vertex(d3,2) - beam_data.wall_vertex(d1,2)...
+                beam_data.wall_vertex(d3,3) - beam_data.wall_vertex(d1,3)];
+            area = cross(p21,p31);
+            area = 0.5.*sqrt(sum(area.*area,2));
+            flux = beam_data.wall_strikes./(double(beam_data.nparticles).*area);
+            output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',flux,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
         case 'grid'
             x=[]; y=[]; z=[];
             raxis = beam_data.raxis;
