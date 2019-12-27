@@ -14,7 +14,7 @@ function data=beams3d_bes(beam_data,geofile,varargin)
 %      beam_data = read_beams3d('beams3d_test.h5');
 %      data=beams3d_bes(beam_data,'QSK-aea21-losCoords-op12b-design-cad.txt');
 %
-% Maintained by: Samuel Lazerson (lazerson@pppl.gov)
+% Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.00
 
 % Helpers
@@ -71,6 +71,7 @@ dex    = NEUT == 0;
 X_BEAM = beam_data.X_lines(2,dex);
 Y_BEAM = beam_data.Y_lines(2,dex);
 Z_BEAM = beam_data.Z_lines(2,dex);
+W_BEAM = beam_data.Weight(dex);
 E_BEAM = (0.5/ec).*beam_data.mass'.*beam_data.vll_lines(1,:).^2;
 E_BEAM = E_BEAM(dex);
 B_BEAM = beam_data.Beam(dex)';
@@ -138,11 +139,12 @@ for i = 1:size(geo,1)
         eplot(i,j) = mean(energy);
         r = sqrt(x.^2+y.^2);
         rplot(i,j) = mean(r);
-        bes(i,j) = sum(dex2);
+        bes(i,j) = sum(W_BEAM(dex2));
     end
 end
 % Now switch to beam density
 bes = cumsum(bes,1);
+%ntotal = 100.*sum(W_BEAM)./(100-beam_data.Shinethrough');
 ntotal = 100.*max(bes,[],1)./(100-beam_data.Shinethrough');
 bes = ntotal-bes;
 
