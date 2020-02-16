@@ -54,7 +54,7 @@ elseif ~isempty(strfind(filename,'map_linear.'))
 elseif ~isempty(strfind(filename,'xvec.'))
         data=read_stellopt_xvec(filename);
 else
-        disp(['ERROR: Unsuported filetype' filetype '!']);
+        disp(['ERROR: Unsuported filetype' filename '!']);
 end
 return
 end
