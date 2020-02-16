@@ -75,6 +75,12 @@ W_BEAM = beam_data.Weight(dex);
 E_BEAM = (0.5/ec).*beam_data.mass'.*beam_data.vll_lines(1,:).^2;
 E_BEAM = E_BEAM(dex);
 B_BEAM = beam_data.Beam(dex)';
+SHINE_BEAM = beam_data.Shinethrough';
+
+% Correct weight
+if all(W_BEAM==0)
+    W_BEAM(:) = 1;
+end
 
 % Downselect beams
 ntotal = [];
@@ -88,6 +94,7 @@ Y_BEAM = Y_BEAM(dex);
 Z_BEAM = Z_BEAM(dex);
 E_BEAM = E_BEAM(dex);
 B_BEAM = B_BEAM(dex);
+SHINE_BEAM = SHINE_BEAM(beam_dex);
 
 if lplot
     plot3(X_BEAM,Y_BEAM,Z_BEAM,'.r','MarkerSize',0.1);
@@ -100,6 +107,7 @@ bes = [];
 bes_sig=[];
 rplot=[];
 vol=[];
+count=[];
 eplot=zeros(size(geo,1),max(beam_dex));
 rplot=zeros(size(geo,1),max(beam_dex));
 bes=zeros(size(geo,1),max(beam_dex));
@@ -140,12 +148,13 @@ for i = 1:size(geo,1)
         r = sqrt(x.^2+y.^2);
         rplot(i,j) = mean(r);
         bes(i,j) = sum(W_BEAM(dex2));
+        count(i,j) = sum(dex2);
     end
 end
 % Now switch to beam density
 bes = cumsum(bes,1);
 %ntotal = 100.*sum(W_BEAM)./(100-beam_data.Shinethrough');
-ntotal = 100.*max(bes,[],1)./(100-beam_data.Shinethrough');
+ntotal = 100.*max(bes,[],1)./(100-SHINE_BEAM);
 bes = ntotal-bes;
 
 if lplot
@@ -168,6 +177,7 @@ data.r   = rplot;
 data.Energy = eplot;
 data.bes_sig = bes_sig;
 data.bes_total = ntotal;
+data.bes_count = count;
 
 return;
 
