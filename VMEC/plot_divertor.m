@@ -88,6 +88,11 @@ switch plottype
             hpatach=plot3(x,y,z,varargin_temp{:});
         end
     case 'phi'
+        if exist('SurfaceIntersection','file')~=2
+            disp(' Please download the SurfaceIntersection Routine from:')
+            disp('     https://www.mathworks.com/matlabcentral/fileexchange/48613-surface-intersection');
+            return;
+        end
         r = sqrt(x.*x+y.*y);
         rmax=max(r).*1.2;
         rmin=min(r)*.8;
