@@ -28,6 +28,7 @@ grid = 60;
 species ='H2';
 ec = 1.602176565E-19;
 div = deg2rad(1);
+div = 0.0125;
 adist = 1.0;
 asize = 0.5;
 charge = 1.60217733E-19;
