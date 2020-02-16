@@ -23,6 +23,9 @@ switch lower(type)
             val = val + glw(i).*aa(1).*(exp(-(xp/aa(2)).^2) - exp(-(1./aa(2)).^2));
         end
         val = val.*s;
+    case{'gauss_trunc_offset'}
+        val = aa(1)+(aa(2)./(1. - exp(-(1./aa(4)).^2)))*...
+                  (exp(-((s-aa(3))./aa(2)).^2)-exp(-(1./aa(4)).^2));
     case{'sum_atan'}
         val = aa(1)+(2./pi).*( aa(2).*atan(aa(3).*s.^aa(4)./(1-s).^aa(5))...
                               +aa(6).*atan(aa(7).*s.^aa(8)./(1-s).^aa(9))...
