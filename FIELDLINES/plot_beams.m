@@ -20,6 +20,7 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      plot_beams(beam_data,'birth_xyz_s');
 %      plot_beams(beam_data,'wall_loss');
 %      plot_beams(beam_data,'wall_heat'); %norm to 1
+%      plot_beams(beam_data,'heating');
 %      plot_beams(beam_data,'benchmark');
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
@@ -31,17 +32,20 @@ camera=[];
 plot_type = 'overview';
 beamdex = -1;
 if nargin > 1
-    for i=1:nargin-1
+    i = 1;
+    while i < nargin
         switch varargin{i}
             case {'overview','lost_len','lost_inital','lost_flux',...
                     'deposition','injection','birth_image','birth_xyz',...
                     'birth_xyz_s','birth_xyz_b','wall_loss','benchmarks',...
                     'grid','grid_s','dist','dist_initial','e-alpha','pitch',...
-                    'camview','wall_heat'}
+                    'camview','wall_heat','heating'}
                 plot_type=varargin{i};
             case 'beam'
-                beamdex = varargin{i+1};
+                i=i+1;
+                beamdex = varargin{i};
         end
+        i=i+1;
     end
 end
 if isfield(beam_data,'vlldist')
@@ -622,6 +626,30 @@ else
             xlim([1 camera(1)]);
             ylim([1 camera(2)]);
             colormap hot;
+        case 'heating'
+            s = 0:1./(size(beam_data.epower_prof,2)-1):1;
+            if beamdex == -1
+                figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+                %if rho then divide each point by 2*s see beams3d_slow.m
+                plot(sqrt(s),sum(beam_data.epower_prof).*1E-3,'b','LineWidth',4); hold on;
+                plot(sqrt(s),sum(beam_data.ipower_prof).*1E-3,'r','LineWidth',4);
+                set(gca,'FontSize',36);
+                legend('Electrons','Ions');
+                xlabel('Normalized Toroidal Flux (s)');
+                ylabel('Power Deposition [kW/m^3]');
+                title('BEAMS3D Total Power Deposition');
+            else
+                figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+                %if rho then divide each point by 2*s see beams3d_slow.m
+                plot(sqrt(s),sum(beam_data.epower_prof(beamdex,:),1).*1E-3,'b','LineWidth',4); hold on;
+                plot(sqrt(s),sum(beam_data.ipower_prof(beamdex,:),1).*1E-3,'r','LineWidth',4);
+                set(gca,'FontSize',36);
+                legend('Electrons','Ions');
+                xlabel('Effective Radius (\rho/a)');
+                ylabel('Power Deposition [kW/m^3]');
+                title(['BEAMS3D Power Deposition (BEAM: ' num2str(beamdex,'%i') ')']);
+                
+            end
         case 'benchmarks'
             % First make sorting arrays
             for i = 1:beam_data.nbeams
