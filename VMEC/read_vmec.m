@@ -356,12 +356,12 @@ f.iota_res=f.N'*Minv;
 %    end
 %end
 % Fix the flow variables
-if isfield(f,'protmnc'), f.protmnc = f.protmnc ./ (pi*4.0E-7); end;
-if isfield(f,'protrsqmnc'), f.protrsqmnc = f.protrsqmnc ./ (pi*4.0E-7); end;
-if isfield(f,'prprmnc'), f.prprmnc = f.prprmnc ./ (pi*4.0E-7); end;
-if isfield(f,'protmns'), f.protmns = f.protmns ./ (pi*4.0E-7); end;
-if isfield(f,'protrsqmns'), f.protrsqmns = f.protrsqmns ./ (pi*4.0E-7); end;
-if isfield(f,'prprmns'), f.prprmns = f.prprmns ./ (pi*4.0E-7); end;
+if isfield(f,'protmnc'), f.protmnc = f.protmnc ./ (pi*4.0E-7); end
+if isfield(f,'protrsqmnc'), f.protrsqmnc = f.protrsqmnc ./ (pi*4.0E-7); end
+if isfield(f,'prprmnc'), f.prprmnc = f.prprmnc ./ (pi*4.0E-7); end
+if isfield(f,'protmns'), f.protmns = f.protmns ./ (pi*4.0E-7); end
+if isfield(f,'protrsqmns'), f.protrsqmns = f.protrsqmns ./ (pi*4.0E-7); end
+if isfield(f,'prprmns'), f.prprmns = f.prprmns ./ (pi*4.0E-7); end
 % Calculate the stored energy
 if (numel(f.vp) == f.ns)
     f.eplasma=1.5*pi*pi*sum(f.vp.*f.presf)./f.ns;
@@ -2296,7 +2296,7 @@ mu0=4.*pi.*1e-7;
 f=read_netcdf(filename,'strip','flipdim');
 % Now fix named fields so they match the old way of doing things
 f.ierr_vmec=f.ierflag;
-if (f.ierr_vmec ~= 0), return; end;
+if (f.ierr_vmec ~= 0), return; end
 f.input_extension=f.inputextension;
 f.mgrid_file=char(f.mgridfile);
 f.rmax_surf=f.rmaxsurf;
@@ -2334,6 +2334,10 @@ f.ntor=double(f.ntor);
 f.mpol=double(f.mpol);
 f.nfp=double(f.nfp);
 f.ns=double(f.ns);
+% Fix stripping
+f.xm_nyq = f.xmnyq;
+f.xn_nyq = f.xnnyq;
+f.mnmax_nyq = f.mnmaxnyq;
 % Calculate Currents
 f.currumnc=zeros(f.mnmaxnyq,f.ns);
 f.currvmnc=zeros(f.mnmaxnyq,f.ns);
@@ -2346,8 +2350,8 @@ for i=2:ns
 end
 js1 = 3:ns;
 js  = 2:(ns-1);
-for mn = 1:f.mnmaxnyq
-    if (mod(f.xmnyq,2) == 1)
+for mn = 1:f.mnmax_nyq
+    if (mod(f.xm_nyq,2) == 1)
         t1  = 0.5.*(shalf(js1).*f.bsubsmns(mn,js1)+...
             shalf(js).*f.bsubsmns(mn,js))./sfull(js);
         bu0 = f.bsubumnc(mn,js)./shalf(js);
@@ -2361,8 +2365,8 @@ for mn = 1:f.mnmaxnyq
         t2  = ohs.*(f.bsubumnc(mn,js1)-f.bsubumnc(mn,js));
         t3  = ohs.*(f.bsubvmnc(mn,js1)-f.bsubvmnc(mn,js));
     end
-    f.currumnc(mn,js) = -double(f.xnnyq(mn)).*t1 - t3;
-    f.currvmnc(mn,js) = -double(f.xmnyq(mn)).*t1 + t2;
+    f.currumnc(mn,js) = -double(f.xn_nyq(mn)).*t1 - t3;
+    f.currvmnc(mn,js) = -double(f.xm_nyq(mn)).*t1 + t2;
 end
 % OLD Way
 %for i=2:f.ns-1
@@ -2371,8 +2375,8 @@ end
 %end
 f.currumnc(:,1)=0.0;
 f.currvmnc(:,1)=0.0;
-for i=1:f.mnmaxnyq
-    if (f.xmnyq(i)<=1)
+for i=1:f.mnmax_nyq
+    if (f.xm_nyq(i)<=1)
         f.currumnc(i,1)=2.*f.currumnc(i,2)-f.currumnc(i,3);
         f.currvmnc(i,1)=2.*f.currvmnc(i,2)-f.currvmnc(i,3);
     end
@@ -2382,10 +2386,10 @@ f.currvmnc(:,f.ns)=2.*f.currvmnc(:,f.ns-1)-f.currvmnc(:,f.ns-2);
 f.currumnc=f.currumnc./mu0;
 f.currvmnc=f.currvmnc./mu0;
 if f.iasym
-    f.currumns=zeros(f.mnmaxnyq,f.ns);
-    f.currvmns=zeros(f.mnmaxnyq,f.ns);
-    for mn = 1:f.mnmaxnyq
-        if (mod(f.xmnyq,2) == 1)
+    f.currumns=zeros(f.mnmax_nyq,f.ns);
+    f.currvmns=zeros(f.mnmax_nyq,f.ns);
+    for mn = 1:f.mnmax_nyq
+        if (mod(f.xm_nyq,2) == 1)
             t1  = 0.5.*(shalf(js1).*f.bsubsmnc(mn,js1)+...
                 shalf(js).*f.bsubsmnc(mn,js))./sfull(js);
             bu0 = f.bsubumns(mn,js)./shalf(js);
@@ -2399,8 +2403,8 @@ if f.iasym
             t2  = ohs.*(f.bsubumns(mn,js1)-f.bsubumns(mn,js));
             t3  = ohs.*(f.bsubvmns(mn,js1)-f.bsubvmns(mn,js));
         end
-        f.currumns(mn,js) = double(f.xnnyq(mn)).*t1 - t3;
-        f.currvmns(mn,js) = double(f.xmnyq(mn)).*t1 + t2;
+        f.currumns(mn,js) = double(f.xn_nyq(mn)).*t1 - t3;
+        f.currvmns(mn,js) = double(f.xm_nyq(mn)).*t1 + t2;
     end
     % OLD WAY
     %for i=2:f.ns-1
