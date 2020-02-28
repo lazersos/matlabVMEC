@@ -7,6 +7,7 @@ function data=beams3d_slow(varargin)
 %   Optional Arguments
 %       'plots'     : Create plots
 %       'beams'     : Downselect beamlines considered
+%       'mass'      : Plasma mass [kg] (assumes protons otherwise)
 %                       data=beams3d_bes(beam_data,file,'beams',4:6);
 %
 % Example usage
@@ -25,6 +26,7 @@ beam_dex = []; % Use to downselect beams
 vmec_data=[];
 beam_data=[];
 data=[];
+plasma_mass=[];
 
 % Handle varargin
 if nargin > 0
@@ -45,6 +47,9 @@ if nargin > 0
                 case 'beams'
                     i=i+1;
                     beam_dex=varargin{i};
+                case 'mass'
+                    i=i+1;
+                    plasma_mass=varargin{i};
             end
         end
         i=i+1;
@@ -59,6 +64,14 @@ end
 if isempty(vmec_data)
     disp('  You must provide VMEC_DATA structure for Vp');
     return;
+end
+
+% Handle lack of plasma mass
+if isempty(plasma_mass)
+    plasma_mass = 1.6726219E-27;
+    if isfield(beam_data,'plasma_mass')
+        plasma_mass = beam_data.plasma_mass;
+    end
 end
 
 %Downselect beams
@@ -107,7 +120,9 @@ dex = TE_BEAM < 10.*myZ.*myZ;
 coulomb_log(dex) = 23 - log(myZ(dex).*sqrt(NE_BEAM(dex).*1E-6./TE3(dex)));
 dex = ~dex;
 coulomb_log(dex) = 24 - log(sqrt(NE_BEAM(dex).*1E-6)./TE_BEAM(dex));
-v_crit = ((0.75*sqrt(pi).*me./MASS).^(1./3)).*sqrt(TE_BEAM).*5.93096892024E5;
+coulomb_log(coulomb_log <=1) = 1;
+v_crit = ((0.75.*sqrt(pi.*MASS./me).*MASS./plasma_mass).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
+%v_crit = ((0.75*sqrt(pi).*me./MASS).^(1./3)).*sqrt(TE_BEAM).*5.93096892024E5;
 vcrit_cube = v_crit.^3;
 tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
 
