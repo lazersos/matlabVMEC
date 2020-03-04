@@ -12,12 +12,19 @@ function w7x_beam_params( source ,varargin)
 %       'ruidx':            Include Rudix Geometry
 %       'write_beams3d':    Generate BEAMS3D Input
 %       'grid':             Specify Accelerating Voltage (60 or 100)
+%       'Energy':           Specify Accelerating Voltage (explicit) [ev]
+%       'Power':            Specify Power (explicit) [W]
+%       'Powerfrac':        Specify Power fractions (explicit) [0-1]
+%
+%           Note: Options marked explicit should have the same shape as the
+%           source vector.  Powerfrac should have shape [3:nbeams] where
+%           nbeams is the legnth of sources.
 %
 %   Usage:
 %       w7x_beams_params(1:8,'plots','H2','write_beams3d','grid',60);
 %
-%   Created by: S. Lazerson (lazerson@pppl.gov)
-%   Version:    1.2
+%   Created by: S. Lazerson (samuel.lazerson@ipp.mpg.de)
+%   Version:    1.5
 %   Date:       06/08/16
 
 % Defaults
@@ -32,10 +39,14 @@ div = 0.0125;
 adist = 1.0;
 asize = 0.5;
 charge = 1.60217733E-19;
+new_pfrac=[];
+new_E=[];
+new_power=[];
 
 % Handle varargin
 if nargin > 1
-    for i=1:nargin-1
+    i = 1;
+    while i < nargin
         switch varargin{i}
             case {'H2','D2'}
                 species=varargin{i};
@@ -48,7 +59,17 @@ if nargin > 1
                 grid=varargin{i};
             case {'Rudix','RUDIX','rudix'}
                 lrudix=1;
+            case {'Energy','ENERGY','energy'}
+                i=i+1;
+                new_E = varargin{i};
+            case {'Powerfrac','POWERFRAC','powerfrac'}
+                i=i+1;
+                new_pfrac = varargin{i};
+            case {'Power','POWER','power'}
+                i=i+1;
+                new_power = varargin{i};
         end
+        i = i+1;
     end
 end
 
@@ -188,54 +209,72 @@ end
 
 % Energy
 NAME_BEAM = {'Q1' 'Q2' 'Q3' 'Q4' 'Q5' 'Q6' 'Q7' 'Q8' };
-P_H2_BEAM = [0 0 1.78 1.64 0 0 1.78 1.64].*1E6;
-P_D2_BEAM = [0 0 2.48 2.28 0 0 2.48 2.28].*1E6;
-if grid == 60
-    E_H2 = 55E3;
-    E_D2 = 60E3;
-    E_H2_full  = E_H2;    P_H2_full  = 0.546;
-    E_H2_half  = E_H2./2; P_H2_half  = 0.309;
-    E_H2_third = E_H2./3; P_H2_third = 0.145;
-    E_D2_full  = E_D2;    P_D2_full  = 0.742;
-    E_D2_half  = E_D2./2; P_D2_half  = 0.208;
-    E_D2_third = E_D2./3; P_D2_third = 0.05;
+P_full=[]; P_half=[]; P_third=[];
+E_full=[]; E_half=[]; E_third=[];
+P_H2_BEAM = [1.78 1.64 1.78 1.64 1.78 1.64 1.78 1.64].*1E6;
+P_D2_BEAM = [2.48 2.28 2.48 2.28 2.48 2.28 2.48 2.28].*1E6;
+if grid ==60
+    switch species
+        case{'H2'}
+            E_full = [1 1 1 1 1 1 1 1].*55E3;
+            P_BEAM = [1.78 1.64 1.78 1.64 1.78 1.64 1.78 1.64].*1E6;
+            P_frac_full  = [1 1 1 1 1 1 1 1].*0.546;
+            P_frac_half  = [1 1 1 1 1 1 1 1].*0.309;
+            P_frac_third = [1 1 1 1 1 1 1 1].*0.145;
+            Mass      = 1.6726231E-27;
+        case{'D2'}
+            E_full = [1 1 1 1 1 1 1 1].* 60E3;
+            P_BEAM = [2.48 2.28 2.48 2.28 2.48 2.28 2.48 2.28].*1E6;
+            P_frac_full  = [1 1 1 1 1 1 1 1].*0.742;
+            P_frac_half  = [1 1 1 1 1 1 1 1].*0.208;
+            P_frac_third = [1 1 1 1 1 1 1 1].*0.050;
+            Mass      = 3.3435837E-27;
+    end
 elseif grid == 100
-    E_H2 = 72E3;
-    E_D2 = 100E3;
-    E_H2_full  = E_H2;    P_H2_full  = 0.380;
-    E_H2_half  = E_H2./2; P_H2_half  = 0.350;
-    E_H2_third = E_H2./3; P_H2_third = 0.270;
-    E_D2_full  = E_D2;    P_D2_full  = 0.6207;
-    E_D2_half  = E_D2./2; P_D2_half  = 0.2808;
-    E_D2_third = E_D2./3; P_D2_third = 0.0985;
+    switch species
+        case{'H2'}
+            E_full = [1 1 1 1 1 1 1 1].*72E3;
+            P_BEAM = [1.78 1.64 1.78 1.64 1.78 1.64 1.78 1.64].*1E6; %????
+            P_frac_full  = [1 1 1 1 1 1 1 1].*0.380;
+            P_frac_half  = [1 1 1 1 1 1 1 1].*0.350;
+            P_frac_third = [1 1 1 1 1 1 1 1].*0.270;
+            Mass      = 1.6726231E-27;
+        case{'D2'}
+            E_full = [1 1 1 1 1 1 1 1].*100E3;
+            P_BEAM = [2.48 2.28 2.48 2.28 2.48 2.28 2.48 2.28].*1E6; %????
+            P_frac_full  = [1 1 1 1 1 1 1 1].*0.6207;
+            P_frac_half  = [1 1 1 1 1 1 1 1].*0.2808;
+            P_frac_third = [1 1 1 1 1 1 1 1].*0.0985;
+            Mass      = 3.3435837E-27;
+    end
 end
+
+% Handel new energy
+if ~isempty(new_E)
+    E_full(source) = new_E;
+end
+E_half  = E_full./2;
+E_third = E_full./3;
+
 
 % Handle non-geometric information
 E_str = {'FULL' 'HALF' 'THRID'};
-switch species
-    case{'H2'}
-        Energy(1) = E_H2_full*ec;
-        Energy(2) = E_H2_half*ec;
-        Energy(3) = E_H2_third*ec;
-        Z         = 1.0;
-        Mass      = 1.6726231E-27; 
-        P_BEAM    = P_H2_BEAM;
-        P_FRAC(1) = P_H2_full;
-        P_FRAC(2) = P_H2_half;
-        P_FRAC(3) = P_H2_third;
-    case{'D2'}
-        Energy(1) = E_D2_full*ec;
-        Energy(2) = E_D2_half*ec;
-        Energy(3) = E_D2_third*ec;
-        Z         = 1.0;
-        Mass      = 3.3435837E-27; 
-        P_BEAM    = P_D2_BEAM;
-        P_FRAC(1) = P_D2_full;
-        P_FRAC(2) = P_D2_half;
-        P_FRAC(3) = P_D2_third;
-    otherwise
-        disp('Unknown Species');
-        return;
+Energy(1,:) = E_full*ec;
+Energy(2,:) = E_half*ec;
+Energy(3,:) = E_third*ec;
+Z = 1.0;
+P_FRAC(1,:) = P_frac_full;
+P_FRAC(2,:) = P_frac_half;
+P_FRAC(3,:) = P_frac_third;
+
+% Handel new Power
+if ~isempty(new_power)
+    P_BEAM(source) = new_power;
+end
+
+% Handel new PowerFracp
+if ~isempty(new_pfrac)
+    P_FRAC(1:3,source) = new_pfrac;
 end
 
 if (lwrite_beams3d)
@@ -261,8 +300,8 @@ for i=1:length(source)
             beam_str = num2str((i-1)*3+j,'%2.2i');
             disp(['!----------BEAM ' NAME_BEAM{source(i)} ' (' species ' ' E_str{j} ') ----------']);
             disp(['  DEX_BEAMS(' beam_str ') = ' num2str(source(i),'%2i')]);
-            disp(['  E_BEAMS(' beam_str ') = ' num2str(Energy(j),'%20.10E')]);
-            disp(['  P_BEAMS(' beam_str ') = ' num2str(P_BEAM(dex_beam)*P_FRAC(j),'%20.10E')]);
+            disp(['  E_BEAMS(' beam_str ') = ' num2str(Energy(j,dex_beam),'%20.10E')]);
+            disp(['  P_BEAMS(' beam_str ') = ' num2str(P_BEAM(dex_beam)*P_FRAC(j,dex_beam),'%20.10E')]);
             disp(['  R_BEAMS(' beam_str,',1) = ' num2str(rstart(dex_beam),'%20.10E')]);
             disp(['  PHI_BEAMS(' beam_str,',1) = ' num2str(pstart(dex_beam),'%20.10E')]);
             disp(['  Z_BEAMS(' beam_str,',1) = ' num2str(zstart(dex_beam),'%20.10E')]);
