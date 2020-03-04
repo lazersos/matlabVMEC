@@ -7,7 +7,7 @@ function data = read_fieldlines(filename,varargin)
 %      data=read_fieldlines('fieldline_test.h5');  % Reads FIELDLINE HDF5 file
 %      data=read_fieldlines('fieldline_test.h5','iota');  % Calculate Iota
 %
-% Maintained by: Samuel Lazerson (lazerson@pppl.gov)
+% Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.3
 
 liota=0;
