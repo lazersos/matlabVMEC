@@ -30,8 +30,8 @@ function varargout = VMECplot(varargin)
 %      VMECplot(data,ves_data)
 %      VMECplot(ves_data)
 %
-%   Written by: Samuel Lazerson (lazerson@pppl.gov)
-%   Version:    2.1
+%   Written by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
+%   Version:    2.5
 %   Date:       03/17/2012
 
 % SAl-10/20/10
@@ -107,6 +107,9 @@ function varargout = VMECplot(varargin)
 %
 % SAL-12/21/13
 % Added support for VMEC Flow variable plotting
+%
+% SAL-03/07/20
+% Added support for SIESTA Plotting
 
 % Edit the above text to modify the response to help VMECplot
 
@@ -195,7 +198,7 @@ elseif (nargin > numdefargs)
     while i<=nargin-numdefargs
         if isstruct(varargin{i})
             switch varargin{i}.datatype
-                case {'wout','pies_out','boozer','SPEC','FIELDLINES','nout'}
+                case {'wout','pies_out','boozer','SPEC','FIELDLINES','nout','siesta'}
                     handles.data=varargin{i};
                     if isempty(filelist)
                         set(handles.filename,'String',{'User Data'});
@@ -271,8 +274,8 @@ end
 % Set up grids
 nsin=5.;
 if handles.data.ntor == 0
-    handles.ntor=90;
-    if ~handles.nuoverride, handles.mpol=90; end
+    handles.ntor=32;
+    if ~handles.nuoverride, handles.mpol=64; end
     handles.theta=0:2*pi/(handles.mpol-1):2*pi;
     handles.zeta=0:2*pi/(handles.ntor-1):2*pi;
     disp(strcat(' - ns=',num2str(handles.data.ns)));
@@ -286,9 +289,9 @@ if handles.data.ntor == 0
     set(handles.torslide,'Value',1.0);
 else
     if ~handles.nvoverride
-        handles.ntor=nsin*(handles.data.ntor+1)*handles.data.nfp;
+        handles.ntor=max(nsin*(handles.data.ntor+1)*handles.data.nfp,32);
     end
-    handles.mpol=90;
+    handles.mpol=64;
     %if ~handles.nuoverride, handles.mpol=handles.data.nu;end
     disp(strcat(' - ns=',num2str(handles.data.ns)));
     disp(strcat(' - ntheta=',num2str(handles.mpol)));
@@ -340,8 +343,8 @@ vfields={'iotaf' 'presf' 'Dmerc' ...
     'dpdr' 'resid' 'nisla' 'correc' 'islw' ...
     'correc2' 'jdev' 'edgeo' 'iota_step' 'fits','errp','mu',...
     'pmap','omega','tpotb'};
-mfields={'b' 'lam' 'p' 'g' 'b_s' 'b_u' 'bs' 'b_v' 'bu' 'bv' 'curru' 'currv' 'br'...
-    'bphi' 'bz' 'jr' 'jphi' 'jz' 'brho' 'bnorm' 'btheta' 'jpara' 'press'...
+mfields={'b' 'lam' 'p' 'g' 'b_s' 'b_u' 'bs' 'b_v' 'bu' 'bv' 'br' 'bphi' 'bz'...
+    'currs' 'curru' 'currv' 'jr' 'jphi' 'jz' 'brho' 'bnorm' 'btheta' 'jpara' 'press'...
     'fnx' 'fny' 'fnz' 'fn' 'rbc' 'rbs' 'zbc' 'zbs' 'jxbx' 'jxby' 'jxbz' ...
     'dpds' 'ptran' 'prot' 'prpr' 'U_rot' 'vphi'};
 optfields={};
@@ -787,52 +790,61 @@ switch contents{get(handles.plottype,'Value')}
             text(c1,70,'R:');
             text(c2,70,['[ ' num2str(handles.data.rmin) ...
                 ' , ' num2str(handles.data.rmax) ' ]']);
-            text(c1,65,'\beta_{axis}:');
-            text(c2,65,num2str(handles.data.betaxis));
+        end
+        if isfield(handles.data,'aspect')
             text(c1,60,'Aspect:');
             text(c2,60,num2str(handles.data.aspect));
         end
-        if strcmp(handles.data.datatype,'nout')
-            text(c1,45,'Volume:');
-            text(c2,45,num2str(handles.data.volume));
-            text(c1,35,'\beta_{total}:');
-            text(c2,35,num2str(handles.data.beta));
+        if isfield(handles.data,'Rmajor')
+            text(c1,55,'Rmajor:');
+            text(c2,55,num2str(handles.data.Rmajor));
         end
-        if strcmp(handles.data.datatype,'wout')
+        if isfield(handles.data,'Aminor')
+            text(c1,50,'Aminor:');
+            text(c2,50,num2str(handles.data.Aminor));
+        end
+        if isfield(handles.data,'Volume') || isfield(handles.data,'volume')
+            text(c1,45,'Volume:');
+            text(c2,45,num2str(handles.data.Volume));
+        end
+        if isfield(handles.data,'mgrid_file')
             text(c1,70,'MGRID\_FILE:');
             text(c2,70,handles.data.mgrid_file,...
                 'Interpreter','none');
-            % Geometry Info
-            text(c1,60,'Aspect:');
-            text(c1,55,'Rmajor:');
-            text(c1,50,'Aminor:');
-            text(c1,45,'Volume:');
-            text(c2,60,num2str(handles.data.aspect));
-            text(c2,55,num2str(handles.data.Rmajor));
-            text(c2,50,num2str(handles.data.Aminor));
-            text(c2,45,num2str(handles.data.Volume));
-            % Beta Info
-            text(c1,35,'\beta_{total}:');
-            text(c1,30,'\beta_{poloidal}:');
-            text(c1,25,'\beta_{toroidal}:');
-            text(c1,20,'\beta_{axis}:');
-            text(c2,35,num2str(handles.data.betatot));
-            text(c2,30,num2str(handles.data.betapol));
-            text(c2,25,num2str(handles.data.betator));
-            text(c2,20,num2str(handles.data.betaxis));
-            % Magnetic Info
-            text(c3,90,'<B>:');
-            text(c3,85,'B_0:');
-            text(c3,80,'I_{toroidal}:');
-            text(c3,75,'Ion Larmor:');
-            text(c4,90,num2str(handles.data.VolAvgB));
-            text(c4,85,num2str(handles.data.b0));
-            text(c4,80,num2str(handles.data.Itor));
-            text(c4,75,num2str(handles.data.IonLarmor));
         end
-        if strcmp(handles.data.datatype,'SPEC')
-            text(c1,45,'Volume:');
-            text(c2,45,num2str(handles.data.volume));
+        if isfield(handles.data,'betatot') || isfield(handles.data,'beta')
+            text(c1,35,'\beta_{total}:');
+            text(c2,35,num2str(handles.data.betatot));
+        end
+            % Beta Info
+        if isfield(handles.data,'betapol')
+            text(c1,30,'\beta_{poloidal}:');
+            text(c2,30,num2str(handles.data.betapol));
+        end
+        if isfield(handles.data,'betator')
+            text(c1,25,'\beta_{toroidal}:');
+            text(c2,25,num2str(handles.data.betator));
+        end
+        if isfield(handles.data,'betaxis')
+            text(c1,20,'\beta_{axis}:');
+            text(c2,20,num2str(handles.data.betaxis));
+        end
+            % Magnetic Info
+        if isfield(handles.data,'VolAvgB')
+            text(c3,90,'<B>:');
+            text(c4,90,num2str(handles.data.VolAvgB));
+        end
+        if isfield(handles.data,'b0')
+            text(c3,85,'B_0:');
+            text(c4,85,num2str(handles.data.b0));
+        end
+        if isfield(handles.data,'Itor')
+            text(c3,80,'I_{toroidal}:');
+            text(c4,80,num2str(handles.data.Itor));
+        end
+        if isfield(handles.data,'IonLarmor')
+            text(c3,75,'Ion Larmor:');
+            text(c4,75,num2str(handles.data.IonLarmor));
         end
         xlabel('');
         ylabel('');
@@ -1116,7 +1128,7 @@ switch contents{get(handles.plottype,'Value')}
         
 % 3D Arrays
     case {'b','lam','p','g','bs','bu','bv','b_s','b_u','b_v','br','bphi','bz',...
-            'curru','currv','jr','jphi','jz','brho','btheta','bnorm',...
+            'currs' 'curru','currv','jr','jphi','jz','brho','btheta','bnorm',...
             'jpara','press','fnx','fny','fnz','fn','jxbx','jxby','jxbz',...
             'dpds','ptran','prot','prpr','U_rot','vphi'}
         % Get Title Strings
@@ -2139,6 +2151,43 @@ switch handles.data.datatype
         end
         handles.data.jcuru = sum(sum(handles.ju,3),2)./(4*pi*pi);
         handles.data.jcurv = sum(sum(handles.jv,3),2)./(4*pi*pi);
+    case 'siesta'
+        handles.r=cfunct(handles.theta,handles.zeta,handles.data.rmnc,handles.data.xm,handles.data.xn);
+        handles.z=sfunct(handles.theta,handles.zeta,handles.data.zmns,handles.data.xm,handles.data.xn);
+        handles.p=cfunct(handles.theta,handles.zeta,handles.data.pmnc,handles.data.xm,handles.data.xn);
+        handles.bs=sfunct(handles.theta,handles.zeta,handles.data.bsupsmns,handles.data.xm,handles.data.xn);
+        handles.bu=cfunct(handles.theta,handles.zeta,handles.data.bsupumnc,handles.data.xm,handles.data.xn);
+        handles.bv=cfunct(handles.theta,handles.zeta,handles.data.bsupvmnc,handles.data.xm,handles.data.xn);
+        handles.b_s=sfunct(handles.theta,handles.zeta,handles.data.bsubsmns,handles.data.xm,handles.data.xn);
+        handles.b_u=cfunct(handles.theta,handles.zeta,handles.data.bsubumnc,handles.data.xm,handles.data.xn);
+        handles.b_v=cfunct(handles.theta,handles.zeta,handles.data.bsubvmnc,handles.data.xm,handles.data.xn);
+        handles.currs=sfunct(handles.theta,handles.zeta,handles.data.currsmns,handles.data.xm,handles.data.xn);
+        handles.curru=cfunct(handles.theta,handles.zeta,handles.data.currumnc,handles.data.xm,handles.data.xn);
+        handles.currv=cfunct(handles.theta,handles.zeta,handles.data.currvmnc,handles.data.xm,handles.data.xn);
+        handles.bu=cfunct(handles.theta,handles.zeta,handles.data.bsupumnc,handles.data.xm,handles.data.xn);
+        handles.bv=cfunct(handles.theta,handles.zeta,handles.data.bsupvmnc,handles.data.xm,handles.data.xn);
+        handles.drds=cfunct(handles.theta,handles.zeta,handles.data.rsmnc,handles.data.xm,handles.data.xn);
+        handles.drdu=sfunct(handles.theta,handles.zeta,handles.data.rumns,handles.data.xm,handles.data.xn);
+        handles.drdv=sfunct(handles.theta,handles.zeta,handles.data.rvmns,handles.data.xm,handles.data.xn);
+        handles.dzds=sfunct(handles.theta,handles.zeta,handles.data.zsmns,handles.data.xm,handles.data.xn);
+        handles.dzdu=cfunct(handles.theta,handles.zeta,handles.data.zumnc,handles.data.xm,handles.data.xn);
+        handles.dzdv=cfunct(handles.theta,handles.zeta,handles.data.zvmnc,handles.data.xm,handles.data.xn);
+        % Calculate jacbian
+        handles.g=handles.r.*(handles.drdu.*handles.dzds-handles.drds.*handles.dzdu);
+        % Fix current
+        handles.currs = handles.currs./handles.g;
+        handles.cvrru = handles.curru./handles.g;
+        handles.currv = handles.currv./handles.g;
+        % Calc |B|
+        handles.b = sqrt(handles.bs.*handles.bs+handles.bu.*handles.bu+handles.bv.*handles.bv);
+        % Calculate cylindrical components of B
+        handles.br=handles.bs.*handles.drds+handles.bu.*handles.drdu+handles.bv.*handles.drdv;
+        handles.bphi=handles.r.*handles.bv;
+        handles.bz=handles.bs.*handles.dzds+handles.bu.*handles.dzdu+handles.bv.*handles.dzdv;
+        % Calculate cylindrical components of J
+        handles.jr=handles.currs.*handles.drds+handles.curru.*handles.drdu+handles.currv.*handles.drdv;
+        handles.jphi=handles.r.*handles.currv;
+        handles.jz=handles.currs.*handles.dzds+handles.curru.*handles.dzdu+handles.currv.*handles.dzdv;
     case 'nout'% NSTAB DATA
         handles.theta=handles.data.theta;
         handles.zeta=handles.data.zeta;
