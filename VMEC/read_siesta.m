@@ -26,10 +26,15 @@ ds = 1./double(f.nrad-1);
 f.nfp = double(f.nfp);
 f.mpol = double(f.mpol);
 f.ntor = double(f.ntor);
-f.ns = f.nrad;
+f.ns = double(f.nrad);
 f.input_extension = filename;
 f.Itor = f.curtor;
 f.Rmajor = f.rmajor;
+f.iotaf = f.chipf_r_'./f.phipf_r_';
+f.phipf = f.phipf_r_';
+f.chipf = f.chipf_r_';
+f.phif  = cumsum(f.phipf);
+f.phi   = f.phif;
 
 % Define xm and xn
 % Siesta uses the NESCOIL kernel (mu+nv)

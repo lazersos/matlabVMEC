@@ -198,7 +198,7 @@ elseif (nargin > numdefargs)
     while i<=nargin-numdefargs
         if isstruct(varargin{i})
             switch varargin{i}.datatype
-                case {'wout','pies_out','boozer','SPEC','FIELDLINES','nout','siesta'}
+                case {'wout','pies_out','boozer','SPEC','FIELDLINES','nout','siesta','BEAMS3D'}
                     handles.data=varargin{i};
                     if isempty(filelist)
                         set(handles.filename,'String',{'User Data'});
@@ -270,6 +270,16 @@ if isfield(handles.data,'ierr_vmec')
         set(handles.threedcut,'Enable','off');
         return
     end
+end
+% Quick handle of BEAMS3D
+if ~isfield(handles.data,'ntor')
+    handles.data.ntor = handles.data.nphi;
+end
+if ~isfield(handles.data,'nfp')
+    handles.data.nfp = 1;
+end
+if ~isfield(handles.data,'ns')
+    handles.data.ns = 128;
 end
 % Set up grids
 nsin=5.;
@@ -343,7 +353,7 @@ vfields={'iotaf' 'presf' 'Dmerc' ...
     'dpdr' 'resid' 'nisla' 'correc' 'islw' ...
     'correc2' 'jdev' 'edgeo' 'iota_step' 'fits','errp','mu',...
     'pmap','omega','tpotb'};
-mfields={'b' 'lam' 'p' 'g' 'b_s' 'b_u' 'bs' 'b_v' 'bu' 'bv' 'br' 'bphi' 'bz'...
+mfields={'b' 'lam' 'p' 'g' 'b_s' 'b_u' 'b_v' 'bs' 'bu' 'bv' 'br' 'bphi' 'bz'...
     'currs' 'curru' 'currv' 'jr' 'jphi' 'jz' 'brho' 'bnorm' 'btheta' 'jpara' 'press'...
     'fnx' 'fny' 'fnz' 'fn' 'rbc' 'rbs' 'zbc' 'zbs' 'jxbx' 'jxby' 'jxbz' ...
     'dpds' 'ptran' 'prot' 'prpr' 'U_rot' 'vphi'};
@@ -378,8 +388,14 @@ end
 if isfield(handles.data,'B_R')
     optfields=[optfields 'B_R'];
 end
+if isfield(handles.data,'B_PHI')
+    optfields=[optfields 'B_PHI'];
+end
 if isfield(handles.data,'B_Z')
     optfields=[optfields 'B_Z'];
+end
+if isfield(handles.data,'S_ARR')
+    optfields=[optfields 'S_ARR'];
 end
 if isfield(handles.data,'rho_lines') && isfield(handles.data,'th_lines')
     optfields=[optfields 'Poincare (polar)'];
@@ -776,16 +792,26 @@ switch contents{get(handles.plottype,'Value')}
         axis([0 100 0 100]);
         % Basic Run info
         text(c1,95,'Run: ');
+        if isfield(handles.data,'ns')
             text(c1,90,'NS:');
+            text(c2,90,num2str(handles.data.ns));
+        end
+        if isfield(handles.data,'mpol')
             text(c1,85,'MPOL:');
+            text(c2,85,num2str(handles.data.mpol));
+        end
+        if isfield(handles.data,'ntor')
             text(c1,80,'NTOR:');
+            text(c2,80,num2str(handles.data.ntor));
+        end
+        if isfield(handles.data,'nfp')
             text(c1,75,'NFP:');
+            text(c2,75,num2str(handles.data.nfp));
+        end
+        if isfield(handles.data,'input_extension')
             text(c2,95,handles.data.input_extension,...
                 'Interpreter','none');
-            text(c2,90,num2str(handles.data.ns));
-            text(c2,85,num2str(handles.data.mpol));
-            text(c2,80,num2str(handles.data.ntor));
-            text(c2,75,num2str(handles.data.nfp));
+        end
         if strcmp(handles.data.datatype,'boozer')
             text(c1,70,'R:');
             text(c2,70,['[ ' num2str(handles.data.rmin) ...
@@ -854,7 +880,7 @@ switch contents{get(handles.plottype,'Value')}
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.iotaf,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.iotaf,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Iota');
         title('Rotational Transform');
         % Code to overplot resonances
@@ -882,12 +908,12 @@ switch contents{get(handles.plottype,'Value')}
                 handles.data.presf,'k');
         end
         %plot(0:1./(handles.data.ns-1):1,handles.data.presf,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Pressure [Pa]');
         title('Pressure');
     case 'iota'
         plot(0:1./(handles.data.ns-1):1,handles.data.iota,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Iota');
         title('Rotational Transform');
         % Code to overplot resonances
@@ -908,12 +934,12 @@ switch contents{get(handles.plottype,'Value')}
         end
     case 'pres'
         plot(0:1./(handles.data.ns-1):1,handles.data.pres,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Pressure [Pa]');
         title('Pressure');
     case 'beta_vol'
         plot(0:1./(handles.data.ns-1):1,handles.data.beta_vol,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Beta');
         title('Plasma Beta');
     case 'phip'
@@ -922,120 +948,120 @@ switch contents{get(handles.plottype,'Value')}
         else
             plot(0:1./(handles.data.ns-1):1,handles.data.phip,'k')
         end
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Ploidal Flux [Wb]');
         title('Phip');
     case 'buco'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.buco,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.buco,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Buco');
         title('Buco');
     case 'bvco'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.bvco,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.bvco,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Bvco');
         title('Bvco');
     case 'phi'
         plot(0:1./(handles.data.ns-1):1,handles.data.phi,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Phi');
         title('Phi');
     case 'vp'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.vp,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.vp,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Vp');
         title('Vp');
     case 'overr'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.overr,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.overr,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Overr');
         title('Overr');
     case 'jcuru'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.jcuru,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.jcuru,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Jcuru');
         title('Jcuru');
     case 'jcurv'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.jcurv,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.jcurv,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Jcurv');
         title('Jcurv');
     case 'specw'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.specw,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.specw,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Specw');
         title('Specw');
     case 'Dmerc'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.Dmerc,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.Dmerc,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('DMerc');
         title('DMerc');
     case 'Dshear'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.Dshear,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.Dshear,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('D \iota / D \phi');
         title('Dshear');
     case 'Dwell'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.Dwell,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.Dwell,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Dwell');
         title('Dwell');
     case 'Dcurr'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.Dcurr,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.Dcurr,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Dcurr');
         title('Dcurr');
     case 'Dgeod'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.Dgeod,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.Dgeod,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Dgeod');
         title('Dgeod');
     case 'jdotb'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.jdotb,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.jdotb,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('J \cdot B');
         title('J \cdot B');
     case 'bdotgradv'
         plot(handles.data.phi./handles.data.phi(handles.data.ns),...
             handles.data.bdotgradv,'k');
         %plot(0:1./(handles.data.ns-1):1,handles.data.bdotgradv,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('B \cdot \nabla v');
         title('B \cdot \nabla v');
     case 'dpdr'
         plot(0:1./(handles.data.ns-1):1,handles.data.dpdr,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Dp/Dr');
         title('Radial Pressure Derivative');
     case 'beta'
         plot(0:1./(handles.data.ns-1):1,handles.data.beta,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('<\beta>');
         title('Plasma Beta');
     case 'resid'
@@ -1112,17 +1138,17 @@ switch contents{get(handles.plottype,'Value')}
         title('Force Balance Evolution');
     case 'pmap'
         plot(0:1./(handles.data.ns-1):1,handles.data.pmap,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('<p>');
         title('Flux Surface Averaged Pressure');
     case 'omega'
         plot(0:1./(handles.data.ns-1):1,handles.data.omega,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Freq.');
         title('Toroidal Angular Frequency');
     case 'tpotb'
         plot(0:1./(handles.data.ns-1):1,handles.data.tpotb,'k')
-        xlabel('Normalized Flux');
+        xlabel(handles.xlabel);
         ylabel('Temperature');
         title('Normalized Temperature');
         
@@ -1174,7 +1200,7 @@ switch contents{get(handles.plottype,'Value')}
         f=handles.(string);
         if strcmp(handles.cuttype,'r1d')
             plot(f(:,handles.thetaval,handles.zetaval))
-            xlabel('Radial Coordinate');
+            xlabel(handles.xlabel);
             ylabel(name);
             title([name ' at theta=',...
                 num2str(handles.theta(handles.thetaval)),...
@@ -1199,14 +1225,14 @@ switch contents{get(handles.plottype,'Value')}
         elseif strcmp(handles.cuttype,'theta1d')
             plot(handles.theta,...
                 f(handles.rval,:,handles.zetaval))
-            xlabel('Theta (\theta)');
+            xlabel('Theta (\theta) [rad]');
             ylabel(name);
             title([name 'on flux surface r=',num2str(handles.rval),...
                 ' at \phi=',num2str(handles.zeta(handles.zetaval))]);
         elseif strcmp(handles.cuttype,'zeta1d')
             plot(squeeze(handles.zeta),...
                 squeeze(f(handles.rval,handles.thetaval,:)))
-            xlabel('Phi (\phi)');
+            xlabel('Phi (\phi) [rad]');
             ylabel(name);
             title([name ' on flux surface r=',num2str(handles.rval),...
                 ' at theta=',num2str(handles.theta(handles.thetaval))]);
@@ -1219,8 +1245,8 @@ switch contents{get(handles.plottype,'Value')}
                     squeeze(f(handles.rval,:,1:2+round(handles.ntor/handles.data.nfp))));
             end
             set(h,'EdgeColor','none');
-            xlabel('Phi (\phi)');
-            ylabel('Theta (\theta)');
+            xlabel('Phi (\phi) [rad]');
+            ylabel('Theta (\theta) [rad]');
             title([name ' on flux surface=',...
                 num2str(handles.rval)]);
             % Overplot fieldlines if Boozer Coordinates
@@ -1252,14 +1278,14 @@ switch contents{get(handles.plottype,'Value')}
             end
             set(h,'EdgeColor','none');
             xlabel('Phi (\phi)');
-            ylabel('Flux Surface (s)');
+            ylabel('Radial Grid');
             title([name ' for \theta=',...
                 num2str(handles.theta(handles.thetaval))]);
             axis tight
         elseif strcmp(handles.cuttype,'zeta2')
             torocont(handles.r,handles.z,f,handles.zetaval)
-            xlabel('Radius (R)');
-            ylabel('Elevation (Z)');
+            xlabel('Radius (R) [m]');
+            ylabel('Elevation (Z) [m]');
             title([name ' at \phi=',num2str(handles.zeta(handles.zetaval))]);
         elseif strcmp(handles.cuttype,'3D')
             set(handles.rtext,'String','Flux');
@@ -1272,9 +1298,9 @@ switch contents{get(handles.plottype,'Value')}
                     squeeze(handles.z(1,1,:)),'k')
                 title('Magnetic Axis');
             end
-            xlabel('X');
-            ylabel('Y');
-            zlabel('Z');
+            xlabel('X [m]');
+            ylabel('Y [m]');
+            zlabel('Z [m]');
         end
     % Fourier Arrays
     case {'rbc' 'rbs' 'zbc' 'zbs'}
@@ -1324,17 +1350,17 @@ switch contents{get(handles.plottype,'Value')}
             hold on
             plot(handles.r(1,1,handles.zetaval),handles.z(1,1,handles.zetaval),'o');
             hold off
-            xlabel('Radius (R)');
-            ylabel('Elevation (Z)');
+            xlabel('Radius (R) [m]');
+            ylabel('Elevation (Z) [m]');
             title(strcat('Flux Surfaces at zeta=',num2str(handles.zeta(handles.zetaval))));
             axis equal
         elseif strcmp(handles.cuttype,'3D')
             set(handles.rtext,'String','Flux');
             isotoro(handles.r,handles.z,handles.zeta,handles.rval);
             title(strcat('Flux Surface (ns=',num2str(handles.rval),')'));
-            xlabel('X');
-            ylabel('Y');
-            zlabel('Z');
+            xlabel('X [m]');
+            ylabel('Y [m]');
+            zlabel('Z [m]');
         end
     case 'B_R'
         set(handles.rslide,'Enable','off');
@@ -1344,11 +1370,27 @@ switch contents{get(handles.plottype,'Value')}
         xlabel('R [m]');
         ylabel('Z [m]');
         handles.cuttype='zeta2';
+    case 'B_PHI'
+        set(handles.rslide,'Enable','off');
+        set(handles.theslide,'Enable','off');
+        set(handles.torslide,'Enable','on');
+        pixplot(handles.data.raxis,handles.data.zaxis,squeeze(handles.data.B_PHI(:,handles.zetaval,:)))
+        xlabel('R [m]');
+        ylabel('Z [m]');
+        handles.cuttype='zeta2';
     case 'B_Z'
         set(handles.rslide,'Enable','off');
         set(handles.theslide,'Enable','off');
         set(handles.torslide,'Enable','on');
         pixplot(handles.data.raxis,handles.data.zaxis,squeeze(handles.data.B_Z(:,handles.zetaval,:)))
+        xlabel('R [m]');
+        ylabel('Z [m]');
+        handles.cuttype='zeta2';
+    case 'S_ARR'
+        set(handles.rslide,'Enable','off');
+        set(handles.theslide,'Enable','off');
+        set(handles.torslide,'Enable','on');
+        pixplot(handles.data.raxis,handles.data.zaxis,squeeze(handles.data.S_ARR(:,handles.zetaval,:)))
         xlabel('R [m]');
         ylabel('Z [m]');
         handles.cuttype='zeta2';
@@ -1384,17 +1426,17 @@ switch contents{get(handles.plottype,'Value')}
                 end
             end
             hold off
-            xlabel('Radius (R)');
-            ylabel('Elevation (Z)');
+            xlabel('Radius (R) [m]');
+            ylabel('Elevation (Z) [m]');
             title(strcat('Flux Surfaces at zeta=',num2str(handles.zeta(handles.zetaval))));
             axis equal
         elseif strcmp(handles.cuttype,'3D')
             set(handles.rtext,'String','Flux');
             isotoro(handles.r,handles.z,handles.zeta,handles.rval);
             title(strcat('Flux Surface (ns=',num2str(handles.rval),')'));
-            xlabel('X');
-            ylabel('Y');
-            zlabel('Z');
+            xlabel('X [m]');
+            ylabel('Y [m]');
+            zlabel('Z [m]');
             camlight left;
         end
     case 'Field Lines' % doesn't work right in straight field line coords
@@ -1408,9 +1450,9 @@ switch contents{get(handles.plottype,'Value')}
         nt=1:round(size(handles.theta,2)/handles.thetaval):size(handles.theta,2);
         torolines_modb(handles.r(:,nt,:),handles.z(:,nt,:),-handles.zeta,[handles.rval],handles.b);
         title(strcat('Field Lines (on surface ns=',num2str(handles.rval),')'));
-        xlabel('X');
-        ylabel('Y');
-        zlabel('Z');
+        xlabel('X [m]');
+        ylabel('Y [m]');
+        zlabel('Z [m]');
     case 'B-Field'
         set(handles.rslide,'Enable','off');
         set(handles.theslide,'Enable','off');
@@ -1555,8 +1597,8 @@ switch contents{get(handles.plottype,'Value')}
         plot(squeeze(handles.r(1,1,cuts(3))),squeeze(handles.z(1,1,cuts(3))),'+r');
         hold off
         title('Flux Surface Evolution');
-        xlabel('R');
-        ylabel('Z');
+        xlabel('R [m]');
+        ylabel('Z [m]');
         colorbar off
         handles.cuttype='other';
         axis equal
@@ -1582,7 +1624,7 @@ switch contents{get(handles.plottype,'Value')}
             amplitudes(amplitudes >= max_amp) = 0;
         end
         title('Axisymmetric |B| modes');
-        xlabel('Normalized Flux (s)');
+        xlabel(handles.xlabel);
         ylabel('|B|');
         legend(leg_text,'Location','NorthWest');
         handles.cuttype='r1d';
@@ -1608,7 +1650,7 @@ switch contents{get(handles.plottype,'Value')}
             leg_text=[leg_text; ['m = ' num2str(handles.data.xm(dex),'%2d') ', n = ' num2str(handles.data.xn(dex))]];
         end
         title('Non-axisymmetric |B| modes');
-        xlabel('Normalized Flux (s)');
+        xlabel(handles.xlabel);
         ylabel('|B|');
         legend(leg_text,'Location','NorthWest');
         handles.cuttype='r1d';
@@ -1845,6 +1887,8 @@ text(0.35,0.5,'Computing Values');
 text(0.35,0.4,'Please Wait');
 switch handles.data.datatype
     case 'wout'
+        % Label X-axis
+        handles.xlabel='Normalize Toroidal Flux (s)';
         % Reset theta to 1D
         handles.theta=0:2*pi/(handles.mpol-1):2*pi;
         set(handles.statustext,'String','Computing lambda');
@@ -2079,6 +2123,7 @@ switch handles.data.datatype
             if isfield(handles,'jz'), rmfield(handles,'jz'); end
         end
     case 'SPEC'% Reset theta to 1D
+        handles.xlabel='Normalize Toroidal Flux (s)';
         handles.theta=0:2*pi/(handles.mpol-1):2*pi;
         % Transform quantities
         set(handles.statustext,'String','Computing r');
@@ -2152,6 +2197,7 @@ switch handles.data.datatype
         handles.data.jcuru = sum(sum(handles.ju,3),2)./(4*pi*pi);
         handles.data.jcurv = sum(sum(handles.jv,3),2)./(4*pi*pi);
     case 'siesta'
+        handles.xlabel='Normalized minor radius (r/a)';
         handles.r=cfunct(handles.theta,handles.zeta,handles.data.rmnc,handles.data.xm,handles.data.xn);
         handles.z=sfunct(handles.theta,handles.zeta,handles.data.zmns,handles.data.xm,handles.data.xn);
         handles.p=cfunct(handles.theta,handles.zeta,handles.data.pmnc,handles.data.xm,handles.data.xn);
@@ -2189,6 +2235,7 @@ switch handles.data.datatype
         handles.jphi=handles.r.*handles.currv;
         handles.jz=handles.currs.*handles.dzds+handles.curru.*handles.dzdu+handles.currv.*handles.dzdv;
     case 'nout'% NSTAB DATA
+        handles.xlabel='Normalize Toroidal Flux (s)';
         handles.theta=handles.data.theta;
         handles.zeta=handles.data.zeta;
         %handles.r = cfunct(handles.theta,handles.zeta,handles.data.rhomn,handles.data.xm,handles.data.xn);
@@ -2204,6 +2251,7 @@ switch handles.data.datatype
         handles.r=handles.data.rreal;
         handles.z=handles.data.zreal;
     case 'pies_out'
+        handles.xlabel='Normalize Toroidal Flux (s)';
         % Note for the derivatives terms we assume (mu+nv) but PIES (nv-mu)
         % This is handled in the read_pies_netcdf routine but not for the
         % derivative terms so the du drivative terms we must multiply by a
@@ -2282,6 +2330,7 @@ switch handles.data.datatype
             handles.zbs=permute(handles.data.zbs, [3 1 2]);
         end
     case 'boozer'   % For Boozer Coordinates transform
+        handles.xlabel='Normalize Toroidal Flux (s)';
         % Reduce boozer quantities in radial dimension
         handles.data.rbc=handles.data.rbc(:,:,handles.data.idx==1);
         handles.data.zbs=handles.data.zbs(:,:,handles.data.idx==1);
@@ -2351,6 +2400,8 @@ switch handles.data.datatype
         end
         handles.data.R_lines = permute(temp_R,[1 3 2]);
         handles.data.Z_lines = permute(temp_Z,[1 3 2]);
+    case 'BEAM3D'
+        handles.data.ntor = handles.data.nphi;
     otherwise
         set(handles.statustext,'String','Datatype:ERROR');
         text(0.35,0.5,['ERROR: Unknown Datatype: ' handles.data.datatype],...
