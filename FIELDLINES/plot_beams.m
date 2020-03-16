@@ -19,6 +19,7 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      plot_beams(beam_data,'birth_xyz_b');
 %      plot_beams(beam_data,'birth_xyz_s');
 %      plot_beams(beam_data,'wall_loss');
+%      plot_beams(beam_data,'wall_shine');
 %      plot_beams(beam_data,'wall_heat'); %norm to 1
 %      plot_beams(beam_data,'heating');
 %      plot_beams(beam_data,'benchmark');
@@ -39,7 +40,7 @@ if nargin > 1
                     'deposition','injection','birth_image','birth_xyz',...
                     'birth_xyz_s','birth_xyz_b','wall_loss','benchmarks',...
                     'grid','grid_s','dist','dist_initial','e-alpha','pitch',...
-                    'camview','wall_heat','heating'}
+                    'camview','wall_heat','heating','wall_shine'}
                 plot_type=varargin{i};
             case 'beam'
                 i=i+1;
@@ -526,6 +527,8 @@ else
             scatter3(x,y,z,b.*0.0+1,b,'.')
         case 'wall_loss'
             output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',beam_data.wall_strikes,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
+        case 'wall_shine'
+            output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',sum(beam_data.wall_shine)','LineStyle','none','CDataMapping','scaled','FaceColor','flat');
         case 'wall_heat'
             d1 = beam_data.wall_faces(:,1);
             d2 = beam_data.wall_faces(:,2);

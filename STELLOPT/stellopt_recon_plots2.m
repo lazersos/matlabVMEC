@@ -499,7 +499,7 @@ if isfield(data,'XICS_V_target')
     theta = 0:2*pi./(ntheta-1):2*pi;
     r = cfunct(theta,zeta,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
     z = sfunct(theta,zeta,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
-    b = cfunct(theta,zeta,vmec_data.bmnc,vmec_data.xm,vmec_data.xn);
+    b = cfunct(theta,zeta,vmec_data.bmnc,vmec_data.xm_nyq,vmec_data.xn_nyq);
     s=vmec_data.phi./vmec_data.phi(end);
     s2=dprof(:,1);
     s2=s2(1:end-1)+diff(s2)/2;
