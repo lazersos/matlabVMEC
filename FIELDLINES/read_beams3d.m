@@ -4,7 +4,7 @@ function data = read_beams3d(filename)
 % file in a structure.
 %
 % Example usage
-%      data=read_beams3d('fieldline_test.h5');  % Reads FIELDLINE HDF5 file
+%      data=read_beams3d('fieldline_test.h5');  % Reads BEAMS3D HDF5 file
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.0
