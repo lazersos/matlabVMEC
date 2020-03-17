@@ -8,24 +8,29 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      beam_data = read_beams3d('beams3d_test.h5');
 %      plot_beams(beam_data);
 %      plot_beams(beam_data,'overview');
-%      plot_beams(beam_data,'lost_len');
-%      plot_beams(beam_data,'lost_initial');
-%      plot_beams(beam_data,'E-alpha');
-%      plot_beams(beam_data,'dist');
-%      plot_beams(beam_data,'dist_initial');
-%      plot_beams(beam_data,'injection');
-%      plot_beams(beam_data,'birth_image');
-%      plot_beams(beam_data,'birth_xyz');
-%      plot_beams(beam_data,'birth_xyz_b');
-%      plot_beams(beam_data,'birth_xyz_s');
-%      plot_beams(beam_data,'wall_loss');
-%      plot_beams(beam_data,'wall_shine');
-%      plot_beams(beam_data,'wall_heat'); %norm to 1
-%      plot_beams(beam_data,'heating');
-%      plot_beams(beam_data,'benchmark');
+%      plot_beams(beam_data,'xyz');
+%      plot_beams(beam_data,'xyz_therm');
+%      plot_beams(beam_data,'xyz_lost');
+%      plot_beams(beam_data,'xyz_initial');
+%      plot_beams(beam_data,'xyz_therm_initial');
+%      plot_beams(beam_data,'xyz_lost_initial');
+%      plot_beams(beam_data,'xyz_birth');
+%      plot_beams(beam_data,'flux'); % note _opt as in xyz above
+%      plot_beams(beam_data,'pitch'); % note _opt as in xyz above
+%      plot_beams(beam_data,'dist'); % note _opt as in xyz above
+%      plot_beams(beam_data,'distribution'); % 2D vll/vperp distribution
+%      plot_beams(beam_data,'heating'); % 1D Heating profiles
+%      plot_beams(beam_data,'current'); % 1D Current Density profiles
+%      plot_beams(beam_data,'fueling'); % 1D EP fuelint profiles
+%      plot_beams(beam_data,'injection'); % Make an NBI injection plot
+%      plot_beams(beam_data,'birth_image'); % R/Z Image plot
+%      plot_beams(beam_data,'wall_loss'); % # of particle lost
+%      plot_beams(beam_data,'wall_shine'); % [W/m^3]
+%      plot_beams(beam_data,'wall_heat'); % [W/m^3]
+%      plot_beams(beam_data,'benchmark'); % Old benchmark plots
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
-% Version:       1.50
+% Version:       1.70
 
 ec=1.6021773300E-19; % Charge of an electron (leave alone)
 camera=[];
@@ -36,11 +41,20 @@ if nargin > 1
     i = 1;
     while i < nargin
         switch varargin{i}
-            case {'overview','lost_len','lost_inital','lost_flux',...
-                    'deposition','injection','birth_image','birth_xyz',...
-                    'birth_xyz_s','birth_xyz_b','wall_loss','benchmarks',...
-                    'grid','grid_s','dist','dist_initial','e-alpha','pitch',...
-                    'camview','wall_heat','heating','wall_shine'}
+            case {'overview',...
+                    'xyz','xyz_therm','xyz_lost','xyz_birth','xyz_total',...
+                    'xyz_initial','xyz_therm_initial','xyz_lost_initial','xyz_total_initial',...
+                    'flux','flux_therm','flux_birth','flux_total',...
+                    'flux_initial','flux_lost_initial','flux_therm_initial',...
+                    'pitch','pitch_therm','pitch_lost', 'pitch_birth', ...
+                    'pitch_initial','pitch_therm_initial','pitch_lost_initial',...
+                    'dist','dist_therm','dist_lost','dist_birth', ...
+                    'dist_initial','dist_therm_initial','dist_lost_initial',...
+                    'distribution','heating','current','fueling',...
+                    'injection','birth_image',...
+                    'wall_loss','wall_heat','wall_shine','benchmarks',...
+                    'grid','grid_s',...
+                    'camview'}
                 plot_type=varargin{i};
             case 'beam'
                 i=i+1;
@@ -146,339 +160,727 @@ if isfield(beam_data,'vlldist')
         xlabel('Time (ms)');
     end
 else
-    % First determine type of run
-    shine_dex = zeros(1,beam_data.nparticles);
-    last_dex = zeros(1,beam_data.nparticles)+double(beam_data.npoinc);
-    lost_dex = zeros(1,beam_data.nparticles);
-    therm_dex = zeros(1,beam_data.nparticles);
-    % Set last dex
-    % Calculate the last index of each particle
-    % Note that the indicies run from 1 to npoinc+1
-    % Note that the last point recorded is the wall point
-    for i = 1:beam_data.nparticles
-        dex = find(beam_data.R_lines(:,i)>0,1,'last');
-        last_dex(i) = dex;
+    % Setup indicies
+    dex1 = 1;
+    shine_dex = beam_data.end_state==3;
+    lost_dex = beam_data.end_state==2;
+    therm_dex = beam_data.end_state==1;
+    orbit_dex = beam_data.end_state==0;
+    born_dex = ones(beam_data.nparticles,1)==1;
+    if any(shine_dex)
+        dex1=3; 
+        born_dex = ~shine_dex;
     end
-    % Handle Injection vs. non-Injection
-    if any(beam_data.neut_lines(1,:) > 0) %then NBI run
-        % Mark Shinethrough Particles
-        % Calculate which particles just shine through
-        % 1: Launch Point
-        % 2: Last point or wall point
-        % 3: Only recorded if particle hits the wall
-        shine_dex(beam_data.neut_lines(2,:) > 0) = 2;
-        for i=1:beam_data.nparticles
-            s = beam_data.S_lines(last_dex(i),i);
-            if (s>1.1)
-                lost_dex(i) = last_dex(i);
-            elseif last_dex(i) < beam_data.npoinc
-                therm_dex(i) = last_dex(i);
-            end
+    % Handle plotting only certain beams
+    beam_dex=[];
+    if any(beamdex > 0)
+        beam_dex=zeros(beam_data.nparticles,1);
+        for i=1:length(beamdex)
+            beam_dex(beam_data.Beam==beamdex(i)) = 1;
         end
-        dex = shine_dex==2;
-        lost_dex(dex) = 0;
-        % Handle a depo run
-        if beam_data.ldepo
-            lost_dex = zeros(1,beam_data.nparticles);
-            therm_dex = zeros(1,beam_data.nparticles);
-        end
-    else % non-nbi run
-        for i=1:beam_data.nparticles
-            s = beam_data.S_lines(last_dex(i),i);
-            if (s>1.1)
-                lost_dex(i) = last_dex(i);
-            elseif last_dex(i) < beam_data.npoinc
-                therm_dex(i) = last_dex(i);
-            end
-        end
+        beam_dex = beam_dex==1;
+    else
+        beam_dex=ones(beam_data.nparticles,1)==1;
     end
-    
-% Now handle plots
+    shine_dex = and(shine_dex,beam_dex);
+    lost_dex = and(lost_dex,beam_dex);
+    therm_dex = and(therm_dex,beam_dex);
+    orbit_dex = and(orbit_dex,beam_dex);
+    born_dex = and(born_dex,beam_dex);
+    % Calc Last Index for each particle
+    last_dex=zeros(1,beam_data.nparticles);
+    for i=1:beam_data.nparticles
+        last_dex(i) =find(beam_data.R_lines(:,i)>0,1,'last');
+    end
+    % Make plots
     switch lower(plot_type)
-        case 'overview' % Simple endpoint plot
+        case 'xyz'
+            x1  = beam_data.X_lines(:,orbit_dex);
+            y1  = beam_data.Y_lines(:,orbit_dex);
+            z1  = beam_data.Z_lines(:,orbit_dex);
+            ld  = last_dex(orbit_dex);
             x=[]; y=[]; z=[];
-            x_lost=[]; y_lost=[]; z_lost=[];
-            x_therm=[]; y_therm=[]; z_therm=[];
-            x_shine=[]; y_shine=[]; z_shine=[];
-            for i=1:beam_data.nparticles
-                if last_dex(i) < beam_data.npoinc
-                    if shine_dex(i)
-                        x_shine = [x_shine beam_data.X_lines(shine_dex(i),i)];
-                        y_shine = [y_shine beam_data.Y_lines(shine_dex(i),i)];
-                        z_shine = [z_shine beam_data.Z_lines(shine_dex(i),i)];
-                    elseif lost_dex(i)
-                        x_lost = [x_lost beam_data.X_lines(lost_dex(i),i)];
-                        y_lost = [y_lost beam_data.Y_lines(lost_dex(i),i)];
-                        z_lost = [z_lost beam_data.Z_lines(lost_dex(i),i)];
-                    elseif therm_dex(i)
-                        x_therm = [x_therm beam_data.X_lines(last_dex(i),i)];
-                        y_therm = [y_therm beam_data.Y_lines(last_dex(i),i)];
-                        z_therm = [z_therm beam_data.Z_lines(last_dex(i),i)];
-                    else
-                        x = [x beam_data.X_lines(last_dex(i),i)];
-                        y = [y beam_data.Y_lines(last_dex(i),i)];
-                        z = [z beam_data.Z_lines(last_dex(i),i)];
-                    end
-                end
+            for i=1:length(ld)
+                x = [x x1(ld(i),i)];
+                y = [y y1(ld(i),i)];
+                z = [z z1(ld(i),i)];
             end
-            hold on;
-            leg_text={};
-            if ~isempty(x_therm), plot3(x_therm,y_therm,z_therm,'.b'); leg_text=[leg_text; 'Thermalized'];end
-            if ~isempty(x_lost), plot3(x_lost,y_lost,z_lost,'.r'); leg_text=[leg_text; 'Lost']; end
-            if ~isempty(x_shine), plot3(x_shine,y_shine,z_shine,'.g'); leg_text=[leg_text; 'Shinethrough']; end
-            if ~isempty(x), plot3(x,y,z,'.k'); leg_text=[leg_text; 'Other']; end
-            legend(leg_text); axis equal; title('Final State');
-        case 'lost_len' % Lost Length
-            line_len=[]; x=[]; y=[]; z=[];
-            dex1 = 1;
-            if any(shine_dex > 0), dex1=3; end
-            for i=1:beam_data.nparticles
-                if last_dex(i) < beam_data.npoinc
-                    if lost_dex(i)
-                        x = [x beam_data.X_lines(last_dex(i),i)];
-                        y = [y beam_data.Y_lines(last_dex(i),i)];
-                        z = [z beam_data.Z_lines(last_dex(i),i)];
-                        dx = beam_data.X_lines(dex1+1:last_dex(i),i)-beam_data.X_lines(dex1:last_dex(i)-1,i);
-                        dy = beam_data.Y_lines(dex1+1:last_dex(i),i)-beam_data.Y_lines(dex1:last_dex(i)-1,i);
-                        dz = beam_data.Z_lines(dex1+1:last_dex(i),i)-beam_data.Z_lines(dex1:last_dex(i)-1,i);
-                        dl = sqrt(dx.*dx+dy.*dy+dz.*dz);
-                        line_len = [line_len sum(dl)];
-                    end
-                end
+            plot3(x,y,z,'.k');
+            axis equal;
+            axis off;
+            title('Orbiting Particles');
+        case 'xyz_thermalized'
+            x1  = beam_data.X_lines(:,therm_dex);
+            y1  = beam_data.Y_lines(:,therm_dex);
+            z1  = beam_data.Z_lines(:,therm_dex);
+            ld  = last_dex(therm_dex);
+            x=[]; y=[]; z=[];
+            for i=1:length(ld)
+                x = [x x1(ld(i),i)];
+                y = [y y1(ld(i),i)];
+                z = [z z1(ld(i),i)];
             end
-            scatter3(x,y,z,1,line_len./1000);
-            colormap hot;
+            plot3(x,y,z,'.k');
+            axis equal;
+            axis off;
+            title('Thermalized Particles');
+        case 'xyz_lost'
+            x1  = beam_data.X_lines(:,lost_dex);
+            y1  = beam_data.Y_lines(:,lost_dex);
+            z1  = beam_data.Z_lines(:,lost_dex);
+            ld  = last_dex(lost_dex);
+            x=[]; y=[]; z=[];
+            for i=1:length(ld)
+                x = [x x1(ld(i),i)];
+                y = [y y1(ld(i),i)];
+                z = [z z1(ld(i),i)];
+            end
+            plot3(x,y,z,'.k');
             axis equal;
             axis off;
             title('Lost Particles');
-            ha = colorbar;
-            ylabel(ha,'Connection Length [km]');
-        case 'lost_initial'
-            line_len=[]; x=[]; y=[]; z=[];
-            dex1 = 1;
-            if any(shine_dex > 0), dex1=3; end
-            for i=1:beam_data.nparticles
-                if last_dex(i) < beam_data.npoinc
-                    if lost_dex(i)
-                        dex = dex - offset;
-                        dx = beam_data.X_lines(dex1+1:last_dex(i),i)-beam_data.X_lines(dex1:last_dex(i)-1,i);
-                        dy = beam_data.Y_lines(dex1+1:last_dex(i),i)-beam_data.Y_lines(dex1:last_dex(i)-1,i);
-                        dz = beam_data.Z_lines(dex1+1:last_dex(i),i)-beam_data.Z_lines(dex1:last_dex(i)-1,i);
-                        dl = sqrt(dx.*dx+dy.*dy+dz.*dz);
-                        line_len = [line_len sum(dl)];
-                        x = [x beam_data.X_lines(dex1,i)];
-                        y = [y beam_data.Y_lines(dex1,i)];
-                        z = [z beam_data.Z_lines(dex1,i)];
-                    end
-                end
-            end
-            scatter3(x,y,z,1,line_len./1000);
-            colormap hot;
+        case 'xyz_birth'
+            x  = beam_data.X_lines(dex1,born_dex);
+            y  = beam_data.Y_lines(dex1,born_dex);
+            z  = beam_data.Z_lines(dex1,born_dex);
+            plot3(x,y,z,'.k');
             axis equal;
             axis off;
-            title('Initial Position');
-            ha = colorbar;
-            ylabel(ha,'Connection Length [km]');
-            title('Connection Length');
+            title('Particle Birth');
+        case {'overview','xyz_total'}
+            leg_text={};
+            x1  = beam_data.X_lines(:,therm_dex);
+            y1  = beam_data.Y_lines(:,therm_dex);
+            z1  = beam_data.Z_lines(:,therm_dex);
+            ld  = last_dex(therm_dex);
+            x=[]; y=[]; z=[];
+            if ~isempty(ld)
+                for i=1:length(ld)
+                    x = [x x1(ld(i),i)];
+                    y = [y y1(ld(i),i)];
+                    z = [z z1(ld(i),i)];
+                end
+                plot3(x,y,z,'.b');
+                hold on;
+                leg_text=[leg_text; 'Thermalized'];
+            end
+            x1  = beam_data.X_lines(:,lost_dex);
+            y1  = beam_data.Y_lines(:,lost_dex);
+            z1  = beam_data.Z_lines(:,lost_dex);
+            ld  = last_dex(lost_dex);
+            x=[]; y=[]; z=[];
+            if ~isempty(ld)
+                for i=1:length(ld)
+                    x = [x x1(ld(i),i)];
+                    y = [y y1(ld(i),i)];
+                    z = [z z1(ld(i),i)];
+                end
+                plot3(x,y,z,'.r');
+                hold on;
+                leg_text=[leg_text; 'Lost'];
+            end
+            x1  = beam_data.X_lines(:,orbit_dex);
+            y1  = beam_data.Y_lines(:,orbit_dex);
+            z1  = beam_data.Z_lines(:,orbit_dex);
+            ld  = last_dex(orbit_dex);
+            x=[]; y=[]; z=[];
+            if ~isempty(ld)
+                for i=1:length(ld)
+                    x = [x x1(ld(i),i)];
+                    y = [y y1(ld(i),i)];
+                    z = [z z1(ld(i),i)];
+                end
+                plot3(x,y,z,'.k');
+                hold on;
+                leg_text=[leg_text; 'Orbiting'];
+            end
+            legend(leg_text); axis equal; title('Final State');
+        case 'xyz_initial'
+            x  = beam_data.X_lines(dex1,orbit_dex);
+            y  = beam_data.Y_lines(dex1,orbit_dex);
+            z  = beam_data.Z_lines(dex1,orbit_dex);
+            plot3(x,y,z,'.k');
+            axis equal;
+            axis off;
+            title('Initial Orbiting Particles');
+        case 'xyz_therm_initial'
+            x  = beam_data.X_lines(dex1,therm_dex);
+            y  = beam_data.Y_lines(dex1,therm_dex);
+            z  = beam_data.Z_lines(dex1,therm_dex);
+            plot3(x,y,z,'.k');
+            axis equal;
+            axis off;
+            title('Initial Thermalized Particles');
+        case 'xyz_lost_initial'
+            x  = beam_data.X_lines(dex1,lost_dex);
+            y  = beam_data.Y_lines(dex1,lost_dex);
+            z  = beam_data.Z_lines(dex1,lost_dex);
+            plot3(x,y,z,'.k');
+            axis equal;
+            axis off;
+            title('Initial Lost Particles');
+        case {'xyz_total_initial'}
+            leg_text={};
+            x  = beam_data.X_lines(dex1,therm_dex);
+            y  = beam_data.Y_lines(dex1,therm_dex);
+            z  = beam_data.Z_lines(dex1,therm_dex);
+            if ~isempty(x)
+                plot3(x,y,z,'.b');
+                hold on;
+                leg_text=[leg_text; 'Thermalized'];
+            end
+            x  = beam_data.X_lines(dex1,lost_dex);
+            y  = beam_data.Y_lines(dex1,lost_dex);
+            z  = beam_data.Z_lines(dex1,lost_dex);
+            if ~isempty(x)
+                plot3(x,y,z,'.r');
+                hold on;
+                leg_text=[leg_text; 'Lost'];
+            end
+            x  = beam_data.X_lines(dex1,orbit_dex);
+            y  = beam_data.Y_lines(dex1,orbit_dex);
+            z  = beam_data.Z_lines(dex1,orbit_dex);
+            if ~isempty(x)
+                plot3(x,y,z,'.k');
+                hold on;
+                leg_text=[leg_text; 'Orbiting'];
+            end
+            legend(leg_text); axis equal; title('Initial State');
+        case 'flux'
+            x1  = beam_data.U_lines(:,orbit_dex);
+            y1  = beam_data.S_lines(:,orbit_dex);
+            ld  = last_dex(orbit_dex);
+            x=[]; y=[];
+            for i=1:length(ld)
+                x = [x x1(ld(i),i)];
+                y = [y y1(ld(i),i)];
+            end
+            polarplot(x,y,'.k');
+            rlim([0 1.5]);
+            title('Orbiting Particles');
+        case 'flux_therm'
+            x1  = beam_data.U_lines(:,therm_dex);
+            y1  = beam_data.S_lines(:,therm_dex);
+            ld  = last_dex(therm_dex);
+            x=[]; y=[];
+            for i=1:length(ld)
+                x = [x x1(ld(i),i)];
+                y = [y y1(ld(i),i)];
+            end
+            polarplot(x,y,'.k');
+            rlim([0 1.5]);
+            title('Thermalized Particles');
+        case 'flux_birth'
+            x  = beam_data.U_lines(dex1,born_dex);
+            y  = beam_data.S_lines(dex1,born_dex);
+            polarplot(x,y,'.k');
+            rlim([0 1.5]);
+            title('Born Particles');
+        case 'flux_initial'
+            x  = beam_data.U_lines(dex1,orbit_dex);
+            y  = beam_data.S_lines(dex1,orbit_dex);
+            polarplot(x,y,'.k');
+            rlim([0 1.5]);
+            title('Intial Orbiting Particles');
+        case 'flux_lost_initial'
+            x  = beam_data.U_lines(dex1,lost_dex);
+            y  = beam_data.S_lines(dex1,lost_dex);
+            polarplot(x,y,'.k');
+            rlim([0 1.5]);
+            title('Intial Lost Particles');
+        case 'flux_therm_initial'
+            x  = beam_data.U_lines(dex1,therm_dex);
+            y  = beam_data.S_lines(dex1,therm_dex);
+            polarplot(x,y,'.k');
+            rlim([0 1.5]);
+            title('Intial Thermalized Particles');
         case 'pitch'
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
-            vll=[]; vperp=[]; mass=[];
-            for i=1:beam_data.nparticles
-                if and(lost_dex(i) == 0,shine_dex(i)==0)
-                    vll = [vll beam_data.vll_lines(last_dex(i),i)]; 
-                    mu = beam_data.moment_lines(last_dex(i),i);
-                    b  = beam_data.B_lines(last_dex(i),i);
-                    vperp = [vperp sqrt(2.*mu.*b./beam_data.mass(i))];
-                    mass = [mass beam_data.mass(i)];
-                end
-            end
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(:,orbit_dex);
+            vperp = vperp(:,orbit_dex);
             pitch = atan2d(vll,vperp);
-            %E     = 0.5.*mass.*(vll.^2+vperp.^2)./ec;
-            %x_size=[0 max(E).*1.25];
-            y_size=[min(pitch) max(pitch)];
+            ld    = last_dex(orbit_dex);
+            p2    = length(ld);
+            for i=1:length(ld)
+                p2(i) = pitch(ld(i),i);
+            end
+            y_size=[min(p2) max(p2)];
             nres = 128;
             edges= y_size(1):diff(y_size)./nres:y_size(2);
-            vals = hist(pitch,edges);
-            %colormap jet;
-            plot(edges,vals);
-            %ha=pcolor(edges{2},edges{1}./norm,vals);
-            %set(ha,'LineStyle','none');
-            set(gca,'FontSize',18);
+            vals = hist(p2,edges);
+            plot(edges,vals,'k','LineWidth',4);
+            set(gca,'FontSize',24);
             xlabel('Pitch Angle [^o]');
             ylabel('Counts');
-            title('Final Distribution');
-        case 'e-alpha'
+            title('Orbiting Distribution');
+        case 'pitch_therm'
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
-            vll=[]; vperp=[]; mass=[];
-            for i=1:beam_data.nparticles
-                if and(lost_dex(i) == 0,shine_dex(i)==0)
-                    vll = [vll beam_data.vll_lines(last_dex(i),i)]; 
-                    mu = beam_data.moment_lines(last_dex(i),i);
-                    b  = beam_data.B_lines(last_dex(i),i);
-                    vperp = [vperp sqrt(2.*mu.*b./beam_data.mass(i))];
-                    mass = [mass beam_data.mass(i)];
-                end
-            end
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(:,therm_dex);
+            vperp = vperp(:,therm_dex);
             pitch = atan2d(vll,vperp);
-            E     = 0.5.*mass.*(vll.^2+vperp.^2)./ec;
-            x_size=[0 max(E).*1.25];
-            y_size=[-180 180];
+            ld    = last_dex(therm_dex);
+            p2    = length(ld);
+            for i=1:length(ld)
+                p2(i) = pitch(ld(i),i);
+            end
+            y_size=[min(p2) max(p2)];
+            nres = 128;
+            edges= y_size(1):diff(y_size)./nres:y_size(2);
+            vals = hist(p2,edges);
+            plot(edges,vals,'k','LineWidth',4);
+            set(gca,'FontSize',24);
+            xlabel('Pitch Angle [^o]');
+            ylabel('Counts');
+            title('Thermalized Particle Pitch');
+        case 'pitch_lost'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(:,lost_dex);
+            vperp = vperp(:,lost_dex);
+            pitch = atan2d(vll,vperp);
+            ld    = last_dex(lost_dex);
+            p2    = length(ld);
+            for i=1:length(ld)
+                p2(i) = pitch(ld(i),i);
+            end
+            y_size=[min(p2) max(p2)];
+            nres = 128;
+            edges= y_size(1):diff(y_size)./nres:y_size(2);
+            vals = hist(p2,edges);
+            plot(edges,vals,'k','LineWidth',4);
+            set(gca,'FontSize',24);
+            xlabel('Pitch Angle [^o]');
+            ylabel('Counts');
+            title('Lost Particle Pitch');
+        case 'pitch_birth'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(dex1,born_dex);
+            vperp = vperp(dex1,born_dex);
+            pitch = atan2d(vll,vperp);
+            p2    = pitch(1,:);
+            y_size=[min(p2) max(p2)];
+            nres = 128;
+            edges= y_size(1):diff(y_size)./nres:y_size(2);
+            vals = hist(p2,edges);
+            plot(edges,vals,'k','LineWidth',4);
+            set(gca,'FontSize',24);
+            xlabel('Pitch Angle [^o]');
+            ylabel('Counts');
+            title('Birth Distribution');
+        case 'pitch_initial'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(:,orbit_dex);
+            vperp = vperp(:,orbit_dex);
+            pitch = atan2d(vll,vperp);
+            ld    = last_dex(orbit_dex);
+            p2    = pitch(1,:);
+            y_size=[min(p2) max(p2)];
+            nres = 128;
+            edges= y_size(1):diff(y_size)./nres:y_size(2);
+            vals = hist(p2,edges);
+            plot(edges,vals,'k','LineWidth',4);
+            set(gca,'FontSize',24);
+            xlabel('Pitch Angle [^o]');
+            ylabel('Counts');
+            title('Initial Orbiting Distribution');
+        case 'pitch_therm_initial'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(:,therm_dex);
+            vperp = vperp(:,therm_dex);
+            pitch = atan2d(vll,vperp);
+            ld    = last_dex(therm_dex);
+            p2    = pitch(1,:);
+            y_size=[min(p2) max(p2)];
+            nres = 128;
+            edges= y_size(1):diff(y_size)./nres:y_size(2);
+            vals = hist(p2,edges);
+            plot(edges,vals,'k','LineWidth',4);
+            set(gca,'FontSize',24);
+            xlabel('Pitch Angle [^o]');
+            ylabel('Counts');
+            title('Initial Thermalized Distribution');
+        case 'pitch_lost_initial'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(:,lost_dex);
+            vperp = vperp(:,lost_dex);
+            pitch = atan2d(vll,vperp);
+            ld    = last_dex(lost_dex);
+            p2    = pitch(1,:);
+            y_size=[min(p2) max(p2)];
+            nres = 128;
+            edges= y_size(1):diff(y_size)./nres:y_size(2);
+            vals = hist(p2,edges);
+            plot(edges,vals,'k','LineWidth',4);
+            set(gca,'FontSize',24);
+            xlabel('Pitch Angle [^o]');
+            ylabel('Counts');
+            title('Initial Lost Distribution');
+        case 'dist'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(:,orbit_dex);
+            vperp = vperp(:,orbit_dex);
+            ld    = last_dex(orbit_dex);
+            p1    = length(ld);
+            p2    = length(ld);
+            for i=1:length(ld)
+                p1(i) = vll(ld(i),i);
+                p2(i) = vperp(ld(i),i);
+            end
+            x_size=[-1 1].*beam_data.partvmax;
+            y_size=[ 0 1].*beam_data.partvmax;
             nres = 256;
             edges={x_size(1):diff(x_size)./nres:x_size(2) ...
                 y_size(1):diff(y_size)./nres:y_size(2)};
-            vals = hist3([E; pitch]',edges);
+            vals = hist3([p1; p2]',edges);
             if max(abs(x_size)) > 1E6
                 norm = 1E6;
-                units = 'MeV';
+                units = 'Mm/s';
             elseif max(abs(x_size)) > 1E3
                 norm = 1E3;
-                units = 'keV';
+                units = 'km/s';
             else
                 norm = 1;
-                units = 'eV';
+                units = 'm/s';
             end
             colormap jet;
-            ha=pcolor(edges{2},edges{1}./norm,vals);
+            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
             set(ha,'LineStyle','none');
-            set(gca,'FontSize',18);
-            xlabel('Pitch Angle [^o]');
-            ylabel(['Energy [' units ']']);
-            title('Final Distribution');
-        case 'dist'
+            set(gca,'FontSize',24);
+            xlabel(['Parallel Velocity (v_{||}) [' units ']']);
+            ylabel(['Perpendicuarl Velocity (v_\perp) [' units ']']);
+            title('Oribiting Distribution');
+        case 'dist_therm'
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
-            vll_lost =[]; vperp_lost=[];
-            vll_therm =[]; vperp_therm=[];
-            vll_other =[]; vperp_other=[];
-            for i=1:beam_data.nparticles
-                if last_dex(i) <= beam_data.npoinc
-                    if lost_dex(i) > 0
-                        vll_lost = [vll_lost beam_data.vll_lines(lost_dex(i),i)];
-                        vperp_lost  = [vperp_lost  beam_data.moment_lines(lost_dex(i),i).*2.*beam_data.B_lines(lost_dex(i),i)./beam_data.mass(i)];
-                    elseif therm_dex(i) > 0
-                        vll_therm = [vll_therm beam_data.vll_lines(therm_dex(i),i)];
-                        vperp_therm  = [vperp_therm  beam_data.moment_lines(therm_dex(i),i).*2.*beam_data.B_lines(therm_dex(i),i)./beam_data.mass(i)];
-                    elseif (shine_dex(i) ==0)
-                        vll_other = [vll_other beam_data.vll_lines(last_dex(i),i)];
-                        vperp_other  = [vperp_other  beam_data.moment_lines(last_dex(i),i).*2.*beam_data.B_lines(last_dex(i),i)./beam_data.mass(i)];
-                    end
-                end
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(:,therm_dex);
+            vperp = vperp(:,therm_dex);
+            ld    = last_dex(therm_dex);
+            p1    = length(ld);
+            p2    = length(ld);
+            for i=1:length(ld)
+                p1(i) = vll(ld(i),i);
+                p2(i) = vperp(ld(i),i);
             end
-            hold on;
-            leg_text={};
-            if ~isempty(vll_therm), plot(vll_therm./1E3,sqrt(vperp_therm)./1E3,'.b'); leg_text=[leg_text; 'Thermalized'];end
-            if ~isempty(vll_lost), plot(vll_lost./1E3,sqrt(vperp_lost)./1E3,'.r'); leg_text=[leg_text; 'Lost'];end
-            if ~isempty(vll_other), plot(vll_other./1E3,sqrt(vperp_other)./1E3,'ok'); leg_text=[leg_text; 'Circulating'];end
-            vmax = max(ylim);
-            vmax = max([vmax max(abs(xlim))]);
-            ylim([0 vmax]);
-            xlim([-1 1].*max(ylim));
-            axis equal;
-            axis square;
-            legend(leg_text);
-            set(gca,'FontSize',18);
-            xlabel('Parallel Velocity [km/s]');
-            ylabel('Perp. Velocity [km/s]');
-            title('Final Particle Distribution');
+            x_size=[-1 1].*beam_data.partvmax;
+            y_size=[ 0 1].*beam_data.partvmax;
+            nres = 256;
+            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
+                y_size(1):diff(y_size)./nres:y_size(2)};
+            vals = hist3([p1; p2]',edges);
+            if max(abs(x_size)) > 1E6
+                norm = 1E6;
+                units = 'Mm/s';
+            elseif max(abs(x_size)) > 1E3
+                norm = 1E3;
+                units = 'km/s';
+            else
+                norm = 1;
+                units = 'm/s';
+            end
+            colormap jet;
+            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            set(ha,'LineStyle','none');
+            set(gca,'FontSize',24);
+            xlabel(['Parallel Velocity (v_{||}) [' units ']']);
+            ylabel(['Perpendicuarl Velocity (v_\perp) [' units ']']);
+            title('Thermalized Distribution');
+        case 'dist_lost'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(:,lost_dex);
+            vperp = vperp(:,lost_dex);
+            ld    = last_dex(lost_dex);
+            p1    = length(ld);
+            p2    = length(ld);
+            for i=1:length(ld)
+                p1(i) = vll(ld(i),i);
+                p2(i) = vperp(ld(i),i);
+            end
+            x_size=[-1 1].*beam_data.partvmax;
+            y_size=[ 0 1].*beam_data.partvmax;
+            nres = 256;
+            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
+                y_size(1):diff(y_size)./nres:y_size(2)};
+            vals = hist3([p1; p2]',edges);
+            if max(abs(x_size)) > 1E6
+                norm = 1E6;
+                units = 'Mm/s';
+            elseif max(abs(x_size)) > 1E3
+                norm = 1E3;
+                units = 'km/s';
+            else
+                norm = 1;
+                units = 'm/s';
+            end
+            colormap jet;
+            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            set(ha,'LineStyle','none');
+            set(gca,'FontSize',24);
+            xlabel(['Parallel Velocity (v_{||}) [' units ']']);
+            ylabel(['Perpendicuarl Velocity (v_\perp) [' units ']']);
+            title('Lost Distribution');
+        case 'dist_birth'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(dex1,orbit_dex);
+            vperp = vperp(dex1,orbit_dex);
+            p1    = vll(1,:);
+            p2    = vperp(1,:);
+            x_size=[-1 1].*beam_data.partvmax;
+            y_size=[ 0 1].*beam_data.partvmax;
+            nres = 256;
+            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
+                y_size(1):diff(y_size)./nres:y_size(2)};
+            vals = hist3([p1; p2]',edges);
+            if max(abs(x_size)) > 1E6
+                norm = 1E6;
+                units = 'Mm/s';
+            elseif max(abs(x_size)) > 1E3
+                norm = 1E3;
+                units = 'km/s';
+            else
+                norm = 1;
+                units = 'm/s';
+            end
+            colormap jet;
+            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            set(ha,'LineStyle','none');
+            set(gca,'FontSize',24);
+            xlabel(['Parallel Velocity (v_{||}) [' units ']']);
+            ylabel(['Perpendicuarl Velocity (v_\perp) [' units ']']);
+            title('Birth Distribution');
         case 'dist_initial'
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
-            dex1 = 1;
-            if any(shine_dex > 0), dex1=3; end
-            vll = beam_data.vll_lines(dex1,:);
-            mu  = beam_data.moment_lines(dex1,:);
-            B   = beam_data.B_lines(dex1,:);
-            vperp = sqrt(2.*mu.*B./beam_data.mass');
-            dex =mu > 0;
-            vll = vll(dex);
-            vperp = vperp(dex);
-            if isfield(beam_data,'Beam')
-                beam  = beam_data.Beam(dex);
-                leg_text=[];
-                for i = 1:max(beam)
-                    dex = beam==i;
-                    hold on;
-                    plot(vll(dex)./1E3,vperp(dex)./1E3,'.');
-                    hold off;
-                    leg_text=[leg_text; ['Beam #' num2str(i,'%i')]];
-                end
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(:,orbit_dex);
+            vperp = vperp(:,orbit_dex);
+            ld    = last_dex(orbit_dex);
+            p1    = vll(1,:);
+            p2    = vperp(1,:);
+            x_size=[-1 1].*beam_data.partvmax;
+            y_size=[ 0 1].*beam_data.partvmax;
+            nres = 256;
+            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
+                y_size(1):diff(y_size)./nres:y_size(2)};
+            vals = hist3([p1; p2]',edges);
+            if max(abs(x_size)) > 1E6
+                norm = 1E6;
+                units = 'Mm/s';
+            elseif max(abs(x_size)) > 1E3
+                norm = 1E3;
+                units = 'km/s';
             else
-                hold on;
-                plot(vll(:)./1E3,vperp(:)./1E3,'.');
-                hold off;
-                leg_text='Particles';
+                norm = 1;
+                units = 'm/s';
             end
-            vmax = max(ylim);
-            vmax = max([vmax max(abs(xlim))]);
-            ylim([0 vmax]);
-            xlim([-1 1].*max(ylim));
-            %axis equal;
-            %axis square;
-            legend(leg_text);
-            set(gca,'FontSize',18);
-            xlabel('Parallel Velocity [km/s]');
-            ylabel('Perp. Velocity [km/s]');
-            title('Initial Particle Distribution');
-        case 'lost_flux'
-            u=[]; v=[]; line_len=[];
-            dex1 = 1;
-            if any(shine_dex > 0), dex1=3; end
-            for i=1:beam_data.nparticles
-                if last_dex(i) < beam_data.npoinc
-                    if lost_dex(i) > 0
-                        u = [u beam_data.U_lines(dex1,i)];
-                        v = [v mod(beam_data.PHI_lines(dex1,i),2*pi)];
-                        dx = beam_data.X_lines(dex1+1:lost_dex(i),i)-beam_data.X_lines(dex1:lost_dex(i)-1,i);
-                        dy = beam_data.Y_lines(dex1+1:lost_dex(i),i)-beam_data.Y_lines(dex1:lost_dex(i)-1,i);
-                        dz = beam_data.Z_lines(dex1+1:lost_dex(i),i)-beam_data.Z_lines(dex1:lost_dex(i)-1,i);
-                        dl = sqrt(dx.*dx+dy.*dy+dz.*dz);
-                        line_len = [line_len sum(dl)];
-                    end
-                end
+            colormap jet;
+            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            set(ha,'LineStyle','none');
+            set(gca,'FontSize',24);
+            xlabel(['Parallel Velocity (v_{||}) [' units ']']);
+            ylabel(['Perpendicuarl Velocity (v_\perp) [' units ']']);
+            title('Initial Oribiting Distribution');
+        case 'dist_therm_initial'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(:,therm_dex);
+            vperp = vperp(:,therm_dex);
+            ld    = last_dex(therm_dex);
+            p1    = vll(1,:);
+            p2    = vperp(1,:);
+            x_size=[-1 1].*beam_data.partvmax;
+            y_size=[ 0 1].*beam_data.partvmax;
+            nres = 256;
+            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
+                y_size(1):diff(y_size)./nres:y_size(2)};
+            vals = hist3([p1; p2]',edges);
+            if max(abs(x_size)) > 1E6
+                norm = 1E6;
+                units = 'Mm/s';
+            elseif max(abs(x_size)) > 1E3
+                norm = 1E3;
+                units = 'km/s';
+            else
+                norm = 1;
+                units = 'm/s';
             end
-            scatter(v,u,1,line_len./1000,'o');
-            xlim([0 2*pi]);
-            ylim([0 2*pi]);
-            axis equal;
-            title('Lost Particle Flux Trajectories');
-            xlabel('VMEC Poloidal Angle (u) [rad]');
-            ylabel('Toroidal Angle (\phi) [rad]');
-            ha = colorbar;
-            ylabel(ha,'Connection Length [km]');
-        case 'deposition'
-            slen = size(beam_data.ndot_prof,2);
-            s    = 0:1.0/(slen-1):1;
-            plot(sqrt(s),beam_data.ndot_prof);
-            xlabel('Effective Radius [\rho/a]');
-            ylabel(beam_data.ndot_prof_description);
-            title('Particle Source ');
-            xlim([0,1]);
+            colormap jet;
+            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            set(ha,'LineStyle','none');
+            set(gca,'FontSize',24);
+            xlabel(['Parallel Velocity (v_{||}) [' units ']']);
+            ylabel(['Perpendicuarl Velocity (v_\perp) [' units ']']);
+            title('Initial Thermalized Distribution');
+        case 'dist_lost_initial'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            vperp = beams3d_calc_vperp(beam_data);
+            vll = beam_data.vll_lines(:,lost_dex);
+            vperp = vperp(:,lost_dex);
+            ld    = last_dex(lost_dex);
+            p1    = vll(1,:);
+            p2    = vperp(1,:);
+            x_size=[-1 1].*beam_data.partvmax;
+            y_size=[ 0 1].*beam_data.partvmax;
+            nres = 256;
+            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
+                y_size(1):diff(y_size)./nres:y_size(2)};
+            vals = hist3([p1; p2]',edges);
+            if max(abs(x_size)) > 1E6
+                norm = 1E6;
+                units = 'Mm/s';
+            elseif max(abs(x_size)) > 1E3
+                norm = 1E3;
+                units = 'km/s';
+            else
+                norm = 1;
+                units = 'm/s';
+            end
+            colormap jet;
+            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            set(ha,'LineStyle','none');
+            set(gca,'FontSize',24);
+            xlabel(['Parallel Velocity (v_{||}) [' units ']']);
+            ylabel(['Perpendicuarl Velocity (v_\perp) [' units ']']);
+            title('Initial Lost Distribution');
+        case 'distribution'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            n1 = double(beam_data.ns_prof4-1);
+            n2 = double(beam_data.ns_prof5-1);
+            h1 = 2*beam_data.partvmax./n1;
+            h2 = beam_data.partvmax./n2;
+            x1 = -beam_data.partvmax:h1:beam_data.partvmax;
+            x2 = 0:h2:beam_data.partvmax;
+            if beam_data.partvmax>1E6
+                units='x1000 [km/s]';
+                factor = 1E-6;
+            elseif beam_data.partvmax>1E3
+                units='[km/s]';
+                factor = 1E-3;
+            else
+                units='[m/s]';
+                factor=1;
+            end
+            pixplot(x1.*factor,x2.*factor,squeeze(sum(beam_data.dist2d_prof(beamdex,:,:),1)));
+            vmax = round(beam_data.partvmax.*factor);
+            xtick = -vmax:1:vmax;
+            ytick = 0:1:vmax;
+            set(gca,'FontSize',24,'XTick',xtick,'XTickLabelMode','auto',...
+                'YTick',ytick,'YTickLabelMode','auto');
+            title('BEAMS3D Distribution Function');
+            xlabel(['Parallel Velocity (v_{||}) ' units ]);
+            ylabel(['Perpendicuarl Velocity (v_\perp) ' units ]);
+            colormap jet;
+        case 'heating'
+            h = 1./double(beam_data.ns_prof1-1);
+            rho = 0:h:1;
+            imax = 2.*max(sum(beam_data.ipower_prof));
+            if imax>1E6
+                factor=1e-6;
+                units = '[MW/m^3]';
+            elseif imax>1E3
+                factor=1e-3;
+                units = '[kW/m^3]';
+            else
+                factor = 1;
+                units = '[W/m^3]';
+            end
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            plot(rho,sum(beam_data.epower_prof(beamdex,:),1).*factor,'b','LineWidth',4); hold on;
+            plot(rho,sum(beam_data.ipower_prof(beamdex,:),1).*factor,'--r','LineWidth',4);
+            ylim([0 imax.*factor]);
+            set(gca,'FontSize',24);
+            legend('Electrons','Ions');
+            xlabel('Effective Minor Radius (r/a) [norm]');
+            ylabel(['Power Deposition ' units]);
+            title('BEAMS3D Total Power Deposition');
+        case 'current'
+            h = 1./double(beam_data.ns_prof1-1);
+            rho = 0:h:1;
+            jmax = 2.*max(sum(beam_data.j_prof));
+            if jmax>1E6
+                factor=1e-6;
+                units = '[MA/m^2]';
+            elseif jmax>1E3
+                factor=1e-3;
+                units = '[kA/m^2]';
+            else
+                factor = 1;
+                units = '[A/m^2]';
+            end
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            plot(rho,sum(beam_data.j_prof(beamdex,:),1).*factor,'k','LineWidth',4);
+            ylim([0 jmax.*factor]);
+            set(gca,'FontSize',24);
+            xlabel('Effective Minor Radius (r/a) [norm]');
+            ylabel(['Current Density ' units]);
+            title('BEAMS3D Total Current Density (uncorr.)');
+        case 'fueling'
+            h = 1./double(beam_data.ns_prof1-1);
+            rho = 0:h:1;
+            jmax = 2.*max(sum(beam_data.ndot_prof));
+            if jmax>1E15
+                factor=1e-15;
+                units = 'x10^{15} [part/(s*m^3)]';
+            elseif jmax>1E12
+                factor=1e-12;
+                units = 'x10^{12} [part/(s*m^3)]';
+            elseif jmax>1E9
+                factor=1e-9;
+                units = 'x10^9 [part/(s*m^3)]';
+            elseif jmax>1E6
+                factor=1e-6;
+                units = 'x10^6 [part/(s*m^3)]';
+            elseif jmax>1E3
+                factor=1e-3;
+                units = 'x10^3 [part/(s*m^3)]';
+            else
+                factor = 1;
+                units = '[part/(s*m^3)]';
+            end
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            plot(rho,sum(beam_data.ndot_prof(beamdex,:),1).*factor,'k','LineWidth',4);
+            ylim([0 jmax.*factor]);
+            set(gca,'FontSize',24);
+            xlabel('Effective Minor Radius (r/a) [norm]');
+            ylabel(['Fueling ' units]);
+            title('BEAMS3D Fast-Ion Fueling');
         case 'injection'
-            x=[]; y=[]; z=[];
-            x_shine=[]; y_shine=[]; z_shine=[];
-            step = round(beam_data.nparticles/1000);
-            for i=1:step:beam_data.nparticles
-                if shine_dex(i) > 0
-                    x_shine = [x_shine; beam_data.X_lines(1,i), beam_data.X_lines(2,i)];
-                    y_shine = [y_shine; beam_data.Y_lines(1,i), beam_data.Y_lines(2,i)];
-                    z_shine = [z_shine; beam_data.Z_lines(1,i), beam_data.Z_lines(2,i)];
-                else
-                    x = [x; beam_data.X_lines(1,i), beam_data.X_lines(2,i)];
-                    y = [y; beam_data.Y_lines(1,i), beam_data.Y_lines(2,i)];
-                    z = [z; beam_data.Z_lines(1,i), beam_data.Z_lines(2,i)];
-                end
-            end
+            nmax=512;
+            x_shine = beam_data.X_lines([1 2],shine_dex);
+            y_shine = beam_data.Y_lines([1 2],shine_dex);
+            z_shine = beam_data.Z_lines([1 2],shine_dex);
+            n = size(x_shine,2);
+            dn = max([round(n/nmax) 1]);
+            dl = 1:dn:n;
+            x_shine = x_shine(:,dl);
+            y_shine = y_shine(:,dl);
+            z_shine = z_shine(:,dl);
+            x = beam_data.X_lines([1 2],~shine_dex);
+            y = beam_data.Y_lines([1 2],~shine_dex);
+            z = beam_data.Z_lines([1 2],~shine_dex);
+            n = size(x,2);
+            dn = max([round(n/nmax) 1]);
+            dl = 1:dn:n;
+            x = x(:,dl);
+            y = y(:,dl);
+            z = z(:,dl);
             leg_text={};
             hold on;
-            if ~isempty(x_shine), plot3(x_shine',y_shine',z_shine','r'); leg_text=[leg_text; 'Shinethrough']; end
-            if ~isempty(x), plot3(x',y',z','g'); leg_text=[leg_text; 'Injected'];end
+            if ~isempty(x_shine), plot3(x_shine,y_shine,z_shine,'r'); leg_text=[leg_text; 'Shinethrough']; end
+            if ~isempty(x), plot3(x,y,z,'g'); leg_text=[leg_text; 'Injected'];end
+            legend(leg_text);
         case 'birth_image'
             r_nb = [];
             z_nb = [];
-            for i = 1:beam_data.nparticles
-                if shine_dex(i) == 0
-                    r_nb = [r_nb beam_data.R_lines(3,i)];
-                    z_nb = [z_nb beam_data.Z_lines(3,i)];
-                end
-            end
+            r_nb = beam_data.R_lines(3,~shine_dex);
+            z_nb = beam_data.Z_lines(3,~shine_dex);
             nres=0.01;
             x_size=[min(beam_data.raxis) max(beam_data.raxis)];
             y_size=[min(beam_data.zaxis) max(beam_data.zaxis)];
@@ -493,56 +895,14 @@ else
             set(gca,'FontSize',24);
             xlabel('R [m]');
             ylabel('Z [m]');
-        case 'birth_xyz'
-            x = []; y=[]; z=[];
-            for i = 1:beam_data.nparticles
-                if shine_dex(i) == 0
-                    x = [x beam_data.X_lines(3,i)];
-                    y = [y beam_data.Y_lines(3,i)];
-                    z = [z beam_data.Z_lines(3,i)];
-                end
-            end
-            plot3(x,y,z,'.b');
-        case 'birth_xyz_s'
-            x = []; y=[]; z=[]; s=[];
-            for i = 1:beam_data.nparticles
-                if shine_dex(i) == 0
-                    x = [x beam_data.X_lines(3,i)];
-                    y = [y beam_data.Y_lines(3,i)];
-                    z = [z beam_data.Z_lines(3,i)];
-                    s = [s beam_data.S_lines(3,i)];
-                end
-            end
-            scatter3(x,y,z,s.*0.0+1,s,'.')
-        case 'birth_xyz_b'
-            x = []; y=[]; z=[]; b=[];
-            for i = 1:beam_data.nparticles
-                if shine_dex(i) == 0
-                    x = [x beam_data.X_lines(3,i)];
-                    y = [y beam_data.Y_lines(3,i)];
-                    z = [z beam_data.Z_lines(3,i)];
-                    b = [b beam_data.B_lines(3,i)];
-                end
-            end
-            scatter3(x,y,z,b.*0.0+1,b,'.')
         case 'wall_loss'
             output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',beam_data.wall_strikes,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
         case 'wall_shine'
-            output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',sum(beam_data.wall_shine)','LineStyle','none','CDataMapping','scaled','FaceColor','flat');
+            output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',sum(beam_data.wall_shine(beamdex,:))','LineStyle','none','CDataMapping','scaled','FaceColor','flat');
+            colormap hot;
         case 'wall_heat'
-            d1 = beam_data.wall_faces(:,1);
-            d2 = beam_data.wall_faces(:,2);
-            d3 = beam_data.wall_faces(:,3);
-            p21 = [beam_data.wall_vertex(d2,1) - beam_data.wall_vertex(d1,1) ...
-                beam_data.wall_vertex(d2,2) - beam_data.wall_vertex(d1,2)...
-                beam_data.wall_vertex(d2,3) - beam_data.wall_vertex(d1,3)];
-            p31 = [beam_data.wall_vertex(d3,1) - beam_data.wall_vertex(d1,1) ...
-                beam_data.wall_vertex(d3,2) - beam_data.wall_vertex(d1,2)...
-                beam_data.wall_vertex(d3,3) - beam_data.wall_vertex(d1,3)];
-            area = cross(p21,p31);
-            area = 0.5.*sqrt(sum(area.*area,2));
-            flux = beam_data.wall_strikes./(double(beam_data.nparticles).*area);
-            output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',flux,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
+            output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',sum(beam_data.wall_load(beamdex,:))','LineStyle','none','CDataMapping','scaled','FaceColor','flat');
+            colormap hot;
         case 'grid'
             x=[]; y=[]; z=[];
             raxis = beam_data.raxis;
@@ -629,30 +989,6 @@ else
             xlim([1 camera(1)]);
             ylim([1 camera(2)]);
             colormap hot;
-        case 'heating'
-            s = 0:1./(size(beam_data.epower_prof,2)-1):1;
-            if beamdex == -1
-                figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
-                %if rho then divide each point by 2*s see beams3d_slow.m
-                plot(sqrt(s),sum(beam_data.epower_prof).*1E-3,'b','LineWidth',4); hold on;
-                plot(sqrt(s),sum(beam_data.ipower_prof).*1E-3,'r','LineWidth',4);
-                set(gca,'FontSize',36);
-                legend('Electrons','Ions');
-                xlabel('Normalized Toroidal Flux (s)');
-                ylabel('Power Deposition [kW/m^3]');
-                title('BEAMS3D Total Power Deposition');
-            else
-                figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
-                %if rho then divide each point by 2*s see beams3d_slow.m
-                plot(sqrt(s),sum(beam_data.epower_prof(beamdex,:),1).*1E-3,'b','LineWidth',4); hold on;
-                plot(sqrt(s),sum(beam_data.ipower_prof(beamdex,:),1).*1E-3,'r','LineWidth',4);
-                set(gca,'FontSize',36);
-                legend('Electrons','Ions');
-                xlabel('Effective Radius (\rho/a)');
-                ylabel('Power Deposition [kW/m^3]');
-                title(['BEAMS3D Power Deposition (BEAM: ' num2str(beamdex,'%i') ')']);
-                
-            end
         case 'benchmarks'
             % First make sorting arrays
             for i = 1:beam_data.nbeams
