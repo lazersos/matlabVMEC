@@ -18,6 +18,7 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      plot_beams(beam_data,'flux'); % note _opt as in xyz above
 %      plot_beams(beam_data,'pitch'); % note _opt as in xyz above
 %      plot_beams(beam_data,'dist'); % note _opt as in xyz above
+%      plot_beams(beam_data,'orbit_rz'); % Full particle Orbit in RZ
 %      plot_beams(beam_data,'distribution'); % 2D vll/vperp distribution
 %      plot_beams(beam_data,'heating'); % 1D Heating profiles
 %      plot_beams(beam_data,'current'); % 1D Current Density profiles
@@ -50,6 +51,7 @@ if nargin > 1
                     'pitch_initial','pitch_therm_initial','pitch_lost_initial',...
                     'dist','dist_therm','dist_lost','dist_birth', ...
                     'dist_initial','dist_therm_initial','dist_lost_initial',...
+                    'orbit_rz','orbit_flux',...
                     'distribution','heating','current','fueling',...
                     'injection','birth_image',...
                     'wall_loss','wall_heat','wall_shine','benchmarks',...
@@ -172,16 +174,14 @@ else
         born_dex = ~shine_dex;
     end
     % Handle plotting only certain beams
-    beam_dex=[];
-    if any(beamdex > 0)
-        beam_dex=zeros(beam_data.nparticles,1);
-        for i=1:length(beamdex)
-            beam_dex(beam_data.Beam==beamdex(i)) = 1;
-        end
-        beam_dex = beam_dex==1;
-    else
-        beam_dex=ones(beam_data.nparticles,1)==1;
+    if beamdex == -1
+        beamdex = 1:double(beam_data.nbeams);
     end
+    beam_dex=zeros(beam_data.nparticles,1);
+    for i=1:length(beamdex)
+        beam_dex(beam_data.Beam==beamdex(i)) = 1;
+    end
+    beam_dex = beam_dex==1;
     shine_dex = and(shine_dex,beam_dex);
     lost_dex = and(lost_dex,beam_dex);
     therm_dex = and(therm_dex,beam_dex);
@@ -749,6 +749,40 @@ else
             xlabel(['Parallel Velocity (v_{||}) [' units ']']);
             ylabel(['Perpendicuarl Velocity (v_\perp) [' units ']']);
             title('Initial Lost Distribution');
+        case 'orbit_rz'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            R = beam_data.R_lines(:,beam_dex);
+            Z = beam_data.Z_lines(:,beam_dex);
+            plot(R,Z);
+            axis equal;
+            set(gca,'FontSize',24);
+            xlabel('R [m]');
+            ylabel('Z [m]');
+            title('Particle Orbits');
+        case 'orbit_rz_lost'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            R = beam_data.R_lines(:,lost_dex);
+            Z = beam_data.Z_lines(:,lost_dex);
+            plot(R,Z);
+            axis equal;
+            set(gca,'FontSize',24);
+            xlabel('R [m]');
+            ylabel('Z [m]');
+            title('Lost Particle Orbits');
+        case 'orbit_flux'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            S = beam_data.S_lines(:,beam_dex);
+            U = beam_data.U_lines(:,beam_dex);
+            polarplot(U,sqrt(S),'.');
+            set(gca,'FontSize',24);
+            title('Particle Orbits (rho,u)');
+        case 'orbit_flux_lost'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            S = beam_data.S_lines(:,lost_dex);
+            U = beam_data.U_lines(:,lost_dex);
+            polarplot(U,sqrt(S),'.');
+            set(gca,'FontSize',24);
+            title('Lost Particle Orbits (rho,u)');
         case 'distribution'
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             n1 = double(beam_data.ns_prof4-1);
@@ -862,9 +896,10 @@ else
             x_shine = x_shine(:,dl);
             y_shine = y_shine(:,dl);
             z_shine = z_shine(:,dl);
-            x = beam_data.X_lines([1 2],~shine_dex);
-            y = beam_data.Y_lines([1 2],~shine_dex);
-            z = beam_data.Z_lines([1 2],~shine_dex);
+            temp_dex = and(~shine_dex,beam_dex);
+            x = beam_data.X_lines([1 2],temp_dex);
+            y = beam_data.Y_lines([1 2],temp_dex);
+            z = beam_data.Z_lines([1 2],temp_dex);
             n = size(x,2);
             dn = max([round(n/nmax) 1]);
             dl = 1:dn:n;
@@ -879,8 +914,9 @@ else
         case 'birth_image'
             r_nb = [];
             z_nb = [];
-            r_nb = beam_data.R_lines(3,~shine_dex);
-            z_nb = beam_data.Z_lines(3,~shine_dex);
+            temp_dex = and(~shine_dex,beam_dex);
+            r_nb = beam_data.R_lines(3,temp_dex);
+            z_nb = beam_data.Z_lines(3,temp_dex);
             nres=0.01;
             x_size=[min(beam_data.raxis) max(beam_data.raxis)];
             y_size=[min(beam_data.zaxis) max(beam_data.zaxis)];
