@@ -1,6 +1,17 @@
 function vmec_spectrum(data,varargin)
-%VMEC_SPECTRUM Dumps the VMEC spectrum to the screen
-%   Detailed explanation goes here
+%VMEC_SPECTRUM Dumps the VMEC spectrum of a wout file to the screen.
+%   The VMEC_SPECTRUM function takes a VMEC wout structure as read by the
+%   READ_VMEC function.  It returns to screen the boundary harmonic
+%   information in multiple formats.  The default is the VMEC INDATA
+%   format.  Options include:
+%       flip:       Flip the torodial angle
+%       spec:       Output in SPEC format
+%       nescoil:    Output in NESCOIL format
+%       focus:      Output in FOCUS format (Bn=0)
+%       ns:         Specify non-boundary surface for output.
+%       
+%   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
+%   Version:       1.00
 
 lspec = 0;
 lvmec = 1;
@@ -8,8 +19,35 @@ lnescoil = 0;
 lfocus = 0;
 lhardcode = 0; % For hardcoding things in matlab
 lflip = 0; % Flip the jacobian sign
-data_save = data;
-%
+s=[];
+
+% Handle varargin
+if nargin > 1
+    i=1;
+    while i < nargin
+        switch varargin{i}
+            case{'flip','FLIP'}
+                lflip = 1;
+            case{'spec','SPEC'}
+                lspec = 1;
+            case{'necoil','NESCOIL'}
+                lnescoil = 1;
+            case{'focus','FOCUS'}
+                lfocus = 1;
+            case{'ns','NS'}
+                i=i+1;
+                s=varargin{i};
+            otherwise
+                disp(['Unrecognized Option: ' varargin{i}]);
+                return
+        end
+        i = i + 1;
+    end
+end
+if (lspec || lnescoil || lfocus), lvmec=0; end
+if (isempty(s)) s = data.ns;
+
+% Flip toroidal direction
 if (lflip)
     for i=1:data.mnmax
         m=data.xm(i);
@@ -26,8 +64,6 @@ end
 
 % Note -xn is needed because we use (mu+nv) in MATLAB but VMEC needs
 % (mu-nv)
-s=data.ns;
-%s=96;
 if (data.iasym == 0)
     if lspec
         disp('mn   m   n   rmnc   zmns');
@@ -99,7 +135,6 @@ else
         end
     end
 end
-data =data_save;
 
 end
 
