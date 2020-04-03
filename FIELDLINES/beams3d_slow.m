@@ -8,7 +8,7 @@ function data=beams3d_slow(varargin)
 %       'plots'     : Create plots
 %       'beams'     : Downselect beamlines considered
 %       'mass'      : Plasma mass [kg] (assumes protons otherwise)
-%                       data=beams3d_bes(beam_data,file,'beams',4:6);
+%                       data=beams3d_slow(beam_data,vmec_data,'beams',4:6);
 %
 % Example usage
 %      vmec_data = read_vmec('wout_test.nc');
@@ -110,6 +110,7 @@ TI_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     TI,R_BEAM,P_BEAM,Z_BEAM);
 
 % PInj
+if size(W_BEAM,2) == 1, W_BEAM=W_BEAM'; end % Flip W
 Pinj = sum(E_BEAM.*W_BEAM);
 Iinj = sum(CHARGE.*W_BEAM);
 
@@ -121,7 +122,8 @@ coulomb_log(dex) = 23 - log(myZ(dex).*sqrt(NE_BEAM(dex).*1E-6./TE3(dex)));
 dex = ~dex;
 coulomb_log(dex) = 24 - log(sqrt(NE_BEAM(dex).*1E-6)./TE_BEAM(dex));
 coulomb_log(coulomb_log <=1) = 1;
-v_crit = ((0.75.*sqrt(pi.*MASS./me).*MASS./plasma_mass).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
+v_crit = ((1.5.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
+%v_crit = ((0.75.*sqrt(pi.*MASS./me).*MASS./plasma_mass).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
 %v_crit = ((0.75*sqrt(pi).*me./MASS).^(1./3)).*sqrt(TE_BEAM).*5.93096892024E5;
 vcrit_cube = v_crit.^3;
 tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
