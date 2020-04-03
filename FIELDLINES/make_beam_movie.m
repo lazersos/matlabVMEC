@@ -12,9 +12,7 @@ function make_beam_movie(varargin)
 %       'parts':    Followed by an array defining a subset of particles to
 %                   follow.
 %       'movie':    Output an AVI file. (slows code down)
-%       'flux':     Particle orbits are plotted in 'flux' space.  Requires
-%                   the code to have been run with the -flux flag, or
-%                   produced by STELLOPT.
+%       'flux':     Particle orbits are plotted in 'flux' space.
 %       'flux_notail':   Same as 'flux' but with no trailing particles
 %                        plotted.
 %
@@ -339,6 +337,7 @@ else
         hold on
         for j=d1:d2
             shade = double(j-1)/double(d2);
+            if ntail==0, shade=1; end
             plot3(data.X_lines(j,parts),data.Y_lines(j,parts),data.Z_lines(j,parts),'.','Color',color.*shade,'MarkerSize',18);
         end
         if (~isempty(vmec_data))
@@ -373,6 +372,7 @@ else
         %disp(num2str([d1 d2],'%i'));
         for j=d1:d2
             shade = double(j-d1)/double(ntail);
+            if ntail==0, shade=1; end
             plot3(data.X_lines(j,parts),data.Y_lines(j,parts),data.Z_lines(j,parts),'.','Color',color.*shade,'MarkerSize',18);
         end
         %plot3(x(99,:,1),y(99,:,1),z(99,:,1),'r');
