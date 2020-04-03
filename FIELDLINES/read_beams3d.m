@@ -11,6 +11,12 @@ function data = read_beams3d(filename)
 
 if (strcmp(filename(end-1:end),'h5'))
     data = read_hdf5(filename);
+    if ~isstruct(data)
+        disp('ERROR: File not found, check filename!');
+        disp(['       Filename: ' filename]);
+        data=[];
+        return;
+    end
     data.datatype='BEAMS3D';
     data.X_lines=data.R_lines.*cos(data.PHI_lines);
     data.Y_lines=data.R_lines.*sin(data.PHI_lines);
