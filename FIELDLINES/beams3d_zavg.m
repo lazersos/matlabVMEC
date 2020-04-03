@@ -25,8 +25,8 @@ nzzm = sum(narr.*zarr.*zarr.*marr2./mp);
 Zavg = nzz./nz;
 Zmean = nzzm./nz;
 disp(['  PLASMA_MASS = ' num2str(mp,'%20.12E')]);
-disp(['  ZAVG = ' num2str(Zavg,'%20.12E')]);
-disp(['  ZMEAN = ' num2str(Zmean,'%20.12E')]);
+disp(['  PLASMA_ZAVG = ' num2str(Zavg,'%20.12E')]);
+disp(['  PLASMA_ZMEAN = ' num2str(Zmean,'%20.12E')]);
 return;
 
 end
