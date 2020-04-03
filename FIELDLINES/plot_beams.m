@@ -19,6 +19,8 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      plot_beams(beam_data,'pitch'); % note _opt as in xyz above
 %      plot_beams(beam_data,'dist'); % note _opt as in xyz above
 %      plot_beams(beam_data,'orbit_rz'); % Full particle Orbit in RZ
+%      plot_beams(beam_data,'orbit_flux'); % Full particle Orbit in flux
+%      plot_beams(beam_data,'orbit_vspace'); % Full particle Orbit in V
 %      plot_beams(beam_data,'distribution'); % 2D vll/vperp distribution
 %      plot_beams(beam_data,'heating'); % 1D Heating profiles
 %      plot_beams(beam_data,'current'); % 1D Current Density profiles
@@ -51,7 +53,7 @@ if nargin > 1
                     'pitch_initial','pitch_therm_initial','pitch_lost_initial',...
                     'dist','dist_therm','dist_lost','dist_birth', ...
                     'dist_initial','dist_therm_initial','dist_lost_initial',...
-                    'orbit_rz','orbit_flux',...
+                    'orbit_rz','orbit_flux','orbit_vspace',...
                     'distribution','heating','current','fueling',...
                     'injection','birth_image',...
                     'wall_loss','wall_heat','wall_shine','benchmarks',...
@@ -783,6 +785,28 @@ else
             polarplot(U,sqrt(S),'.');
             set(gca,'FontSize',24);
             title('Lost Particle Orbits (rho,u)');
+        case 'orbit_vspace'
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            vll = beam_data.vll_lines(:,beam_dex);
+            vperp = beams3d_calc_vperp(beam_data);
+            vperp = vperp(:,beam_dex);
+            if beam_data.partvmax>1E6
+                units='x1000 [km/s]';
+                factor = 1E-6;
+            elseif beam_data.partvmax>1E3
+                units='[km/s]';
+                factor = 1E-3;
+            else
+                units='[m/s]';
+                factor=1;
+            end
+            plot(vll.*factor,vperp.*factor,'.');
+            xlim([-1 1].*beam_data.partvmax.*factor);
+            ylim([0 1].*beam_data.partvmax.*factor);
+            set(gca,'FontSize',24);
+            title('Particle Orbits Velocity Space');
+            xlabel(['Parallel Velocity (v_{||}) ' units ]);
+            ylabel(['Perpendicuarl Velocity (v_\perp) ' units ]);
         case 'distribution'
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             n1 = double(beam_data.ns_prof4-1);
