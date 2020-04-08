@@ -1914,28 +1914,28 @@ switch handles.data.datatype
         handles.lam=sfunct(handles.theta,handles.zeta,handles.data.lmns,handles.data.xm,handles.data.xn);
         set(handles.statustext,'String','Computing B');
         pause(.01);
-        handles.b=cfunct(handles.theta,handles.zeta,handles.data.bmnc,handles.data.xmnyq,handles.data.xnnyq);
+        handles.b=cfunct(handles.theta,handles.zeta,handles.data.bmnc,handles.data.xm_nyq,handles.data.xn_nyq);
         set(handles.statustext,'String','Computing g');
         pause(.01);
-        handles.g=cfunct(handles.theta,handles.zeta,handles.data.gmnc,handles.data.xmnyq,handles.data.xnnyq);
+        handles.g=cfunct(handles.theta,handles.zeta,handles.data.gmnc,handles.data.xm_nyq,handles.data.xn_nyq);
         set(handles.statustext,'String','Computing b_s');
         pause(.01);
-        handles.b_s=sfunct(handles.theta,handles.zeta,handles.data.bsubsmns,handles.data.xmnyq,handles.data.xnnyq);
+        handles.b_s=sfunct(handles.theta,handles.zeta,handles.data.bsubsmns,handles.data.xm_nyq,handles.data.xn_nyq);
         set(handles.statustext,'String','Computing b_u');
         pause(.01);
-        handles.b_u=cfunct(handles.theta,handles.zeta,handles.data.bsubumnc,handles.data.xmnyq,handles.data.xnnyq);
+        handles.b_u=cfunct(handles.theta,handles.zeta,handles.data.bsubumnc,handles.data.xm_nyq,handles.data.xn_nyq);
         set(handles.statustext,'String','Computing b_v');
         pause(.01);
-        handles.b_v=cfunct(handles.theta,handles.zeta,handles.data.bsubvmnc,handles.data.xmnyq,handles.data.xnnyq);
+        handles.b_v=cfunct(handles.theta,handles.zeta,handles.data.bsubvmnc,handles.data.xm_nyq,handles.data.xn_nyq);
         set(handles.statustext,'String','Computing b^u');
         pause(.01);
-        handles.bu=cfunct(handles.theta,handles.zeta,handles.data.bsupumnc,handles.data.xmnyq,handles.data.xnnyq);
+        handles.bu=cfunct(handles.theta,handles.zeta,handles.data.bsupumnc,handles.data.xm_nyq,handles.data.xn_nyq);
         set(handles.statustext,'String','Computing b^v');
         pause(.01);
-        handles.bv=cfunct(handles.theta,handles.zeta,handles.data.bsupvmnc,handles.data.xmnyq,handles.data.xnnyq);
+        handles.bv=cfunct(handles.theta,handles.zeta,handles.data.bsupvmnc,handles.data.xm_nyq,handles.data.xn_nyq);
         set(handles.statustext,'String','Computing currv');
         pause(.01);
-        handles.currv=cfunct(handles.theta,handles.zeta,handles.data.currvmnc,handles.data.xmnyq,handles.data.xnnyq);
+        handles.currv=cfunct(handles.theta,handles.zeta,handles.data.currvmnc,handles.data.xm_nyq,handles.data.xn_nyq);
         set(handles.statustext,'String','Computing dR/du');
         pause(.01);
         handles.drdu=sfunct(handles.theta,handles.zeta,handles.data.rumns,handles.data.xm,handles.data.xn);
@@ -1985,33 +1985,33 @@ switch handles.data.datatype
             if isfield(handles.data,'bmns')
                 set(handles.statustext,'String','Adding bs to b');
                 pause(.01);
-                handles.b=handles.b+sfunct(handles.theta,handles.zeta,handles.data.bmns,handles.data.xm,handles.data.xn);
+                handles.b=handles.b+sfunct(handles.theta,handles.zeta,handles.data.bmns,handles.data.xm_nyq,handles.data.xn_nyq);
             end
             if isfield(handles.data,'gmns')
                 set(handles.statustext,'String','Adding gs to g');
                 pause(.01);
-                handles.g=handles.g+sfunct(handles.theta,handles.zeta,handles.data.gmns,handles.data.xm,handles.data.xn);
+                handles.g=handles.g+sfunct(handles.theta,handles.zeta,handles.data.gmns,handles.data.xm_nyq,handles.data.xn_nyq);
             end
             if isfield(handles.data,'bsubsmnc')
                 set(handles.statustext,'String','Adding b_sc to b_s');
                 pause(.01);
-                handles.b_s=handles.b_s+cfunct(handles.theta,handles.zeta,handles.data.bsubsmnc,handles.data.xm,handles.data.xn);
+                handles.b_s=handles.b_s+cfunct(handles.theta,handles.zeta,handles.data.bsubsmnc,handles.data.xm_nyq,handles.data.xn_nyq);
             end
             if isfield(handles.data,'bsubumns')
                 set(handles.statustext,'String','Adding b_us to b_u');
                 pause(.01);
-                handles.b_u=handles.b_u+sfunct(handles.theta,handles.zeta,handles.data.bsubumns,handles.data.xm,handles.data.xn);
+                handles.b_u=handles.b_u+sfunct(handles.theta,handles.zeta,handles.data.bsubumns,handles.data.xm_nyq,handles.data.xn_nyq);
             end
             if isfield(handles.data,'bsubvmns')
                 set(handles.statustext,'String','Adding b_vs to b_v');
                 pause(.01);
-                handles.b_v=handles.b_v+sfunct(handles.theta,handles.zeta,handles.data.bsubvmns,handles.data.xm,handles.data.xn);
+                handles.b_v=handles.b_v+sfunct(handles.theta,handles.zeta,handles.data.bsubvmns,handles.data.xm_nyq,handles.data.xn_nyq);
             end
             if isfield(handles.data,'currvmns')
                 set(handles.statustext,'String','Adding currvs to currv');
                 pause(.01);
-                handles.currv=handles.currv+sfunct(handles.theta,handles.zeta,handles.data.currvmns,handles.data.xm,handles.data.xn);
-                handles.b=handles.b+sfunct(handles.theta,handles.zeta,handles.data.bmns,handles.data.xm,handles.data.xn);
+                handles.currv=handles.currv+sfunct(handles.theta,handles.zeta,handles.data.currvmns,handles.data.xm_nyq,handles.data.xn_nyq);
+                %handles.b=handles.b+sfunct(handles.theta,handles.zeta,handles.data.bmns,handles.data.xm_nyq,handles.data.xn);
             end
             if isfield(handles.data,'protmns')
                 pause(.01);
@@ -2048,10 +2048,10 @@ switch handles.data.datatype
         if isfield(handles.data,'currumnc')
             set(handles.statustext,'String','Computing curru');
             pause(.01);
-            handles.curru=cfunct(handles.theta,handles.zeta,handles.data.currumnc,handles.data.xmnyq,handles.data.xnnyq);
+            handles.curru=cfunct(handles.theta,handles.zeta,handles.data.currumnc,handles.data.xm_nyq,handles.data.xn_nyq);
             if handles.data.iasym==1
                 if isfield(handles.data,'currumns')
-                    handles.curru=handles.curru+sfunct(handles.theta,handles.zeta,handles.data.currumns,handles.data.xm,handles.data.xn);
+                    handles.curru=handles.curru+sfunct(handles.theta,handles.zeta,handles.data.currumns,handles.data.xm_nyq,handles.data.xn_nyq);
                 end
             end
             handles.curru=handles.curru./handles.g;
