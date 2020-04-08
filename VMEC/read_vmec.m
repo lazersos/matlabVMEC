@@ -2437,6 +2437,9 @@ f=rmfield(f,'betavol');
 f=rmfield(f,'lasymlogical');
 f=rmfield(f,'lfreeblogical');
 f=rmfield(f,'lreconlogical');
+f=rmfield(f,'xmnyq');
+f=rmfield(f,'xnnyq');
+f=rmfield(f,'mnmaxnyq');
 return
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
