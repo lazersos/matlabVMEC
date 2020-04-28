@@ -29,7 +29,7 @@ function data = write_wall(data,filename )
 %       lim_data=read_wall('limiter_trimesh.dat');
 %       write_wall(lim_data,'test_file.dat');
 %
-%   Written by:     S.Lazerson (lazerson@pppl.gov)
+%   Written by:     S.Lazerson (samuel.lazerson@ipp.mpg.de)
 %   Version:        1.0
 %   Date:           9/29/16
 % Check arguments

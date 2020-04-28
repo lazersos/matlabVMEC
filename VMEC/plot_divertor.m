@@ -28,7 +28,7 @@ function phandle=plot_divertor(data,varargin)
 %
 %   See also read_divertor.
 %
-%   Written by:     S.Lazerson (lazerson@pppl.gov)
+%   Written by:     S.Lazerson (samuel.lazerson@ipp.mpg.de)
 %   Version:        1.0
 %   Date:           1/10/13
 
