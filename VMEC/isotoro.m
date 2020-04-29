@@ -27,7 +27,7 @@ function [varargout]=isotoro(r,z,zeta,s,varargin)
 %      z=sfunct(theta,zeta,data.zmns,data.xm,data.xn);
 %      hpatch=isotoro(r,z,zeta,[2 10]);
 %
-% Maintained by: Samuel Lazerson (lazerson@pppl.gov)
+% Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       2.05
 if nargin > 5
     disp('-- Error too many arguments');
