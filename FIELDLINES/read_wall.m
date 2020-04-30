@@ -28,29 +28,51 @@ function data = read_wall( filename )
 %   Example:
 %       lim_data=read_wall('limiter_trimesh.dat');
 %
-%   Written by:     S.Lazerson (lazerson@pppl.gov)
-%   Version:        1.0
+%   Written by:     S.Lazerson (samuel.lazerson@ipp.mpg.de)
+%   Version:        2.0
 %   Date:           9/29/16
+
+% Defaults
+data=[];
 
 % Check arguments
 if nargin<1
     disp('ERROR: read_vessel requires filename');
     return
 end
-% Open File
-fid=fopen(filename,'r');
-% Read Header
-header_line1=fgetl(fid);
-header_line2=fgetl(fid);
-data.machine=strtrim(header_line1(strfind(header_line1,':')+1:numel(header_line1)));
-data.date=strtrim(header_line2(strfind(header_line2,':')+1:numel(header_line2)));
-temp=fscanf(fid,'%d',2);
-data.nvertex = temp(1);
-data.nfaces = temp(2);
-% Read dataset
-data.coords=fscanf(fid,'%E %E %E',[3 data.nvertex]);
-data.faces=fscanf(fid,'%d %d %d',[3 data.nfaces]);
-fclose(fid);
+
+% Try to open an STL if given
+n = length(filename);
+if strcmp(filename(n-3:n),'.dat')
+    % Open File
+    fid=fopen(filename,'r');
+    % Read Header
+    header_line1=fgetl(fid);
+    header_line2=fgetl(fid);
+    data.machine=strtrim(header_line1(strfind(header_line1,':')+1:numel(header_line1)));
+    data.date=strtrim(header_line2(strfind(header_line2,':')+1:numel(header_line2)));
+    temp=fscanf(fid,'%d',2);
+    data.nvertex = temp(1);
+    data.nfaces = temp(2);
+    % Read dataset
+    data.coords=fscanf(fid,'%E %E %E',[3 data.nvertex]);
+    data.faces=fscanf(fid,'%d %d %d',[3 data.nfaces]);
+    fclose(fid);
+elseif strcmp(filename(n-3:n),'.stl')
+    stl_data=stlread(filename);
+    data.machine=['STL: ' filename];
+    data.date=datestr(now,'mm-dd-yyyy');
+    data.coords=stl_data.Points';
+    data.faces=stl_data.ConnectivityList';
+    if max(max(data.coords))>1000
+        disp('  COORDS>1000 detected, assuming mm, rescaling!');
+        data.coords=data.coords.*1E-3;
+    end
+else
+    disp(' READ_WALL accepts STL and DAT wall files only!');
+    data=[];
+    return;
+end
 % Fix if 0 index
 if min(min(data.faces)) == 0
     data.faces = data.faces+1;
