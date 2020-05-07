@@ -13,6 +13,8 @@ function [ output_args ] = plot_fieldlines(data,varargin)
 %       'skip':         Skip this many fieldlines in plot
 %       'wall_strike':  Strucutre strike heat map
 %       'camview':      Use current view to construct a camer view
+%       'phi':          Plot on interpolated value of phi 2D ('phi',0.51)
+%       'phi3D':        Plot on interpolated value of phi 3D ('phi3D',0.51)
 %
 %   Usage:
 %       line_data=read_fieldlines('fieldlines_test.h5');
@@ -144,7 +146,7 @@ switch plottype
         plot(R,Z,'.','Color',line_color,'MarkerSize',0.1);
         axis equal
     case{103}
-        phi2 = phi0:2*pi:max(max(data.PHI_lines));
+        phi2 = phi0:2*pi./data.nfp:max(max(data.PHI_lines));
         R=zeros(data.nlines,length(phi2));
         Z=zeros(data.nlines,length(phi2));
         for i=1:data.nlines
@@ -155,8 +157,8 @@ switch plottype
             R(i,1:n2) = pchip(phi,data.R_lines(i,1:n),phi2(1:n2));
             Z(i,1:n2) = pchip(phi,data.Z_lines(i,1:n),phi2(1:n2));
         end
-        X = R.*cos(phi2);
-        Y = R.*sin(phi2);
+        X = R.*cos(phi0);
+        Y = R.*sin(phi0);
         hold on;
         plot3(X,Y,Z,'.','Color',line_color,'MarkerSize',0.1);
         axis equal
