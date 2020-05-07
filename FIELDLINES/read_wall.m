@@ -64,10 +64,12 @@ elseif strcmp(filename(n-3:n),'.stl')
     data.date=datestr(now,'mm-dd-yyyy');
     data.coords=stl_data.Points';
     data.faces=stl_data.ConnectivityList';
-    if max(max(data.coords))>1000
+    if max(max(abs(data.coords)))>1000
         disp('  COORDS>1000 detected, assuming mm, rescaling!');
         data.coords=data.coords.*1E-3;
     end
+    data.nvertex = size(data.coords,2);
+    data.nfaces = size(data.faces,2);
 else
     disp(' READ_WALL accepts STL and DAT wall files only!');
     data=[];
