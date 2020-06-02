@@ -2107,7 +2107,7 @@ end
 if isfield(f,'beta_vol'), f.beta_vol=h2f(f.beta_vol,f.ns); end
 f.buco=h2f(f.buco,f.ns);
 f.bvco=h2f(f.bvco,f.ns);
-f.vp=h2f_special(f.vp,length(f.vp));
+f.vp=h2f(f.vp,length(f.vp));
 f.overr=h2f(f.overr,f.ns);
 f.specw=h2f(f.specw,f.ns);
 if(length(f.jdotb) == f.ns)
@@ -2273,12 +2273,9 @@ end
 function f = h2f(var,ns)
 % Map quantitiy from half to full grid
 temp=zeros(1,ns);
-temp(1)  =  1.5 *   var( 1) - 0.5 *    var(2);
-temp(2:ns-1)=0.5 * ( var(1:ns-2) + var(2:ns-1));
-%for i=2:ns-1
-%    temp(i)= 0.5 * ( var(i) +    var(i+1) );
-%end
-temp(ns) =  1.5 *   var(ns-1) - 0.5 * var(ns-2);
+temp(1)      =  1.5 *   var( 2) - 0.5 *    var(3);
+temp(2:ns-1) =  0.5 * ( var(2:ns-1) + var(3:ns));
+temp(ns)     =  2   *   var(ns) - var(ns-2);
 f=temp;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
