@@ -7,7 +7,7 @@ function [S11 S12 S21 S22] = calc_susceptance(data)
 %       vmec_data=read_vmec('wout_test.nc');
 %       [S11 S12 S21 S22]=calc_susceptance(vmec_data);
 %
-%   See also read_fieldlines.
+%   See also read_vmec.
 %
 %   Created by: S. Lazerson (lazerson@pppl.gov)
 %   Version:    1.00
