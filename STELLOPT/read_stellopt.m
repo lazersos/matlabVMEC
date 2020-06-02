@@ -902,7 +902,7 @@ while ~feof(fid);
                 data.([tstr '_Z'])(niter,:) = temp(:,6);
                 data.([tstr '_chisq'])(niter,:) = ((temp(:,1)-temp(:,3))./(temp(:,2))).^2;
             % Thomson
-            case {'TE','TI','IOTA','VPHI','PRESS','VACIOTA'}
+            case {'TE','TI','IOTA','VPHI','PRESS','VACIOTA','PRESSPRIME'}
                 data.([tstr '_R'])(niter,:) = temp(:,1);
                 data.([tstr '_PHI'])(niter,:) = temp(:,2);
                 data.([tstr '_Z'])(niter,:) = temp(:,3);

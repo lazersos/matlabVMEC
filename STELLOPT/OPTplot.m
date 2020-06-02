@@ -123,6 +123,9 @@ end
 if isfield(handles.data,'PRESS_chisq')
     handles.plot_types = [handles.plot_types; 'PRESS_evolution'];
 end
+if isfield(handles.data,'PRESSPRIME_chisq')
+    handles.plot_types = [handles.plot_types; 'PRESSPRIME_evolution'];
+end
 if isfield(handles.data,'TE_chisq')
     handles.plot_types = [handles.plot_types; 'TE_evolution'];
     handles.plot_types = [handles.plot_types; 'TE_R'];
@@ -510,7 +513,18 @@ switch stemp
         xlim([0 1]);
         xlabel('Normalized Flux');
         ylabel('Pressure');
-        title('Pressure Reconstruction');
+        title('Pressure Optimization');
+    case{'PRESSPRIME_evolution'}
+        %errorbar(handles.data.PRESS_S(1,:),handles.data.PRESS_target(1,:),handles.data.PRESS_sigma(1,:),'ok');
+        plot(handles.data.PRESS_S(:,:)',handles.data.PRESSPRIME_equil(:,:)','k');
+        hold on;
+        plot(handles.data.PRESS_S(1,:),handles.data.PRESSPRIME_equil(1,:),cinitial,'LineWidth',2.0);
+        plot(handles.data.PRESS_S(end,:),handles.data.PRESSPRIME_equil(end,:),cfinal,'LineWidth',2.0);
+        hold off;
+        xlim([0 1]);
+        xlabel('Normalized Flux');
+        ylabel('dp/ds');
+        title('Pressure Gradient Optimization');
     case{'NE_evolution'}
         errorbar(handles.data.NE_S(1,:),handles.data.NE_target(1,:),handles.data.NE_sigma(1,:),'ok');
         hold on;
