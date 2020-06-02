@@ -22,7 +22,7 @@ function [ output_args ] = plot_fieldlines(data,varargin)
 %
 %   See also read_fieldlines.
 %
-%   Created by: S. Lazerson (lazerson@pppl.gov)
+%   Created by: S. Lazerson (samuel.lazerson@ipp.mpg.de)
 %   Version:    1.22
 %   Date:       11/19/14
 
@@ -143,7 +143,7 @@ switch plottype
             %hold off;
             %drawnow;
         end
-        plot(R,Z,'.','Color',line_color,'MarkerSize',0.1);
+        plot(R(1:skip:data.nlines,:),Z(1:skip:nlines,:),'.','Color',line_color,'MarkerSize',0.1);
         axis equal
     case{103}
         phi2 = phi0:2*pi./data.nfp:max(max(data.PHI_lines));
