@@ -9,6 +9,7 @@ function stellopt2neotransp(ext,varargin)
 %
 %   Example
 %       stellopt2neotransp('test');
+%       stellopt2neotransp([],'list'); % List equil database
 %
 % Maintained by: Samuel Lazerson (sameul.lazerson@ipp.mpg.de)
 % Version:       1.00
@@ -62,7 +63,7 @@ te  = tprof(:,3).*1E-3;
 ti  = tprof(:,4).*1E-3;
 Z   = tprof(:,5);
 ni  = ne./Z;
-h2  = 0.025;
+h2  = 0.01;
 rho2 = 0.1:h2:0.95;
 
 % Electrons
@@ -89,58 +90,57 @@ Prof(2).n20=ppval(p_spl,rho2);
 Prof(2).dn20drho=ppval(pp_spl,rho2);
 
 Opt.makeErsearchplot=0; %set to 0 to turn off, or to the figure number
-Opt.roots='i&e';          %can be 'i', 'e', 'i&e' 
+Opt.roots='i/e';          %can be 'i', 'e', 'i&e' 
 
 Transp = neotransp(equilID,rho2,Prof,B00axis,Opt);
 
 % Now we need to fit the data
 factor = 1E-3;
-dphi1 = Transp.dPhidskV(1,:).*1E3;
-dphi2 = Transp.dPhidskV(2,:).*1E3;
+dphi = Transp.dPhidskV(1,:).*1E3; %kV to V
+%dphi2 = Transp.dPhidskV(2,:).*1E3;
 
 % Handle single root
-dphi1(isnan(dphi1)) = dphi2(isnan(dphi1));
-dphi2(isnan(dphi2)) = dphi1(isnan(dphi2));
+%dphi1(isnan(dphi1)) = dphi2(isnan(dphi1));
+%dphi2(isnan(dphi2)) = dphi1(isnan(dphi2));
 
 rho  = Transp.rho;
-s    = rho.*rho;
+s    = Transp.s;
 fig = figure('Position',[ 1 1 1024 768],'Color','white');
 subplot(1,2,1);
-plot(s,factor.*dphi1./phiedge,'ob');
+plot(s,factor.*dphi./phiedge,'ok');
 hold on;
-plot(s,factor.*dphi2./phiedge,'or');
 xlim([0 1]);
 set(gca,'FontSize',24);
 xlabel('Norm. Toridal Flux (s)');
 ylabel('dV/ds [kV/Wb]');
 title('NEOTRANSP E');
-dphim=0.5*(dphi1+dphi2);
-s = s(~isnan(dphim));
-dphi1 = dphi1(~isnan(dphim));
-dphi2 = dphi2(~isnan(dphim));
-dphim = dphim(~isnan(dphim));
-plot(s,factor.*dphim./phiedge,'ok');
-pp=polyfit([0 s 1],[0 dphim 0], 6);
+s = s(~isnan(dphi));
+dphi = dphi(~isnan(dphi));
+pp = pchip([0 s 1],[0 dphi 0]);
+%pp=polyfit([0 s 1],[0 dphi 0], 6);
 h = 0.01;
 s2 = 0:h:1;
-plot(s2,factor.*polyval(pp,s2)./phiedge,'g');
-legend('Root1','Root2','Avg','Polyfit');
+%plot(s2,factor.*polyval(pp,s2)./phiedge,'g');
+plot(s2,factor.*ppval(pp,s2)./phiedge,'g');
+legend('d\Phi/d\Psi','Polyfit');
 subplot(1,2,2);
-plot(s,factor.*cumsum(dphi1),'b');
-hold on;
-plot(s,factor.*cumsum(dphi2),'r');
-plot(s2,factor.*cumsum(polyval(pp,s2)),'ok');
+s_lin = min(s):range(s)./128:max(s);
+dphi_lin = pchip(s,dphi,s_lin);
+plot(s_lin,factor.*cumsum(dphi_lin).*(s_lin(2)-s_lin(1)),'b'); hold on;
+%plot(s2,factor.*cumsum(polyval(pp,s2)).*h,'ok');
+plot(s2,factor.*cumsum(ppval(pp,s2)).*h,'ok');
 xlim([0 1]);
 set(gca,'FontSize',24);
 xlabel('Norm. Toridal Flux (s)');
 ylabel('e-static Potential [kV]');
 title('NEOTRANSP Potential');
-legend('Root1','Root2','Polyfit');
+legend('\Phi','Fit');
 
-
-s3 = 0:0.05:1;
+h3 = 0.05;
+s3 = 0:h3:1;
 disp(['  POT_AUX_S = ' num2str(s3,' %20.10E')]);
-disp(['  POT_AUX_F = ' num2str(cumsum(polyval(pp,s3)),' %20.10E')]);
+%disp(['  POT_AUX_F = ' num2str(cumsum(polyval(pp,s3)),' %20.10E')]);
+disp(['  POT_AUX_F = ' num2str(cumsum(ppval(pp,s3)).*h3,' %20.10E')]);
 
 end
 
