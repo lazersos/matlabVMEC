@@ -55,9 +55,9 @@ h5create(filename,['/marker/gc_' id '/id'],size(idnum),'Datatype','int32');
 
 
 % Write Attributes
-h5writeatt(filename,['/marker'],'active',id);
-h5writeatt(filename,['/marker/gc_' id ],'date',datestr(now,'yyyy-mm-dd hh:MM:ss'));
-h5writeatt(filename,['/marker/gc_' id ],'description','Written by MATLAB');
+h5writeatt(filename,'/marker','active',id,'TextEncoding','system');
+h5writeatt(filename,['/marker/gc_' id ],'date',datestr(now,'yyyy-mm-dd hh:MM:ss'),'TextEncoding','system');
+h5writeatt(filename,['/marker/gc_' id ],'description','Written by MATLAB','TextEncoding','system');
 
 % Relativistic adjustments
 vtotal = sqrt(2.*energy.*ec./(mass.*amu));

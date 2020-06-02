@@ -76,9 +76,9 @@ h5create(filename,['/wall/wall_3D_' id '/y1y2y3'],size(y123));
 h5create(filename,['/wall/wall_3D_' id '/z1z2z3'],size(z123));
 
 % Write Attributes
-h5writeatt(filename,['/wall'],'active',id);
-h5writeatt(filename,['/wall/wall_3D_' id ],'date',datestr(now,'yyyy-mm-dd hh:MM:ss'));
-h5writeatt(filename,['/wall/wall_3D_' id ],'description',desc_text);
+h5writeatt(filename,'/wall','active',id,'TextEncoding','system');
+h5writeatt(filename,['/wall/wall_3D_' id ],'date',datestr(now,'yyyy-mm-dd hh:MM:ss'),'TextEncoding','system');
+h5writeatt(filename,['/wall/wall_3D_' id ],'description',desc_text,'TextEncoding','system');
 
 
 % Write Variables

@@ -97,20 +97,25 @@ if ~isempty(runid)
     % Pull data
     path = ['/results/run_' num2str(runid,'%10.10i') '/endstate'];
     try
-        walltile = h5read(a5file,[path '/walltile']);
+        endcond = h5read(a5file,[path '/endcond']);
     catch
         disp(['ERROR: Could not result: ' num2str(runid,'%10.10i')]);
         return;
     end
+    walltile = h5read(a5file,[path '/walltile'])+1;
+    % Correct walltile
+    dex = endcond ~= 8; % endcond=8 is wall hit
+    walltile(dex) = 0;
     % Count hits
     nhits=[];
-    mask = unique(walltile)+1;
+    mask = unique(walltile);
     for i = mask'
         if (i==0), continue; end
         dex = walltile==i;
         nhits = [nhits; sum(dex)];
     end
-    wall_strikes(mask) = nhits;
+    mask2 = mask(mask>0);
+    wall_strikes(mask2) = nhits;
     % Filter to zero
     dex = wall_strikes<=nfilter;
     wall_strikes(dex) = 0;
@@ -146,7 +151,7 @@ if ~isempty(runid)
             qtemp = q(dex);
             qflux = [qflux; sum(qtemp)];
         end
-        wall_load(mask)=qflux;
+        wall_load(mask2)=qflux;
         wall_load = wall_load./A;
         % Always filter
         dex = wall_strikes==0;

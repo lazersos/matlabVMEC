@@ -8,20 +8,22 @@ function fig = ascot5_plotwall(a5file,wallid,runid,varargin)
 %   fewer than this number of hits is zeroed out.
 %
 %   Example:
-%       a5file='ascot5_W7X_20180821_012_5100_h8.h5';
+%       a5file='ascot5_test.h5';
 %       wallid=0838288192;
 %       runid=0396210459;
 %       fig=ascot5_plotwall(a5file,wallid,[]); % Just wall
 %       fig=ascot5_plotwall(a5file,wallid,runid); %Heat flux [W/m^2]
 %       fig=ascot5_plotwall(a5file,wallid,runid,'hits'); %Wall strikes
 %       fig=ascot5_plotwall(a5file,wallid,runid,'nfilter',5); %Filtering
+%       fig=ascot5_plotwall(a5file,wallid,runid,'log'); %LOG10 scale
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
-% Version:       1.0
+% Version:       1.2
 
 nfilter=0;
 lhits=0;
 llog=0;
+lpts=0;
 amu = 1.66053906660E-27;
 ec = 1.60217662E-19;
 
@@ -38,6 +40,8 @@ if nargin > 3
             case{'nfilter'}
                 i=i+1;
                 nfilter=varargin{i};
+            case{'points'}
+                lpts=1;
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -74,69 +78,31 @@ end
 y1y2y3 = h5read(a5file,[path '/y1y2y3']);
 z1z2z3 = h5read(a5file,[path '/z1z2z3']);
 
+wall_load = [];
+wall_strikes = [];
 
-wall_strikes = zeros(1,size(x1x2x3,2));
-wall_load = zeros(1,size(x1x2x3,2));
 if ~isempty(runid)
-    % Pull data
-    path = ['/results/run_' num2str(runid,'%10.10i') '/endstate'];
-    try
-        walltile = h5read(a5file,[path '/walltile']);
-    catch
-        disp(['ERROR: Could not result: ' num2str(runid,'%10.10i')]);
-        return;
-    end
-    % Count hits
-    nhits=[];
-    mask = unique(walltile)+1;
-    for i = mask'
-        if (i==0), continue; end
-        dex = walltile==i;
-        nhits = [nhits; sum(dex)];
-    end
-    wall_strikes(mask) = nhits;
-    % Filter to zero
-    dex = wall_strikes<=nfilter;
-    wall_strikes(dex) = 0;
-    % Calc heatload if desired
-    if ~lhits
-        weight = h5read(a5file,[path '/weight']);
-        vr = h5read(a5file,[path '/vr']);
-        vphi = h5read(a5file,[path '/vphi']);
-        vz = h5read(a5file,[path '/vz']);
-        mass = h5read(a5file,[path '/mass']).*amu; %in amu
-        v2 = vr.*vr+vphi.*vphi+vz.*vz;
-        q  = 0.5.*mass.*v2.*weight;
-        %vpar = h5read(a5file,[path '/vpar']);
-        %mu = h5read(a5file,[path '/mu']).*ec; %in eV/T
-        %br = h5read(a5file,[path '/br']);
-        %bphi = h5read(a5file,[path '/bphi']);
-        %bz = h5read(a5file,[path '/bz']);
-        %modb = sqrt(br.*br+bphi.*bphi+bz.*bz);
-        %energy = mu.*modb;
-        %q = (energy+0.5.*mass.*vpar.*vpar).*weight;
-    
-        % Calc Area
-        V0=[x1x2x3(2,:)-x1x2x3(1,:);y1y2y3(2,:)-y1y2y3(1,:);z1z2z3(2,:)-z1z2z3(1,:)];
-        V1=[x1x2x3(3,:)-x1x2x3(1,:);y1y2y3(3,:)-y1y2y3(1,:);z1z2z3(3,:)-z1z2z3(1,:)];
-        F = cross(V0,V1);
-        A = 0.5.*sqrt(sum(F.*F));
-        
-        % Convert to heatflux
-        qflux=[];
-        for i = mask'
-            if (i==0), continue; end
-            dex = walltile==i;
-            qtemp = q(dex);
-            qflux = [qflux; sum(qtemp)];
+    if (lhits)
+        wall_strikes = ascot5_calcwallload(a5file,wallid,runid,'hits');
+    else
+        wall_load = ascot5_calcwallload(a5file,wallid,runid);
+        if nfilter > 0
+            wall_strikes = ascot5_calcwallload(a5file,wallid,runid,'hits');
+            dex = wall_strikes <= nfilter;
+            wall_load(dex) = 0;
         end
-        wall_load(mask)=qflux;
-        wall_load = wall_load./A;
-        % Always filter
-        dex = wall_strikes==0;
-        wall_load(dex) = 0;
+    end
+    if lpts
+        path = ['/results/run_' num2str(runid,'%10.10i') '/endstate'];
+        r_pts = h5read(a5file,[path '/r']);
+        p_pts = h5read(a5file,[path '/phi']);
+        z_pts = h5read(a5file,[path '/z']);
+        x_pts = r_pts.*cosd(p_pts);
+        y_pts = r_pts.*sind(p_pts);
     end
 end
+    
+% Handle Log plots
 if llog
     if lhits
         wall_strikes = log10(wall_strikes);
@@ -148,15 +114,33 @@ end
 
 % Make plot
 fig=figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
-if isempty(wall_load)
-    patch('XData',x1x2x3,'YData',y1y2y3,'ZData',z1z2z3,'EdgeColor','none');
+if isempty(wall_load) && isempty(wall_strikes)
+    hp=patch('XData',x1x2x3,'YData',y1y2y3,'ZData',z1z2z3,'EdgeColor','none');
 else
     if lhits
-        patch(x1x2x3,y1y2y3,z1z2z3,wall_strikes,'EdgeColor','none');
+        hp=patch(x1x2x3,y1y2y3,z1z2z3,wall_strikes,'EdgeColor','none');
     else
-        patch(x1x2x3,y1y2y3,z1z2z3,wall_load,'EdgeColor','none');
+        hp=patch(x1x2x3,y1y2y3,z1z2z3,wall_load,'EdgeColor','none');
     end
+    set(hp,'AmbientStrength',1.0,'SpecularStrength',0,'DiffuseStrength',1);
 end
+if lpts
+    hold on;
+    plot3(x_pts,y_pts,z_pts,'.r','MarkerSize',0.1);
+    hold on;
+end
+set(gca,'Color','black');
+
+%cmap
+%r0 = [138; 138; 138]./255.0;
+r0 = [96; 96; 96]./255.0;
+r1 = [255; 0; 0]./255.0;
+r2 = [255; 255; 0]./255.0;
+dr = (r1-r0);
+cmap = r0+dr*(0:1.0/127:1);
+dr = (r2-r1);
+cmap = [cmap r1+dr*(0:1.0/127:1)];
+colormap(cmap');
 
 return;
 

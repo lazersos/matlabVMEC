@@ -34,6 +34,7 @@ function beams3d_write_gc(beam_data,dex,varargin)
 lbeams3d = 1;
 lascot5  = 0;
 ndiv = 1;
+pertcent = 0;
 ec = 1.60217662E-19;
 amu = 1.66053906660E-27;
 
@@ -45,6 +46,9 @@ if ~isempty(varargin)
             case 'ascot5'
                 lbeams3d=0;
                 lascot5=1;
+            case 'pert'
+                n=n+1;
+                pertcent = varargin{n};
             case 'ndiv'
                 n=n+1;
                 ndiv = varargin{n};
@@ -77,7 +81,7 @@ else
 end
 
 % Now process subarrays
-nnew=sum(dex_local);
+nnew=sum(dex_local>0);
 r      = zeros(1,nnew);
 phi    = zeros(1,nnew);
 z      = zeros(1,nnew);
@@ -117,6 +121,36 @@ if ndiv>1
     zatom  = reshape(repmat(zatom,[ndiv,1]),[1 nnew]);
     tend   = reshape(repmat(tend,[ndiv,1]),[1 nnew]);
     weight = reshape(repmat(weight,[ndiv,1]),[1 nnew])./ndiv;
+end
+
+% Add perturbation
+if pertcent >= 0
+    vperp2 = 2.*mu.*b./mass;
+    vtotal = sqrt(vll.*vll+vperp2);
+    pitch  = vll./vtotal;
+    if (max(vtotal) > 1E6)
+        scale = 1E-6;
+        units = ' x10^3 [km/s]';
+    else
+        scale = 1E-3;
+        units = ' [km/s]';
+    end
+    fig = figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+    plot(vll.*scale,sqrt(vperp2).*scale,'or');
+    temp   = 1 - pertcent + 2*pertcent.*rand(1,length(pitch));
+    temp(1:ndiv:end) = 1; % Keep the original particle
+    pitch  = pitch.*temp;
+    vll    = pitch.*vtotal;
+    vperp2 = abs(vtotal.*vtotal - vll.*vll);
+    mu     = 0.5.*vperp2.*mass./b;
+    hold on; plot(vll.*scale,sqrt(vperp2).*scale,'.b');
+    set(gca,'FontSize',24);
+    xlabel(['V_{||}' units]);
+    ylabel(['V_\perp' units]);
+    title('Particle Distribution');
+    legend('Original (BEAMS3D)','New (ASCOT5)');
+    xlim([-1.05 1.05].*max(abs(vtotal)).*scale);
+    ylim([0 1.05].*max(abs(vtotal)).*scale);
 end
 
 % Now output
