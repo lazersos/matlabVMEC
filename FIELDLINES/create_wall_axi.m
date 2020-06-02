@@ -53,6 +53,7 @@ end
 wall_data=[];
 wall_data.machine=name;
 wall_data.date=datestr(now,'mm-dd-yy');
+wall_data.datatype='limiter_trimesh';
 wall_data.nvertex = size(vertex,1);
 wall_data.nfaces = size(faces,1);
 wall_data.coords = vertex';
