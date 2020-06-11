@@ -4,7 +4,7 @@ function data = read_beams3d(filename)
 % file in a structure.
 %
 % Example usage
-%      data=read_beams3d('fieldline_test.h5');  % Reads BEAMS3D HDF5 file
+%      data=read_beams3d('beams3d_test.h5');  % Reads BEAMS3D HDF5 file
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.0
@@ -35,6 +35,20 @@ if (strcmp(filename(end-1:end),'h5'))
     % Catch some old format issues
     if isfield(data,'ns_prof1')
         data.ns_prof = data.ns_prof1;
+    end
+    if isfield(data,'dist_prof') && ~isfield(data,'dist2d_prof')
+        data.dist2d_prof = squeeze(sum(data.dist_prof,[2 3 4]));
+    end
+    % Fix quantities multiplied not multiplied by drho
+    if data.VERSION<2.7
+        drho = 1./double(data.ns_prof1);
+        data.ndot_prof   = data.ndot_prof ./drho;
+        data.epower_prof = data.epower_prof./drho;
+        data.ipower_prof = data.ipower_prof./drho;
+        data.j_prof      = data.j_prof./drho;
+        if isfield(data,'dense_prof')
+            data.dense_prof  = data.dense_prof./drho;
+        end
     end
 elseif (strcmp(filename(1:12),'beams3d_diag'))
     
