@@ -6,6 +6,7 @@ function stellopt2neotransp(ext,varargin)
 %   and 'wout' files are read.  The options are as follows:
 %       list:       List all available equilID's
 %       equilid:    Specify specific equilID (w7x-sc1 is default)
+%       b0:         Specify field on axis (default is to use WOUT value)
 %
 %   Example
 %       stellopt2neotransp('test');
@@ -16,6 +17,7 @@ function stellopt2neotransp(ext,varargin)
 
 
 equilID='w7x-sc1'; % Standard
+B00axis=[];
 
 % Handle varargin
 if nargin > 1
@@ -29,6 +31,9 @@ if nargin > 1
             case{'equilid','equilID','EQUILID'}
                 i=i+1;
                 equilID=varargin{i};
+            case{'b0'}
+                i=i+1;
+                B00axis=varargin{i};
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -53,9 +58,11 @@ else
     disp('ERROR: Cannot file wout file');
     return;
 end
-    
-B00axis= vmec_data.b0;
-phiedge = vmec_data.phi(end);
+
+if isempty(B00axis)
+    B00axis= vmec_data.b0;
+end
+phiedge = vmec_data.phi(end); %Only used for plotting
 
 rho = sqrt(tprof(:,1));
 ne  = tprof(:,2).*1E-20;
@@ -135,12 +142,17 @@ xlabel('Norm. Toridal Flux (s)');
 ylabel('e-static Potential [kV]');
 title('NEOTRANSP Potential');
 legend('\Phi','Fit');
+text(0.025,0.85*max(ylim),['EQUILID: ' equilID],'FontSize',24)
+saveas(fig,['neotransp_ER_' ext '.fig']);
+saveas(fig,['neotransp_ER_' ext '.png']);
 
 h3 = 0.05;
 s3 = 0:h3:1;
 disp(['  POT_AUX_S = ' num2str(s3,' %20.10E')]);
 %disp(['  POT_AUX_F = ' num2str(cumsum(polyval(pp,s3)),' %20.10E')]);
 disp(['  POT_AUX_F = ' num2str(cumsum(ppval(pp,s3)).*h3,' %20.10E')]);
+pause(5);
+close(fig);
 
 end
 
