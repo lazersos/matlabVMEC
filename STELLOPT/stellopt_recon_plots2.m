@@ -212,7 +212,7 @@ if isfield(data,'NELINE_target')
         tprof=importdata(files(end).name);
         tprof=tprof.data;
     end
-    zeta = mean(data.NELINE_PHI0(1,:));
+    zeta = mean([data.NELINE_PHI0(1,:) data.NELINE_PHI1(1,:)]);
     theta = 0:2*pi./(ntheta-1):2*pi;
     r = cfunct(theta,zeta,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
     z = sfunct(theta,zeta,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
@@ -249,6 +249,48 @@ if isfield(data,'NELINE_target')
     close(fig);
 end
 
+if isfield(data,'ZEFFLINE_target')
+    if isempty(tprof)
+        files = dir('tprof.*.*');
+        tprof=importdata(files(end).name);
+        tprof=tprof.data;
+    end
+    zeta = mean([data.ZEFFLINE_PHI0(1,:) data.ZEFFLINE_PHI1(1,:)]);
+    theta = 0:2*pi./(ntheta-1):2*pi;
+    r = cfunct(theta,zeta,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
+    z = sfunct(theta,zeta,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
+    f = pchip(tprof(:,1),tprof(:,5),vmec_data.phi./vmec_data.phi(end));
+    f = repmat(f',[1 ntheta]);
+    fig = figure('Position',[1 1 1024 768],'Color','white');
+    subplot(1,2,2);
+    torocont(r,z,f,1);
+    hold on;
+    plot([data.ZEFFLINE_R0(1,:); data.ZEFFLINE_R1(1,:)],[data.ZEFFLINE_Z0(1,:); data.ZEFFLINE_Z1(1,:)],'k','LineWidth',2);
+    hold off;
+    colormap jet;
+    set(gca,'FontSize',24);
+    xlabel('R [m]');
+    ylabel('Z [m]');
+    ha = colorbar;
+    set(ha,'FontSize',24);
+    ylabel(ha,'Z_{eff}');
+    subplot(1,2,1);
+    plot(1:length(data.ZEFFLINE_target(end,:)),data.ZEFFLINE_target(end,:),'ok','MarkerSize',8,'LineWidth',2);
+    hold on;
+    plot(1:length(data.ZEFFLINE_target(end,:)),data.ZEFFLINE_equil(end,:),'+b','MarkerSize',8,'LineWidth',2);
+    hold off;
+    axis tight;
+    ylim([0 2.0*max(ylim)]);
+    set(gca,'FontSize',24);
+    xlabel('Channel');
+    ylabel('Line Int. Z_{eff}');
+    legend('Exp.','Recon.');
+    set(gca,'Position',[0.162 0.237 0.303 0.576]);
+    annotation('textbox',[0.1 0.85 0.8 0.1],'string','Line Int Z_{eff} Reconstruction','FontSize',24,'LineStyle','none','HorizontalAlignment','center');
+    saveas(fig,['recon_zeffline_' ext '.fig']);
+    saveas(fig,['recon_zeffline_' ext '.png']);
+    close(fig);
+end
 
 if isfield(data,'TI_target')
     if isempty(tprof)
