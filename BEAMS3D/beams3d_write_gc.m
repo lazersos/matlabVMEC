@@ -37,6 +37,7 @@ ndiv = 1;
 pertcent = 0;
 ec = 1.60217662E-19;
 amu = 1.66053906660E-27;
+aux_str='';
 
 % Handle varargin
 if ~isempty(varargin)
@@ -49,9 +50,11 @@ if ~isempty(varargin)
             case 'pert'
                 n=n+1;
                 pertcent = varargin{n};
+                aux_str=[aux_str ' pert: ',num2str(pertcent,'%5.4f') ';'];
             case 'ndiv'
                 n=n+1;
                 ndiv = varargin{n};
+                aux_str=[aux_str ' ndiv: ',num2str(pertcent,'%5i') ';'];
         end
         n=n+1;
     end
@@ -157,6 +160,8 @@ end
 if lbeams3d
     fid = fopen('beams3d_namelist.txt','w');
     fprintf(fid,'&BEAMS3D_INPUT\n');
+    fprintf(fid,['! Created by beams3d_write_gc. ' aux_str]);
+    fprintf(fid,['!   DATE: ' disp(datestr(now,'mm-dd-yyyy HH:MM:SS'))]);
     fprintf(fid,'  NR = %i\n',beam_data.nr);
     fprintf(fid,'  NZ = %i\n',beam_data.nz);
     fprintf(fid,'  NPHI = %i\n',beam_data.nphi);
@@ -230,6 +235,7 @@ elseif lascot5
     id      = 1:nnew;
     ascot5_writemarker_gc('ascot5_beams3d_gc.h5',r,phi2,z,energy,pitch,...
         zeta,mass2,charge2,anum,znum,weight,tend,id);
+    h5writeatt('ascot5_beams3d_gc.h5',['/marker'],'notes',['Created in MATLAB via beams3d_write_gc. ' aux_str],'TextEncoding','system');
 end
 
 return;

@@ -35,6 +35,8 @@ if (strcmp(filename(end-1:end),'h5'))
     % Catch some old format issues
     if isfield(data,'ns_prof1')
         data.ns_prof = data.ns_prof1;
+        h = 1./double(data.ns_prof1);
+        data.rho = h/2.:h:(1-h/2);
     end
     if isfield(data,'dist_prof') && ~isfield(data,'dist2d_prof')
         data.dist2d_prof = squeeze(sum(data.dist_prof,[2 3 4]));

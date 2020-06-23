@@ -15,7 +15,7 @@ function data=beams3d_slow(varargin)
 %      beam_data = read_beams3d('beams3d_test.h5');
 %      data=beams3d_slow(beam_data,vmec_data);
 %
-% Maintained by: Samuel Lazerson (lazerson@pppl.gov)
+% Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.00
 
 % Helpers
@@ -122,7 +122,8 @@ coulomb_log(dex) = 23 - log(myZ(dex).*sqrt(NE_BEAM(dex).*1E-6./TE3(dex)));
 dex = ~dex;
 coulomb_log(dex) = 24 - log(sqrt(NE_BEAM(dex).*1E-6)./TE_BEAM(dex));
 coulomb_log(coulomb_log <=1) = 1;
-v_crit = ((1.5.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
+%v_crit = ((1.5.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
+v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
 %v_crit = ((0.75.*sqrt(pi.*MASS./me).*MASS./plasma_mass).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
 %v_crit = ((0.75*sqrt(pi).*me./MASS).^(1./3)).*sqrt(TE_BEAM).*5.93096892024E5;
 vcrit_cube = v_crit.^3;
@@ -131,7 +132,8 @@ tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
 % Integrate
 C1 = 1./tau_spit;
 C2 = vcrit_cube./tau_spit;
-v_sound = 1.5*sqrt(ec.*TI_BEAM./MASS);
+%v_sound = 1.5*sqrt(ec.*TI_BEAM./MASS);
+v_sound = sqrt(1.5)*sqrt(ec.*TI_BEAM./MASS);
 V  = SPEED;
 V2 = V;
 dt = 1E-4;
@@ -183,7 +185,7 @@ end
 
 % Calculate Vp for new grid
 s = 0:1./(vmec_data.ns-1):1;
-vp = pchip(s,2.*s.*vmec_data.vp,RHO);
+vp = pchip(s,2.*s.*vmec_data.vp*4*pi*pi./length(RHO),RHO);
 
 if lplot
     if max(PE_RHO) > 1E6 || max(PI_RHO) > 1E6
