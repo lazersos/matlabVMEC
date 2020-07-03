@@ -86,10 +86,19 @@ if ~lhits
     y1y2y3 = h5read(a5file,[path_wall '/y1y2y3']);
     z1z2z3 = h5read(a5file,[path_wall '/z1z2z3']);
     weight = h5read(a5file,[path_run '/weight']);
-    vr = h5read(a5file,[path_run '/vr']);
-    vphi = h5read(a5file,[path_run '/vphi']);
-    vz = h5read(a5file,[path_run '/vz']);
-    mass = h5read(a5file,[path_run '/mass']).*amu; %in amu
+        mass = h5read(a5file,[path_run '/mass']).*amu; %in amu
+    try
+        vr = h5read(a5file,[path_run '/vr']);
+        vphi = h5read(a5file,[path_run '/vphi']);
+        vz = h5read(a5file,[path_run '/vz']);
+    catch
+        pr = h5read(a5file,[path_run '/prprt']);
+        pphi = h5read(a5file,[path_run '/pphiprt']);
+        pz = h5read(a5file,[path_run '/pzprt']);
+        vr = pr./mass;
+        vphi=pphi./mass;
+        vz = pz./mass;
+    end
     v2 = vr.*vr+vphi.*vphi+vz.*vz;
     q  = 0.5.*mass.*v2.*weight;
     V0=[x1x2x3(2,:)-x1x2x3(1,:);y1y2y3(2,:)-y1y2y3(1,:);z1z2z3(2,:)-z1z2z3(1,:)];
