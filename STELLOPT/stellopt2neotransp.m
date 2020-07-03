@@ -7,6 +7,9 @@ function stellopt2neotransp(ext,varargin)
 %       list:       List all available equilID's
 %       equilid:    Specify specific equilID (w7x-sc1 is default)
 %       b0:         Specify field on axis (default is to use WOUT value)
+%       D:          Deutrium main ion mass (H default)
+%       T:          Tritium main ion mass (H default)
+%       He:         Helium main ion mass (H default)
 %
 %   Example
 %       stellopt2neotransp('test');
@@ -18,6 +21,7 @@ function stellopt2neotransp(ext,varargin)
 
 equilID='w7x-sc1'; % Standard
 B00axis=[];
+mion=1;
 
 % Handle varargin
 if nargin > 1
@@ -34,6 +38,12 @@ if nargin > 1
             case{'b0'}
                 i=i+1;
                 B00axis=varargin{i};
+            case{'D'}
+                mion=2;
+            case{'T'}
+                mion=3;
+            case{'He'}
+                mion=4;
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -86,7 +96,7 @@ Prof(1).dn20drho=ppval(pp_spl,rho2);
 
 % Ions
 Prof(2).Z=1;
-Prof(2).m_au=1;
+Prof(2).m_au=mion;
 p_spl = spline(rho,ti);
 pp_spl = spline_deriv(p_spl,1);
 Prof(2).TkeV=ppval(p_spl,rho2);
