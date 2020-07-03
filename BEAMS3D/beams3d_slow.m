@@ -10,13 +10,13 @@ function data=beams3d_slow(varargin)
 %       'mass'      : Plasma mass [kg] (assumes protons otherwise)
 %                       data=beams3d_slow(beam_data,vmec_data,'beams',4:6);
 %
-% Example usage
+%   Example usage
 %      vmec_data = read_vmec('wout_test.nc');
 %      beam_data = read_beams3d('beams3d_test.h5');
 %      data=beams3d_slow(beam_data,vmec_data);
 %
-% Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
-% Version:       1.00
+%   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
+%   Version:       1.00
 
 % Helpers
 me = 9.10938356D-31;
@@ -123,7 +123,7 @@ dex = ~dex;
 coulomb_log(dex) = 24 - log(sqrt(NE_BEAM(dex).*1E-6)./TE_BEAM(dex));
 coulomb_log(coulomb_log <=1) = 1;
 %v_crit = ((1.5.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
-v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
+v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./plasma_mass);
 %v_crit = ((0.75.*sqrt(pi.*MASS./me).*MASS./plasma_mass).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
 %v_crit = ((0.75*sqrt(pi).*me./MASS).^(1./3)).*sqrt(TE_BEAM).*5.93096892024E5;
 vcrit_cube = v_crit.^3;
