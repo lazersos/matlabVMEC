@@ -317,7 +317,17 @@ elseif strcmp(plottype,'tube')    %Render as tubes
     end
     axis equal
 else
-    colors = prism(max(data(5,:)));
+    if isempty(pcolor)
+        temp = prism(max(data(5,:)));
+        for i=1:size(temp,1)
+            colors{i} = temp(i,:);
+        end
+    else
+        temp = prism(max(data(5,:)));
+        for i=1:size(temp,1)
+            colors{i} = pcolor;
+        end
+    end
     for i=1:max(data(5,:))
         index=(data(5,:)==i);
         startpoints=find(index==1,1)-1;
@@ -329,7 +339,7 @@ else
             plot3(data(1,startpoints(j):endpoints(j)),...
                 data(2,startpoints(j):endpoints(j)),...
                 data(3,startpoints(j):endpoints(j)),...
-                'Color',colors(i,:),...
+                'Color',colors{i},...
                 'LineWidth',2);
         end
         %This section shows the direction of the coils with arrows

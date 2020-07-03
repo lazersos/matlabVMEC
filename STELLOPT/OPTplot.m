@@ -233,6 +233,11 @@ if ~isempty(filename_prof)
     handles.plot_types = [handles.plot_types; 'ETA_00'];
     handles.plot_types = [handles.plot_types; 'ETA_01'];
 end
+filename_coils = dir('coils.*');
+if ~isempty(filename_coils)
+    handles.plot_types = [handles.plot_types; '-----COILS-----'];
+    handles.plot_types = [handles.plot_types; 'COILS_XYZ'];
+end
         
 % Update the UI
 set(handles.pulldownmenu,'String',handles.plot_types)
@@ -271,7 +276,7 @@ stemp=contents{get(handles.pulldownmenu,'Value')};
 cinitial='b';
 cfinal='g';
 marker='+';
-legend off;
+legend off; rotate3d off;
 switch stemp
     case{'Chi-Stacked'}
         data_array=[];
@@ -1447,6 +1452,20 @@ switch stemp
         title(['\eta (' stemp(5:end) ')']);
         xlabel('radial index');
         ylabel('\eta');
+    case{'COILS_XYZ'}
+        files = dir('coils.*');
+        cla;
+        for i=2:length(files)-1
+            data=read_coils(files(i).name);
+            plot_coils(data,'pcolor','k');
+            hold on; drawnow;
+        end
+        data=read_coils(files(1).name);
+        plot_coils(data,'pcolor',cinitial);
+        hold on;
+        data=read_coils(files(end).name);
+        plot_coils(data,'pcolor',cfinal);
+        axis tight; rotate3d on;
 end
 hold off;
 % Add labels
