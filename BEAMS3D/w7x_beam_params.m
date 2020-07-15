@@ -7,14 +7,12 @@ function w7x_beam_params( source ,varargin)
 %   'write_beams3d' is not specified as an optional argument.
 %   Options:
 %       'H2':               Hydrogen Beams
-%       'D2':               Deterium Beams    
+%       'D2':               Deterium Beams  
+%       'He':               Helium Beams  
 %       'plots':            Generate Geometry Plots
 %       'ruidx':            Include Rudix Geometry
 %       'write_beams3d':    Generate BEAMS3D Input
 %       'grid':             Specify Accelerating Voltage (60 or 100)
-%       'Energy':           Specify Accelerating Voltage (explicit) [ev]
-%       'Power':            Specify Power (explicit) [W]
-%       'Powerfrac':        Specify Power fractions (explicit) [0-1]
 %
 %           Note: Options marked explicit should have the same shape as the
 %           source vector.  Powerfrac should have shape [3:nbeams] where
@@ -39,9 +37,6 @@ div = 0.0125;
 adist = 1.0;
 asize = 0.5;
 charge = 1.60217733E-19;
-new_pfrac=[];
-new_E=[];
-new_power=[];
 vmec_data=[];
 vmec_data.Aminor = 0;
 vmec_data.rmax_surf = 6.5;
@@ -72,15 +67,6 @@ if nargin > 1
                     grid=varargin{i};
                 case {'Rudix','RUDIX','rudix'}
                     lrudix=1;
-                case {'Energy','ENERGY','energy'}
-                    i=i+1;
-                    new_E = varargin{i};
-                case {'Powerfrac','POWERFRAC','powerfrac'}
-                    i=i+1;
-                    new_pfrac = varargin{i};
-                case {'Power','POWER','power'}
-                    i=i+1;
-                    new_power = varargin{i};
             end
         end
         i = i+1;
@@ -221,13 +207,13 @@ if lplots
     axis tight; axis equal;
 end
 
-% Use beamnamelist (Rudix as S9)
+% Use beamnamelist
 r_beam=[]; p_beam=[]; z_beam=[]; j=1; power_beam=[]; energy_beam=[];
 div_beam=[]; note={};
 switch species
     case{'He'}
         POWER=[1.40 1.40 1.40 1.40 1.40 1.40 1.40 1.40].*1E6;
-        PFRAC=[1];
+        PFRAC=[1 0 0];
         ENERGY = 40E3;
     case{'H2'}
         POWER=[1.78 1.64 1.78 1.64 1.78 1.64 1.78 1.64].*1E6;
@@ -265,166 +251,41 @@ for i=1:length(source)
     note{j} = ['Q' num2str(dex)];
     j=j+1;
 end
-if isfield(vmec_data,'rmnc')
-    beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
-        z_beam,div_beam,species,'pfrac',PFRAC,'beam_dex',source,'note',note,'plots');
-else
-    
-    beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
-        z_beam,div_beam,species,'pfrac',PFRAC,'beam_dex',source,'note',note);
-end
-return
-
-% Energy
-% We should switch this to the new namelist function
-% note for He assume P=1.4MW, only full energy (40 keV)
-NAME_BEAM = {'Q1' 'Q2' 'Q3' 'Q4' 'Q5' 'Q6' 'Q7' 'Q8' };
-P_full=[]; P_half=[]; P_third=[];
-E_full=[]; E_half=[]; E_third=[];
-P_H2_BEAM = [1.78 1.64 1.78 1.64 1.78 1.64 1.78 1.64].*1E6;
-P_D2_BEAM = [2.48 2.28 2.48 2.28 2.48 2.28 2.48 2.28].*1E6;
-if grid ==60
-    switch species
-        case{'H2'}
-            E_full = [1 1 1 1 1 1 1 1].*55E3;
-            P_BEAM = [1.78 1.64 1.78 1.64 1.78 1.64 1.78 1.64].*1E6;
-            P_frac_full  = [1 1 1 1 1 1 1 1].*0.546;
-            P_frac_half  = [1 1 1 1 1 1 1 1].*0.309;
-            P_frac_third = [1 1 1 1 1 1 1 1].*0.145;
-            Mass      = 1.6726231E-27;
-        case{'D2'}
-            E_full = [1 1 1 1 1 1 1 1].* 60E3;
-            P_BEAM = [2.48 2.28 2.48 2.28 2.48 2.28 2.48 2.28].*1E6;
-            P_frac_full  = [1 1 1 1 1 1 1 1].*0.742;
-            P_frac_half  = [1 1 1 1 1 1 1 1].*0.208;
-            P_frac_third = [1 1 1 1 1 1 1 1].*0.050;
-            Mass      = 3.3435837E-27;
-        case{'He'}
-            E_full = [1 1 1 1 1 1 1 1].* 40E3;
-            P_BEAM = [1.4 1.4 1.4 1.4 1.4 1.4 1.4 1.4].*1E6;
-            P_frac_full  = [1 1 1 1 1 1 1 1].*1.000;
-            P_frac_half  = [1 1 1 1 1 1 1 1].*0.0;
-            P_frac_third = [1 1 1 1 1 1 1 1].*0.0;
-            Mass      = 6.6464769891E-27;
-    end
-elseif grid == 100
-    switch species
-        case{'H2'}
-            E_full = [1 1 1 1 1 1 1 1].*72E3;
-            P_BEAM = [1.78 1.64 1.78 1.64 1.78 1.64 1.78 1.64].*1E6; %????
-            P_frac_full  = [1 1 1 1 1 1 1 1].*0.380;
-            P_frac_half  = [1 1 1 1 1 1 1 1].*0.350;
-            P_frac_third = [1 1 1 1 1 1 1 1].*0.270;
-            Mass      = 1.6726231E-27;
-        case{'D2'}
-            E_full = [1 1 1 1 1 1 1 1].*100E3;
-            P_BEAM = [2.48 2.28 2.48 2.28 2.48 2.28 2.48 2.28].*1E6; %????
-            P_frac_full  = [1 1 1 1 1 1 1 1].*0.6207;
-            P_frac_half  = [1 1 1 1 1 1 1 1].*0.2808;
-            P_frac_third = [1 1 1 1 1 1 1 1].*0.0985;
-            Mass      = 3.3435837E-27;
-    end
-end
-
-% Handel new energy
-if ~isempty(new_E)
-    E_full(source) = new_E;
-end
-E_half  = E_full./2;
-E_third = E_full./3;
-
-
-% Handle non-geometric information
-E_str = {'FULL' 'HALF' 'THRID'};
-Energy(1,:) = E_full*ec;
-Energy(2,:) = E_half*ec;
-Energy(3,:) = E_third*ec;
-Z = 1.0;
-P_FRAC(1,:) = P_frac_full;
-P_FRAC(2,:) = P_frac_half;
-P_FRAC(3,:) = P_frac_third;
-
-% Handel new Power
-if ~isempty(new_power)
-    P_BEAM(source) = new_power;
-end
-
-% Handel new PowerFracp
-if ~isempty(new_pfrac)
-    P_FRAC(1:3,source) = new_pfrac;
-end
-
-if (lwrite_beams3d)
-    disp('!--------Universal Beam Parameters------');
-    if lrudix
-        beam_str = num2str(length(source)*3+3,'%2.2i');
-    else
-        beam_str = num2str(length(source)*3,'%2.2i');
-    end
-    disp(['  T_END_IN(1:' beam_str ') = ' beam_str '*0.001']);
-    disp(['  DIV_BEAMS(1:' beam_str ') = ' beam_str '*' num2str(div,'%20.10E')]);
-    disp(['  ADIST_BEAMS(1:' beam_str ') = ' beam_str '*' num2str(adist,'%20.10E')]);
-    disp(['  ASIZE_BEAMS(1:' beam_str ') = ' beam_str '*' num2str(asize,'%20.10E')]);
-    disp(['  MASS_BEAMS(1:' beam_str ') = ' beam_str '*' num2str(Mass,'%20.10E')]);
-    disp(['  ZATOM_BEAMS(1:' beam_str ') = ' beam_str '*' num2str(Z,'%20.10E')]);
-    disp(['  CHARGE_BEAMS(1:' beam_str ') = ' beam_str '*' num2str(charge,'%20.10E')]);
-end
-
-for i=1:length(source)
-    dex_beam = source(i);
-    if lwrite_beams3d
-        for j = 1:3
-            beam_str = num2str((i-1)*3+j,'%2.2i');
-            disp(['!----------BEAM ' NAME_BEAM{source(i)} ' (' species ' ' E_str{j} ') ----------']);
-            disp(['  DEX_BEAMS(' beam_str ') = ' num2str(source(i),'%2i')]);
-            disp(['  E_BEAMS(' beam_str ') = ' num2str(Energy(j,dex_beam),'%20.10E')]);
-            disp(['  P_BEAMS(' beam_str ') = ' num2str(P_BEAM(dex_beam)*P_FRAC(j,dex_beam),'%20.10E')]);
-            disp(['  R_BEAMS(' beam_str,',1) = ' num2str(rstart(dex_beam),'%20.10E')]);
-            disp(['  PHI_BEAMS(' beam_str,',1) = ' num2str(pstart(dex_beam),'%20.10E')]);
-            disp(['  Z_BEAMS(' beam_str,',1) = ' num2str(zstart(dex_beam),'%20.10E')]);
-            disp(['  R_BEAMS(' beam_str,',2) = ' num2str(rtarget(dex_beam),'%20.10E')]);
-            disp(['  PHI_BEAMS(' beam_str,',2) = ' num2str(ptarget(dex_beam),'%20.10E')]);
-            disp(['  Z_BEAMS(' beam_str,',2) = ' num2str(ztarget(dex_beam),'%20.10E')]);
-        end
-        
-    end
-end
 if lrudix
     i = length(source);
     Energy = [1 0.5 1./3].*55E3;
     P_FRAC = [55 22 22];
     P_RUDI = 10E6;
-    p=atan2(yo_RUDI,xo_RUDI);
-    r=sqrt(xo_RUDI.^2+yo_RUDI.^2);
-    r0=[r p zo_RUDI];
-    p=atan2(yt_RUDI,xt_RUDI);
-    r=sqrt(xt_RUDI.^2+yt_RUDI.^2);
-    r1=[r p zt_RUDI];
+    r_beam(1,j) = sqrt(xo_RUDI.^2+yo_RUDI.^2);
+    r_beam(2,j) = sqrt(xt_RUDI.^2+yt_RUDI.^2);
+    p_beam(1,j) = atan2(yo_RUDI,xo_RUDI);
+    p_beam(2,j) = atan2(yt_RUDI,xt_RUDI);
+    z_beam(1,j) = zo_RUDI;
+    z_beam(2,j) = zt_RUDI;
+    power_beam(j) = 1E6;
+    energy_beam(j) = 20E3;
+    div_beam(j)    = 0.0125;
+    note{j} = 'RUDIX BEAM';
+    source = [source 9]; % Treat as source 9
     if lplots
         hold on;
         plot3([xo_RUDI xt_RUDI],[yo_RUDI yt_RUDI],[zo_RUDI zt_RUDI],'k');
         hold off;
     end
-    if lwrite_beams3d
-        for j = 1:3
-            beam_str = num2str(i*3+j,'%2.2i');
-            disp(['!----------BEAM RUDIX (' species ' ' E_str{j} ') ----------']);
-            %disp(['  DEX_BEAMS(' beam_str ') = ' num2str(deg2rad(0.7),'%20.10E')]);
-            disp(['  DIV_BEAMS(' beam_str ') = ' num2str(deg2rad(0.7),'%20.10E')]);
-            disp(['  E_BEAMS(' beam_str ') = ' num2str(Energy(j),'%20.10E')]);
-            disp(['  P_BEAMS(' beam_str ') = ' num2str(P_RUDI*P_FRAC(j),'%20.10E')]);
-            disp(['  R_BEAMS(' beam_str,',1) = ' num2str(r0(1),'%20.10E')]);
-            disp(['  PHI_BEAMS(' beam_str,',1) = ' num2str(r0(2),'%20.10E')]);
-            disp(['  Z_BEAMS(' beam_str,',1) = ' num2str(r0(3),'%20.10E')]);
-            disp(['  R_BEAMS(' beam_str,',2) = ' num2str(r1(1),'%20.10E')]);
-            disp(['  PHI_BEAMS(' beam_str,',2) = ' num2str(r1(2),'%20.10E')]);
-            disp(['  Z_BEAMS(' beam_str,',2) = ' num2str(r1(3),'%20.10E')]);
-        end
-    end
-        
 end
 
-return;
+% Write if requested
+if (lwrite_beams3d)
+    if isfield(vmec_data,'rmnc')
+        beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
+            z_beam,div_beam,species,'pfrac',PFRAC,'beam_dex',source,'note',note,'plots');
+    else
+        
+        beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
+            z_beam,div_beam,species,'pfrac',PFRAC,'beam_dex',source,'note',note);
+    end
+end
+return
 
 end
 
