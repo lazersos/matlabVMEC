@@ -15,9 +15,10 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      plot_beams(beam_data,'xyz_therm_initial');
 %      plot_beams(beam_data,'xyz_lost_initial');
 %      plot_beams(beam_data,'xyz_birth');
-%      plot_beams(beam_data,'flux'); % note _opt as in xyz above
-%      plot_beams(beam_data,'pitch'); % note _opt as in xyz above
-%      plot_beams(beam_data,'dist'); % note _opt as in xyz above
+%      plot_beams(beam_data,'flux_'); % note _opt as in xyz above
+%      plot_beams(beam_data,'pitch_'); % note _opt as in xyz above
+%      plot_beams(beam_data,'dist_'); % note _opt as in xyz above
+%      plot_beams(beam_data,'rho_'); % note _opt as in xyz above
 %      plot_beams(beam_data,'orbit_rz'); % Full particle Orbit in RZ
 %      plot_beams(beam_data,'orbit_flux'); % Full particle Orbit in flux
 %      plot_beams(beam_data,'orbit_vspace'); % Full particle Orbit in V
@@ -54,6 +55,8 @@ if nargin > 1
                     'dist','dist_therm','dist_lost','dist_birth', ...
                     'dist_initial','dist_therm_initial','dist_lost_initial',...
                     'orbit_rz','orbit_flux','orbit_vspace',...
+                    'rho','rho_therm','rho_birth','rho_total',...
+                    'rho_initial','rho_lost_initial','rho_therm_initial',...
                     'distribution','heating','current','fueling',...
                     'injection','birth_image',...
                     'wall','wall_loss','wall_heat','wall_shine','benchmarks',...
@@ -395,6 +398,112 @@ else
             y  = beam_data.S_lines(dex1,therm_dex);
             polarplot(x,y,'.k');
             rlim([0 1.5]);
+            title('Intial Thermalized Particles');
+        case 'rho'
+            cdex=pchip([0 1],[1 0 0; 0 1 0]',0:1./double(beam_data.npoinc):1)';
+            colororder(cdex);
+            for j=1:beam_data.npoinc+1
+                x1 =  sqrt(beam_data.S_lines(j,orbit_dex));
+                h  = 1.2/64.0;
+                edges = 0:h:1.2;
+                rho   = 0.5.*(edges(1:end-1)+edges(2:end));
+                y=zeros(1,64);
+                for i=1:length(edges)-1
+                    sm = x1 > edges(i);
+                    sp = x1 <= edges(i+1);
+                    y(i) = sum(and(sm,sp));
+                end
+                hold on;
+                plot(rho,y);
+                hold off;
+            end
+            xlim([0 1.2]);
+            xlabel('r/a');
+            ylabel('# Particles');
+            title('Orbiting Particles');
+        case 'rho_therm'
+            cdex=pchip([0 1],[1 0 0; 0 1 0]',0:1./double(beam_data.npoinc):1)';
+            colororder(cdex);
+            for j=1:beam_data.npoinc+1
+                x1 =  sqrt(beam_data.S_lines(j,therm_dex));
+                h  = 1.2/64.0;
+                edges = 0:h:1.2;
+                rho   = 0.5.*(edges(1:end-1)+edges(2:end));
+                y=zeros(1,64);
+                for i=1:length(edges)-1
+                    sm = x1 > edges(i);
+                    sp = x1 <= edges(i+1);
+                    y(i) =sum(and(sm,sp));
+                end
+                plot(rho,y);
+            end
+            xlim([0 1.2]);
+            xlabel('r/a');
+            ylabel('# Particles');
+            title('Thermalized Particles');
+        case 'rho_birth'
+            x1 =  sqrt(beam_data.S_lines(dex1,born_dex));
+            h  = 1.2/64.0;
+            edges = 0:h:1.2;
+            rho   = 0.5.*(edges(1:end-1)+edges(2:end));
+            y=zeros(1,64);
+            for i=1:length(edges)-1
+                sm = x1 > edges(i);
+                sp = x1 <= edges(i+1);
+                y(i) =sum(and(sm,sp));
+            end
+            plot(rho,y,'k');
+            xlim([0 1.2]);
+            xlabel('r/a');
+            ylabel('# Particles');
+            title('Born Particles');
+        case 'rho_initial'
+            x1 =  sqrt(beam_data.S_lines(dex1,orbit_dex));
+            h  = 1.2/64.0;
+            edges = 0:h:1.2;
+            rho   = 0.5.*(edges(1:end-1)+edges(2:end));
+            y=zeros(1,64);
+            for i=1:length(edges)-1
+                sm = x1 > edges(i);
+                sp = x1 <= edges(i+1);
+                y(i) =sum(and(sm,sp));
+            end
+            plot(rho,y,'k');
+            xlim([0 1.2]);
+            xlabel('r/a');
+            ylabel('# Particles');
+            title('Intial Orbiting Particles');
+        case 'rho_lost_initial'
+            x1 =  sqrt(beam_data.S_lines(dex1,rho_dex));
+            h  = 1.2/64.0;
+            edges = 0:h:1.2;
+            rho   = 0.5.*(edges(1:end-1)+edges(2:end));
+            y=zeros(1,64);
+            for i=1:length(edges)-1
+                sm = x1 > edges(i);
+                sp = x1 <= edges(i+1);
+                y(i) =sum(and(sm,sp));
+            end
+            plot(rho,y,'k');
+            xlim([0 1.2]);
+            xlabel('r/a');
+            ylabel('# Particles');
+            title('Intial Lost Particles');
+        case 'rho_therm_initial'
+            x1 =  sqrt(beam_data.S_lines(dex1,therm_dex));
+            h  = 1.2/64.0;
+            edges = 0:h:1.2;
+            rho   = 0.5.*(edges(1:end-1)+edges(2:end));
+            y=zeros(1,64);
+            for i=1:length(edges)-1
+                sm = x1 > edges(i);
+                sp = x1 <= edges(i+1);
+                y(i) =sum(and(sm,sp));
+            end
+            plot(rho,y,'k');
+            xlim([0 1.2]);
+            xlabel('r/a');
+            ylabel('# Particles');
             title('Intial Thermalized Particles');
         case 'pitch'
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
