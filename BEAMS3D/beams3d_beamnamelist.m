@@ -29,6 +29,8 @@ mass=[];
 charge=[];
 ashape=[];
 pfrac=[];
+beam_dex=[];
+note={};
 Zatom=1;
 species_type='H';
 ec  = 1.60217662E-19; % electron charge [C]
@@ -52,6 +54,12 @@ if (nargin > 6)
                 j=j+1;
                 A=varargin{j};
                 mass = A.*amu;
+            case {'beam_dex'}
+                j=j+1;
+                beam_dex=varargin{j};
+            case {'note'}
+                j=j+1;
+                note=varargin{j};
             case {'plots','plot'}
                 lplots=1;
         end
@@ -91,6 +99,11 @@ if isempty(pfrac)
         case 'He'
             pfrac=1.0;
     end
+end
+
+% Handle bad energy
+if (max(energy) > 1)
+    energy = energy*ec;
 end
 
 %Setup beams
@@ -153,6 +166,9 @@ n=1;
 for i=1:nbeams
     for j=1:npower
         disp(['!----------BEAM ' num2str(n,'%d') ' ----------']);
+        if ~isempty(note)
+            disp(['!-- ' note{i}]);
+        end
         disp(['  E_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(energy(i).*(1.0/j),'%20.10E')]);
         disp(['  P_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(power(i).*pfrac(j),'%20.10E')]);
         disp(['  DIV_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(div_beam(i),'%20.10E')]);
@@ -161,6 +177,9 @@ for i=1:nbeams
         disp(['  R_BEAMS(' num2str(n,'%2.2d') ',1:2) = ' num2str(r_beam(1:2,i)','%20.10E')]);
         disp(['  PHI_BEAMS(' num2str(n,'%2.2d') ',1:2) = ' num2str(phi_beam(1:2,i)',' %20.10E')]);
         disp(['  Z_BEAMS(' num2str(n,'%2.2d') ',1:2) = ' num2str(z_beam(1:2,i)',' %20.10E')]);
+        if ~isempty(beam_dex)
+            disp(['  DEX_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(beam_dex(i),'%2i')]);
+        end
         n=n+1;
     end
 end

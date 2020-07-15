@@ -42,32 +42,46 @@ charge = 1.60217733E-19;
 new_pfrac=[];
 new_E=[];
 new_power=[];
+vmec_data=[];
+vmec_data.Aminor = 0;
+vmec_data.rmax_surf = 6.5;
+vmec_data.rmin_surf = 4.25;
+vmec_data.zmax_surf = 1.0;
+vmec_data.nfp = 5;
+vmec_data.iasym=0;
 
 % Handle varargin
 if nargin > 1
     i = 1;
     while i < nargin
-        switch varargin{i}
-            case {'H2','D2'}
-                species=varargin{i};
-            case 'plots'
-                lplots=1;
-            case 'write_beams3d'
-                lwrite_beams3d=1;
-            case 'grid'
-                i=i+1;
-                grid=varargin{i};
-            case {'Rudix','RUDIX','rudix'}
-                lrudix=1;
-            case {'Energy','ENERGY','energy'}
-                i=i+1;
-                new_E = varargin{i};
-            case {'Powerfrac','POWERFRAC','powerfrac'}
-                i=i+1;
-                new_pfrac = varargin{i};
-            case {'Power','POWER','power'}
-                i=i+1;
-                new_power = varargin{i};
+        if isstruct(varargin{i})
+            switch varargin{i}.datatype
+                case 'wout'
+                    vmec_data=varargin{i};
+            end
+        else
+            switch varargin{i}
+                case {'H2','D2','He'}
+                    species=varargin{i};
+                case 'plots'
+                    lplots=1;
+                case 'write_beams3d'
+                    lwrite_beams3d=1;
+                case 'grid'
+                    i=i+1;
+                    grid=varargin{i};
+                case {'Rudix','RUDIX','rudix'}
+                    lrudix=1;
+                case {'Energy','ENERGY','energy'}
+                    i=i+1;
+                    new_E = varargin{i};
+                case {'Powerfrac','POWERFRAC','powerfrac'}
+                    i=i+1;
+                    new_pfrac = varargin{i};
+                case {'Power','POWER','power'}
+                    i=i+1;
+                    new_power = varargin{i};
+            end
         end
         i = i+1;
     end
@@ -207,7 +221,63 @@ if lplots
     axis tight; axis equal;
 end
 
+% Use beamnamelist (Rudix as S9)
+r_beam=[]; p_beam=[]; z_beam=[]; j=1; power_beam=[]; energy_beam=[];
+div_beam=[]; note={};
+switch species
+    case{'He'}
+        POWER=[1.40 1.40 1.40 1.40 1.40 1.40 1.40 1.40].*1E6;
+        PFRAC=[1];
+        ENERGY = 40E3;
+    case{'H2'}
+        POWER=[1.78 1.64 1.78 1.64 1.78 1.64 1.78 1.64].*1E6;
+        if grid==60
+            ENERGY=55E3;
+            PFRAC=[0.546 0.309 0.145];
+        elseif grid==100
+            ENERGY=72E3;
+            PFRAC=[0.380 0.350 0.270];
+        end
+    case{'D2'}
+        POWER=[2.48 2.28 2.48 2.28 2.48 2.28 2.48 2.28].*1E6;
+        if grid==60
+            ENERGY=60E3;
+            PFRAC=[0.742 0.208 0.050];
+        elseif grid==100
+            ENERGY=100E3;
+            PFRAC=[0.6207 0.2808 0.0985];
+        end
+    otherwise
+        disp('Error: Unsupported species!');
+        return;
+end
+for i=1:length(source)
+    dex=source(i);
+    r_beam(1,j) = rstart(dex);
+    r_beam(2,j) = rtarget(dex);
+    p_beam(1,j) = pstart(dex);
+    p_beam(2,j) = ptarget(dex);
+    z_beam(1,j) = zstart(dex);
+    z_beam(2,j) = ztarget(dex);
+    power_beam(j) = POWER(dex);
+    energy_beam(j) = ENERGY;
+    div_beam(j)    = div;
+    note{j} = ['Q' num2str(dex)];
+    j=j+1;
+end
+if isfield(vmec_data,'rmnc')
+    beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
+        z_beam,div_beam,species,'pfrac',PFRAC,'beam_dex',source,'note',note,'plots');
+else
+    
+    beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
+        z_beam,div_beam,species,'pfrac',PFRAC,'beam_dex',source,'note',note);
+end
+return
+
 % Energy
+% We should switch this to the new namelist function
+% note for He assume P=1.4MW, only full energy (40 keV)
 NAME_BEAM = {'Q1' 'Q2' 'Q3' 'Q4' 'Q5' 'Q6' 'Q7' 'Q8' };
 P_full=[]; P_half=[]; P_third=[];
 E_full=[]; E_half=[]; E_third=[];
@@ -229,6 +299,13 @@ if grid ==60
             P_frac_half  = [1 1 1 1 1 1 1 1].*0.208;
             P_frac_third = [1 1 1 1 1 1 1 1].*0.050;
             Mass      = 3.3435837E-27;
+        case{'He'}
+            E_full = [1 1 1 1 1 1 1 1].* 40E3;
+            P_BEAM = [1.4 1.4 1.4 1.4 1.4 1.4 1.4 1.4].*1E6;
+            P_frac_full  = [1 1 1 1 1 1 1 1].*1.000;
+            P_frac_half  = [1 1 1 1 1 1 1 1].*0.0;
+            P_frac_third = [1 1 1 1 1 1 1 1].*0.0;
+            Mass      = 6.6464769891E-27;
     end
 elseif grid == 100
     switch species
