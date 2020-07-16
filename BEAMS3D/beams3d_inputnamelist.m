@@ -140,11 +140,11 @@ disp(['/']);
 
 if lplots
     thv=0:2*pi./64:2*pi;
-    rv = cfunct(thv,zeta,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
-    zv = sfunct(thv,zeta,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
+    rv = cfunct(thv,zeta,vmec_data.rmnc,vmec_data.xm,vmec_data.xn./vmec_data.nfp);
+    zv = sfunct(thv,zeta,vmec_data.zmns,vmec_data.xm,vmec_data.xn./vmec_data.nfp);
     if vmec_data.iasym==1
-        rv = rv+sfunct(thv,zeta,vmec_data.rmns,vmec_data.xm,vmec_data.xn);
-        zv = zv+cfunct(thv,zeta,vmec_data.zmnc,vmec_data.xm,vmec_data.xn);
+        rv = rv+sfunct(thv,zeta,vmec_data.rmns,vmec_data.xm,vmec_data.xn./vmec_data.nfp);
+        zv = zv+cfunct(thv,zeta,vmec_data.zmnc,vmec_data.xm,vmec_data.xn./vmec_data.nfp);
     end
     n1=1;
     nstep = length(r)/nzeta;
@@ -152,7 +152,7 @@ if lplots
     for i=1:nzeta
         fig=figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
         plot(rv(vmec_data.ns,:,i),zv(vmec_data.ns,:,i),'r','LineWidth',4); hold on;
-        plot(rv(vmec_data.ns/4,:,i),zv(vmec_data.ns/4,:,i),'--k','LineWidth',2);
+        plot(rv(round(vmec_data.ns/4),:,i),zv(round(vmec_data.ns/4),:,i),'--k','LineWidth',2);
         plot(rv(1,1,i),zv(1,1,i),'+k','LineWidth',2,'MarkerSize',10);
         plot(r(n1:n2),z(n1:n2),'ok','Linewidth',2,'MarkerSize',10);
         xlim([rmin rmax]);
