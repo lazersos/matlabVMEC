@@ -1,20 +1,48 @@
-function [outputArg1,outputArg2] = beams3d_powertable(beam_data,vmec_data)
+function P = beams3d_powertable(beam_data,varargin)
 %BEASM3D_POWERTABLE Calculate total power per beam
 %   This subroutine calculates the total power born, going to the port,
 %   shining through, deposited in the plasma, and lost to the wall.
 %
 % Example usage
 %      beam_data=read_beams3d('beams3d_test.h5');  % Reads BEAMS3D HDF5 file
-%      vmec_data=read_vmec('wout_test.nc');  % Reads VMEC netCDF file
 %       beams3d_powertable(beam_data,vmec_data);
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.0
 
+vmec_data=[];
+lverb=1;
+
+if ~isempty(varargin)
+    i=1;
+    while i<=numel(varargin)
+        if isstruct(varargin{i})
+            if isfield(varargin{i},'datatype')
+                switch varargin{i}.datatype
+                    case 'wout'
+                        vmec_data=varargin{i};
+                end
+            end
+        else
+            switch varargin{i}
+                case 'quiet'
+                    lverb=0;
+            end
+        end
+        i=i+1;
+    end
+end
+
 % Handle the calculation of dV/drho from VMEC dV/ds
-s_vmec = 0:1./(vmec_data.ns-1):1;
+if ~isempty(vmec_data)
+    h_vmec = 1./(vmec_data.ns-1);
+    s_vmec = 0:h_vmec:1;
+    vp_vmec = vmec_data.vp.*4.*pi.*pi;
+else
+    [s_vmec, ~, vp_vmec] = beams3d_volume(beam_data);
+end
 rho_vmec = sqrt(s_vmec);
-dVdrho_spl = pchip(rho_vmec,2.*rho_vmec.*vmec_data.vp.*4*pi*pi);
+dVdrho_spl = pchip(rho_vmec,2.*rho_vmec.*vp_vmec);
 ns = double(beam_data.ns_prof1);
 h = 1./ns;
 rho=0:h:1.0;
@@ -55,7 +83,7 @@ orbit_dex=beam_data.end_state==0;
 % Handle orbiting particles
 P_orbit = zeros(1,beam_data.nparticles);
 if any(orbit_dex>0)
-    disp('Circulating Particles found');
+    if lverb, disp('Circulating Particles found'); end;
     orbit_index=beams3d_finddex(beam_data,'orbit_last');
     for i=1:beam_data.nparticles
         if orbit_index(i)==0, continue; end
@@ -66,7 +94,7 @@ end
 % Handle thermalized particles
 P_therm = zeros(1,beam_data.nparticles);
 if any(therm_dex>0)
-    disp('Thermalized Particles found');
+    if lverb, disp('Thermalized Particles found'); end
     therm_index=beams3d_finddex(beam_data,'therm_end');
     for i=1:beam_data.nparticles
         if therm_index(i)==0, continue; end
@@ -93,10 +121,14 @@ for i=1:beam_data.nbeams
 end
 
 P = [P_INITIAL; P_PORTS; P_SHINE; P_IDEPO; P_EDEPO; P_WALL; P_ORBIT; P_THERM];
-disp('POWER TOTAL   PORTS   SHINE    IONS    ELEC    WALL   ORBIT   THERM');
-for i=1:size(P,2)
-    disp(['BEAM' num2str(i,'%i') ':  ' num2str(round(P(:,i)./1E3)',' %6i ') ' kW']);
-end
+if lverb
+    disp('POWER TOTAL   PORTS   SHINE    IONS    ELEC    WALL   ORBIT   THERM');
+    for i=1:size(P,2)
+        disp(['BEAM' num2str(i,'%i') ':  ' num2str(round(P(:,i)./1E3)',' %6i ') ' kW']);
+    end
     disp(['TOTAL:  ' num2str(round(sum(P,2)./1E3)',' %6i ') ' kW']);
 end
+return;
+end
+
 

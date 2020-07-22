@@ -252,18 +252,17 @@ for i=1:length(source)
     j=j+1;
 end
 if lrudix
-    i = length(source);
-    Energy = [1 0.5 1./3].*55E3;
-    P_FRAC = [55 22 22];
-    P_RUDI = 10E6;
+    E_RUDI = 60E3; %20-60 kV
+    %PFRAC = [56 22 22];
+    P_RUDI = 250E3; %250 kW
     r_beam(1,j) = sqrt(xo_RUDI.^2+yo_RUDI.^2);
     r_beam(2,j) = sqrt(xt_RUDI.^2+yt_RUDI.^2);
     p_beam(1,j) = atan2(yo_RUDI,xo_RUDI);
     p_beam(2,j) = atan2(yt_RUDI,xt_RUDI);
     z_beam(1,j) = zo_RUDI;
     z_beam(2,j) = zt_RUDI;
-    power_beam(j) = 1E6;
-    energy_beam(j) = 20E3;
+    power_beam(j) = P_RUDI;
+    energy_beam(j) = E_RUDI;
     div_beam(j)    = 0.0125;
     note{j} = 'RUDIX BEAM';
     source = [source 9]; % Treat as source 9

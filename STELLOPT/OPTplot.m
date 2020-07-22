@@ -63,7 +63,7 @@ handles.chi_types={'ASPECT','BETA','CURTOR','EXTCUR','SEPARATRIX',...
     'XICS','XICS_BRIGHT','XICS_V','XICS_W3','SXR','VPHI','VACIOTA',...
     'IOTA','BALLOON','BOOTSTRAP','DKES','HELICITY','HELICITY_FULL',...
     'KINK','ORBIT','JDOTB','J_STAR','NEO','TXPORT','ECEREFLECT'...
-    'S11','S12','S21','S22'};
+    'S11','S12','S21','S22','MAGWELL','CURVATURE_KERT'};
 handles.data = read_stellopt(filename(1).name);  % Read the file
 handles.plot_types={'Chi-Squared';'Chi-Stacked'};
 for i=1:length(handles.chi_types)
@@ -83,6 +83,9 @@ if isfield(handles.data,'ORBIT_chisq')
 end
 if isfield(handles.data,'NEO_chisq')
     handles.plot_types = [handles.plot_types; 'NEO_evolution'];
+end
+if isfield(handles.data,'MAGWELL_chisq')
+    handles.plot_types = [handles.plot_types; 'MAGWELL_evolution'];
 end
 if isfield(handles.data,'S11_chisq')
     handles.plot_types = [handles.plot_types; 'S11_evolution'];
@@ -162,6 +165,9 @@ if isfield(handles.data,'XICS_W3_chisq')
 end
 if isfield(handles.data,'IOTA_chisq')
     handles.plot_types = [handles.plot_types; 'IOTA_evolution'];
+end
+if isfield(handles.data,'VACIOTA_chisq')
+    handles.plot_types = [handles.plot_types; 'VACIOTA_evolution'];
 end
 if isfield(handles.data,'ECEREFLECT_chisq')
     handles.plot_types = [handles.plot_types; 'ECE_evolution'];
@@ -273,8 +279,8 @@ function update_plots(handles)
 contents = cellstr(get(handles.pulldownmenu,'String'));
 stemp=contents{get(handles.pulldownmenu,'Value')};
         set(gca,'YScale','linear');
-cinitial='b';
-cfinal='g';
+cinitial='blue';
+cfinal='green';
 marker='+';
 legend off; rotate3d off;
 switch stemp
@@ -327,7 +333,7 @@ switch stemp
             'TELINE_chisq','TILINE_chisq','ZEFFLINE_chisq',...
             'SXR_chisq','ECEREFLECT_chisq',...
             'KINK_chisq','XICS_chisq','XICS_BRIGHT_chisq','XICS_V_chisq','XICS_W3_chisq',...
-            'S11_chisq','S12_chisq','S21_chisq','S22_chisq'}
+            'S11_chisq','S12_chisq','S21_chisq','S22_chisq','MAGWELL_chisq'}
         f = sum(handles.data.(stemp),2);
         plot(handles.data.iter,f,marker,'MarkerSize',18,'LineWidth',4.0);
         set(gca,'YScale','log');
@@ -358,8 +364,8 @@ switch stemp
     case{'ORBIT_evolution'}
         if (size(handles.data.ORBIT_s,2)==1)
             plot(handles.data.ORBIT_s(:,:),handles.data.ORBIT_equil(:,:),'k.');
-            cinitial = [cinitial 'o'];
-            cfinal = [cfinal 'o'];
+            %cinitial = [cinitial 'o'];
+            %cfinal = [cfinal 'o'];
         else
             plot(handles.data.ORBIT_s(:,:)',handles.data.ORBIT_equil(:,:)','k');
         end
@@ -381,6 +387,16 @@ switch stemp
         xlabel('Flux Surface');
         ylabel('Epsilon Effective');
         title('Neoclassical (NEO) Transport Evolution');
+    case{'MAGWELL_evolution'}
+        plot(handles.data.MAGWELL_k(:,:)',handles.data.MAGWELL_equil(:,:)','k');
+        hold on;
+        plot(handles.data.MAGWELL_k(1,:),handles.data.MAGWELL_equil(1,:),cinitial,'LineWidth',2.0);
+        plot(handles.data.MAGWELL_k(end,:),handles.data.MAGWELL_equil(end,:),cfinal,'LineWidth',2.0);
+        hold off;
+        %xlim([0 1]);
+        xlabel('Flux Surface');
+        ylabel('Magnetic Well');
+        title('Magnetic Well Evolution (+ Stable)');
     case{'S11_evolution'}
         plot(handles.data.S11_s(:,:)',handles.data.S11_equil(:,:)','k');
         hold on;
@@ -669,6 +685,17 @@ switch stemp
         plot(handles.data.IOTA_S(:,:)',handles.data.IOTA_equil(:,:)','.k');
         plot(handles.data.IOTA_S(1,:),handles.data.IOTA_equil(1,:),'+b','LineWidth',2.0);
         plot(handles.data.IOTA_S(end,:),handles.data.IOTA_equil(end,:),'+g','LineWidth',2.0);
+        hold off;
+        xlim([0 1]);
+        xlabel('Normalized Flux');
+        ylabel('Iota');
+        title('Rotational Transform');
+    case{'VACIOTA_evolution'}
+        errorbar(handles.data.VACIOTA_S(1,:),handles.data.VACIOTA_target(1,:),handles.data.VACIOTA_sigma(1,:),'ok');
+        hold on;
+        plot(handles.data.VACIOTA_S(:,:)',handles.data.VACIOTA_equil(:,:)','.k');
+        plot(handles.data.VACIOTA_S(1,:),handles.data.VACIOTA_equil(1,:),'+b','LineWidth',2.0);
+        plot(handles.data.VACIOTA_S(end,:),handles.data.VACIOTA_equil(end,:),'+g','LineWidth',2.0);
         hold off;
         xlim([0 1]);
         xlabel('Normalized Flux');
