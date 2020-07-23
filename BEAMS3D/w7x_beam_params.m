@@ -44,6 +44,7 @@ vmec_data.rmin_surf = 4.25;
 vmec_data.zmax_surf = 1.0;
 vmec_data.nfp = 5;
 vmec_data.iasym=0;
+next_varargin={};
 
 % Handle varargin
 if nargin > 1
@@ -54,14 +55,22 @@ if nargin > 1
                 case 'wout'
                     vmec_data=varargin{i};
             end
-        else
+        elseif ischar(varargin{i})
             switch varargin{i}
                 case {'H2','D2','He'}
                     species=varargin{i};
                 case 'plots'
-                    lplots=1;
+                    next_varargin = [next_varargin varargin{i}];
+                case {'TE','TI','NE','ZEFF','POT'}
+                    next_varargin = [next_varargin varargin{i}];
+                    i = i+1;
+                    next_varargin = [next_varargin varargin{i}];
                 case 'write_beams3d'
                     lwrite_beams3d=1;
+                case {'filename','file'}
+                    next_varargin = [next_varargin varargin{i}];
+                    i = i+1;
+                    next_varargin = [next_varargin varargin{i}];
                 case 'grid'
                     i=i+1;
                     grid=varargin{i};
@@ -72,6 +81,8 @@ if nargin > 1
         i = i+1;
     end
 end
+
+
 
 % Geometry 
 xo_NI20 =  3.68581; yo_NI20 =  5.65498; zo_NI20 = -0.305; %Origin locations
@@ -275,14 +286,9 @@ end
 
 % Write if requested
 if (lwrite_beams3d)
-    if isfield(vmec_data,'rmnc')
+    next_varargin=[next_varargin species 'pfrac' PFRAC 'beam_dex' source];
         beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
-            z_beam,div_beam,species,'pfrac',PFRAC,'beam_dex',source,'note',note,'plots');
-    else
-        
-        beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
-            z_beam,div_beam,species,'pfrac',PFRAC,'beam_dex',source,'note',note);
-    end
+            z_beam,div_beam,next_varargin{:},'note',note,'t_end',0.01);
 end
 return
 
