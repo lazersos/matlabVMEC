@@ -31,40 +31,90 @@ ashape=[];
 pfrac=[];
 beam_dex=[];
 note={};
+ne_s=[]; ne_f=[];
+te_s=[]; te_f=[];
+ti_s=[]; ti_f=[];
+zeff_s=[]; zeff_f=[];
+pot_s=[]; pot_f=[];
 Zatom=1;
 species_type='H';
 ec  = 1.60217662E-19; % electron charge [C]
 amu = 1.66053906660E-27; % Dalton [kg]
+t_end = 1.0E-3;
 lplots=0;
+fid=[];
 
 if (nargin > 6)
     j=1;
     while j<=numel(varargin)
-        switch(varargin{j})
-            case {'H','D','T','He'}
-                species_type = varargin{j};
-            case {'pfrac','power_frac','power_fraction'}
-                j=j+1;
-                pfrac=varargin{j};
-            case {'Z','Zatom'}
-                j=j+1;
-                Zatom=varargin{j};
-                charge = charge.*ec;
-            case {'mass'}
-                j=j+1;
-                A=varargin{j};
-                mass = A.*amu;
-            case {'beam_dex'}
-                j=j+1;
-                beam_dex=varargin{j};
-            case {'note'}
-                j=j+1;
-                note=varargin{j};
-            case {'plots','plot'}
-                lplots=1;
+        if ischar(varargin{j})
+            switch(varargin{j})
+                case {'H','D','T','He'}
+                    species_type = varargin{j};
+                case {'pfrac','power_frac','power_fraction'}
+                    j=j+1;
+                    pfrac=varargin{j};
+                case {'file','filename'}
+                    j=j+1;
+                    filename=varargin{j};
+                    fid=fopen(filename,'a');
+                case {'Z','Zatom'}
+                    j=j+1;
+                    Zatom=varargin{j};
+                    charge = charge.*ec;
+                case {'mass'}
+                    j=j+1;
+                    A=varargin{j};
+                    mass = A.*amu;
+                case {'beam_dex'}
+                    j=j+1;
+                    beam_dex=varargin{j};
+                case {'note'}
+                    j=j+1;
+                    note=varargin{j};
+                case {'plots','plot'}
+                    lplots=1;
+                case {'TE'}
+                    j=j+1;
+                    temp=varargin{j};
+                    te_s=temp(1,:);
+                    te_f=temp(2,:);
+                case {'NE'}
+                    j=j+1;
+                    temp=varargin{j};
+                    ne_s=temp(1,:);
+                    ne_f=temp(2,:);
+                case {'TI'}
+                    j=j+1;
+                    temp=varargin{j};
+                    ti_s=temp(1,:);
+                    ti_f=temp(2,:);
+                case {'ZEFF'}
+                    j=j+1;
+                    temp=varargin{j};
+                    zeff_s=temp(1,:);
+                    zeff_f=temp(2,:);
+                case {'POT'}
+                    j=j+1;
+                    temp=varargin{j};
+                    pot_s=temp(1,:);
+                    pot_f=temp(2,:);
+                case {'t_end'}
+                    j=j+1;
+                    t_end=varargin{j};
+            end
         end
         j=j+1;
     end
+end
+
+% Hanled fileid
+if isempty(fid)
+    fid=1;
+end
+if fid == -1
+    fprintf(fid,[' ERROR- Problem opening file: ' filename]);
+    return;
 end
 
 % Handle mass
@@ -129,61 +179,83 @@ else
     zmin = -vmec_data.zmax_surf-delta;
 end
 
+% Handle no profiles passed
+if isempty(ne_f)
+    ne_s = 0:0.2:1;
+    ne_f = polyval([-1.0E20 1.2E20],ne_s);
+end
+if isempty(te_f)
+    te_s = 0:0.2:1;
+    te_f = polyval([-1.0E4 1.0E4],te_s);
+end
+if isempty(ti_f)
+    ti_s = 0:0.2:1;
+    ti_f = polyval([-1.0E4 1.0E4],ti_s);
+end
+if isempty(zeff_f)
+    zeff_s = 0:0.2:1;
+    zeff_f = polyval([1],zeff_s);
+end
+
 % Output values to screen
-disp( '&BEAMS3D_INPUT');
-disp( '  NR = 128');
-disp(['  NPHI = ' num2str(360/(2*vmec_data.nfp),'%d')]);
-disp( '  NZ = 128');
-disp(['  RMIN = ' num2str(rmin,'%20.10E')]);
-disp(['  RMAX = ' num2str(rmax,'%20.10E')]);
-disp(['  ZMIN = ' num2str(zmin,'%20.10E')]);
-disp(['  ZMAX = ' num2str(zmax,'%20.10E')]);
-disp( '  PHIMIN = 0.0');
-disp(['  PHIMAX = ' num2str(2.*pi./vmec_data.nfp,'%20.10E')]);
-disp( '  INT_TYPE = ''LSODE''');
-disp( '  FOLLOW_TOL = 1.0E-9');
-disp( '  VC_ADAPT_TOL = 1.0E-2');
-disp( '  NPOINC = 2');
-disp( '!--------Dummy profiles Te=Ti=10kev ----');
-disp( '  NE_AUX_S = 0.00E+00  0.20E+00  0.40E+00  0.60E+00  0.80E+00  1.00E+00');
-disp( '  NE_AUX_F = 1.20E+20  1.00E+00  0.80E+20  0.60E+20  0.40E+20  0.20E+20');
-disp( '  TE_AUX_S = 0.00E+00  0.20E+00  0.40E+00  0.60E+00  0.80E+00  1.00E+00');
-disp( '  TE_AUX_F = 1.00E+04  0.80E+04  0.60E+04  0.40E+04  0.20E+04  0.00E+00');
-disp( '  TI_AUX_S = 0.00E+00  0.20E+00  0.40E+00  0.60E+00  0.80E+00  1.00E+00');
-disp( '  TI_AUX_F = 1.00E+04  0.80E+04  0.60E+04  0.40E+04  0.20E+04  0.00E+00');
-disp( '  ZEFF_AUX_S = 0.00E+00  0.20E+00  0.40E+00  0.60E+00  0.80E+00  1.00E+00');
-disp( '  ZEFF_AUX_F = 1.00E+00  1.00E+00  1.00E+00  1.00E+00  1.00E+00  1.00E+00');
-disp(['  PLASMA_MASS = ' num2str(mass,'%20.10E')]);
-disp(['  PLAMSA_ZMEAN = ' num2str(1,'%20.10E')]);
-disp(['  PLAMSA_ZAVG  = ' num2str(1,'%20.10E')]);
-disp( '!--------Universal Beam Parameters------');
-disp( '  NPARTICLES_START = 65536');
-disp(['  T_END_IN = ' num2str(ntotal,'%d') '*1.0E-3']);
-disp(['  MASS_BEAMS = ' num2str(ntotal,'%d') '*' num2str(mass,'%-20.10E')]);
-disp(['  ZATOM_BEAMS = ' num2str(ntotal,'%d') '*' num2str(Zatom,'%-20.10E')]);
-disp(['  CHARGE_BEAMS = ' num2str(ntotal,'%d') '*' num2str(charge,'%-20.10E')]);
+fprintf(fid, '&BEAMS3D_INPUT\n');
+fprintf(fid, '  NR = 128\n');
+fprintf(fid,['  NPHI = ' num2str(360/(2*vmec_data.nfp),'%d') '\n']);
+fprintf(fid, '  NZ = 128\n');
+fprintf(fid,['  RMIN = ' num2str(rmin,'%20.10E') '\n']);
+fprintf(fid,['  RMAX = ' num2str(rmax,'%20.10E') '\n']);
+fprintf(fid,['  ZMIN = ' num2str(zmin,'%20.10E') '\n']);
+fprintf(fid,['  ZMAX = ' num2str(zmax,'%20.10E') '\n']);
+fprintf(fid, '  PHIMIN = 0.0\n');
+fprintf(fid,['  PHIMAX = ' num2str(2.*pi./vmec_data.nfp,'%20.10E') '\n']);
+fprintf(fid, '  INT_TYPE = ''LSODE''\n');
+fprintf(fid, '  FOLLOW_TOL = 1.0E-9\n');
+fprintf(fid, '  VC_ADAPT_TOL = 1.0E-2\n');
+fprintf(fid, '  NPOINC = 2\n');
+fprintf(fid, '!--------PROFILES ----\n');
+fprintf(fid,[ '  NE_AUX_S = ' num2str(ne_s,'%12.6E  ') '\n']);
+fprintf(fid,[ '  NE_AUX_F = ' num2str(ne_f,'%12.6E  ') '\n']);
+fprintf(fid,[ '  TE_AUX_S = ' num2str(te_s,'%12.6E  ') '\n']);
+fprintf(fid,[ '  TE_AUX_F = ' num2str(te_f,'%12.6E  ') '\n']);
+fprintf(fid,[ '  TI_AUX_S = ' num2str(ti_s,'%12.6E  ') '\n']);
+fprintf(fid,[ '  TI_AUX_F = ' num2str(ti_f,'%12.6E  ') '\n']);
+fprintf(fid,[ '  ZEFF_AUX_S = ' num2str(zeff_s,'%12.6E  ') '\n']);
+fprintf(fid,[ '  ZEFF_AUX_F = ' num2str(zeff_f,'%12.6E  ') '\n']);
+if ~isempty(pot_f)
+fprintf(fid,[ '  POT_AUX_S = ' num2str(pot_s,'%12.6E  ') '\n']);
+fprintf(fid,[ '  POT_AUX_F = ' num2str(pot_f,'%12.6E  ') '\n']);
+end
+fprintf(fid,['  PLASMA_MASS = ' num2str(mass,'%20.10E') '\n']);
+fprintf(fid,['  PLAMSA_ZMEAN = ' num2str(1,'%20.10E') '\n']);
+fprintf(fid,['  PLAMSA_ZAVG  = ' num2str(1,'%20.10E') '\n']);
+fprintf(fid, '!--------Universal Beam Parameters------\n');
+fprintf(fid, '  NPARTICLES_START = 65536\n');
+fprintf(fid,['  T_END_IN = ' num2str(ntotal,'%d') '*' num2str(t_end,'%-8.2E') '\n']);
+fprintf(fid,['  MASS_BEAMS = ' num2str(ntotal,'%d') '*' num2str(mass,'%-20.10E') '\n']);
+fprintf(fid,['  ZATOM_BEAMS = ' num2str(ntotal,'%d') '*' num2str(Zatom,'%-20.10E') '\n']);
+fprintf(fid,['  CHARGE_BEAMS = ' num2str(ntotal,'%d') '*' num2str(charge,'%-20.10E') '\n']);
 n=1;
 for i=1:nbeams
     for j=1:npower
-        disp(['!----------BEAM ' num2str(n,'%d') ' ----------']);
+        fprintf(fid,['!----------BEAM ' num2str(n,'%d') ' ----------\n']);
         if ~isempty(note)
-            disp(['!-- ' note{i}]);
+            fprintf(fid,['!-- ' note{i} '  Energy=' num2str(energy(i).*(1.0/j)./(ec.*1E3),'%5.2f') '\n']);
         end
-        disp(['  E_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(energy(i).*(1.0/j),'%20.10E')]);
-        disp(['  P_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(power(i).*pfrac(j),'%20.10E')]);
-        disp(['  DIV_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(div_beam(i),'%20.10E')]);
-        disp(['  ADIST_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(adist(i),'%20.10E')]);
-        disp(['  ASIZE_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(asize(i),'%20.10E')]);
-        disp(['  R_BEAMS(' num2str(n,'%2.2d') ',1:2) = ' num2str(r_beam(1:2,i)','%20.10E')]);
-        disp(['  PHI_BEAMS(' num2str(n,'%2.2d') ',1:2) = ' num2str(phi_beam(1:2,i)',' %20.10E')]);
-        disp(['  Z_BEAMS(' num2str(n,'%2.2d') ',1:2) = ' num2str(z_beam(1:2,i)',' %20.10E')]);
+        fprintf(fid,['  E_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(energy(i).*(1.0/j),'%20.10E') '\n']);
+        fprintf(fid,['  P_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(power(i).*pfrac(j),'%20.10E') '\n']);
+        fprintf(fid,['  DIV_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(div_beam(i),'%20.10E') '\n']);
+        fprintf(fid,['  ADIST_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(adist(i),'%20.10E') '\n']);
+        fprintf(fid,['  ASIZE_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(asize(i),'%20.10E') '\n']);
+        fprintf(fid,['  R_BEAMS(' num2str(n,'%2.2d') ',1:2) = ' num2str(r_beam(1:2,i)','%20.10E') '\n']);
+        fprintf(fid,['  PHI_BEAMS(' num2str(n,'%2.2d') ',1:2) = ' num2str(phi_beam(1:2,i)',' %20.10E') '\n']);
+        fprintf(fid,['  Z_BEAMS(' num2str(n,'%2.2d') ',1:2) = ' num2str(z_beam(1:2,i)',' %20.10E') '\n']);
         if ~isempty(beam_dex)
-            disp(['  DEX_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(beam_dex(i),'%2i')]);
+            fprintf(fid,['  DEX_BEAMS(' num2str(n,'%2.2d') ') = ' num2str(beam_dex(i),'%2i') '\n']);
         end
         n=n+1;
     end
 end
-disp('/');
+fprintf(fid,'/');
 
 if lplots
     fig=figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
