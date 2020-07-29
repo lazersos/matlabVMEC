@@ -37,6 +37,7 @@ div = 0.0125;
 adist = 1.0;
 asize = 0.5;
 charge = 1.60217733E-19;
+t_end  = 0.05;
 vmec_data=[];
 vmec_data.Aminor = 0;
 vmec_data.rmax_surf = 6.5;
@@ -76,6 +77,9 @@ if nargin > 1
                     grid=varargin{i};
                 case {'Rudix','RUDIX','rudix'}
                     lrudix=1;
+                case 't_end'
+                    i=i+1;
+                    t_end=varargin{i};
             end
         end
         i = i+1;
@@ -288,7 +292,7 @@ end
 if (lwrite_beams3d)
     next_varargin=[next_varargin species 'pfrac' PFRAC 'beam_dex' source];
         beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
-            z_beam,div_beam,next_varargin{:},'note',note,'t_end',0.01);
+            z_beam,div_beam,next_varargin{:},'note',note,'t_end',t_end);
 end
 return
 
