@@ -198,6 +198,13 @@ if ~isempty(filename)
     handles.plot_types = [handles.plot_types; 'PHIEDGE'];
     handles.plot_types = [handles.plot_types; 'EXTCUR'];
 end
+filename = dir('boozmn_*.*.nc');
+if ~isempty(filename)
+    handles.plot_types = [handles.plot_types; '-----BOOZ-----'];
+    handles.plot_types = [handles.plot_types; 'QAS_ERROR'];
+    handles.plot_types = [handles.plot_types; 'QPS_ERROR'];
+    handles.plot_types = [handles.plot_types; 'QHS_ERROR'];
+end
 filename_prof = dir('tprof.*.*');
 if ~isempty(filename_prof)
     handles.plot_types = [handles.plot_types; '-----PROF-----'];
@@ -249,6 +256,7 @@ end
 set(handles.pulldownmenu,'String',handles.plot_types)
 % Update handles structure
 guidata(hObject, handles);
+update_plots(handles);
 
 % UIWAIT makes OPTplot wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -1074,6 +1082,75 @@ switch stemp
         title('Enclosed Toroidal Flux');
         xlabel('ITERATION');
         ylabel('Flux [Wb]');
+    case{'QAS_ERROR'}
+        files = dir('boozmn*.*.nc');
+        cla;
+        xlim([0 1]);
+        ylim([0 1]);
+        booz_data=read_boozer(files(1).name);
+        error = boozer_qerror(booz_data,0,1);
+        plot(booz_data.phi./booz_data.phi(end),error,['o' cinitial],'LineWidth',2.0);
+        hold on;
+        for i=2:length(files)-1
+            booz_data=read_boozer(files(i).name);
+            error = boozer_qerror(booz_data,0,1);
+            plot(booz_data.phi./booz_data.phi(end),error,'k+','LineWidth',2.0);
+        end
+        booz_data=read_boozer(files(end).name);
+        error = boozer_qerror(booz_data,0,1);
+        plot(booz_data.phi./booz_data.phi(end),error,['o' cfinal],'LineWidth',2.0);
+        %xlim([0 1]);
+        axis tight;
+        hold off;
+        title('Quasi-Axisymmetry Error');
+        xlabel('Normalized Flux');
+        ylabel('$\sqrt{\sum_{m,n\neq0}B_{m,n}^2}/B_{0,0}$','Interpreter','latex');
+    case{'QPS_ERROR'}
+        files = dir('boozmn*.*.nc');
+        cla;
+        xlim([0 1]);
+        ylim([0 1]);
+        booz_data=read_boozer(files(1).name);
+        error = boozer_qerror(booz_data,1,0);
+        plot(booz_data.phi./booz_data.phi(end),error,['o' cinitial],'LineWidth',2.0);
+        hold on;
+        for i=2:length(files)-1
+            booz_data=read_boozer(files(i).name);
+            error = boozer_qerror(booz_data,1,0);
+            plot(booz_data.phi./booz_data.phi(end),error,'k+','LineWidth',2.0);
+        end
+        booz_data=read_boozer(files(end).name);
+        error = boozer_qerror(booz_data,1,0);
+        plot(booz_data.phi./booz_data.phi(end),error,['o' cfinal],'LineWidth',2.0);
+        %xlim([0 1]);
+        axis tight;
+        hold off;
+        title('Quasi-Poloidal Symmetry Error');
+        xlabel('Normalized Flux');
+        ylabel('$\sqrt{\sum_{m\neq0,n}B_{m,n}^2}/B_{0,0}$','Interpreter','latex');
+    case{'QHS_ERROR'}
+        mtemp=1; ntemp=1;
+        files = dir('boozmn*.*.nc');
+        cla;
+        xlim([0 1]);
+        ylim([0 1]);
+        booz_data=read_boozer(files(1).name);
+        error = boozer_qerror(booz_data,ntemp,mtemp);
+        plot(booz_data.phi./booz_data.phi(end),error,['o' cinitial],'LineWidth',2.0);
+        hold on;
+        for i=2:length(files)-1
+            booz_data=read_boozer(files(i).name);
+            error = boozer_qerror(booz_data,ntemp,mtemp);
+            plot(booz_data.phi./booz_data.phi(end),error,'k+','LineWidth',2.0);
+        end
+        booz_data=read_boozer(files(end).name);
+        error = boozer_qerror(booz_data,ntemp,mtemp);
+        plot(booz_data.phi./booz_data.phi(end),error,['o' cfinal],'LineWidth',2.0);
+        axis tight;
+        hold off;
+        title(['Quasi-Helical Symmetry Error (n=' num2str(ntemp,'%i') ', m=' num2str(mtemp,'%i') ')'] );
+        xlabel('Normalized Flux');
+        ylabel(['$\sqrt{\sum_{m\neq' num2str(mtemp,'%i') ',n\neq' num2str(ntemp,'%i') '}B_{m,n}^2}/B_{0,0}$'],'Interpreter','latex');
     case{'NE'}
         files = dir('tprof.*.*');
         cla;
