@@ -226,8 +226,8 @@ fprintf(fid,[ '  POT_AUX_S = ' num2str(pot_s,'%12.6E  ') '\n']);
 fprintf(fid,[ '  POT_AUX_F = ' num2str(pot_f,'%12.6E  ') '\n']);
 end
 fprintf(fid,['  PLASMA_MASS = ' num2str(mass,'%20.10E') '\n']);
-fprintf(fid,['  PLAMSA_ZMEAN = ' num2str(1,'%20.10E') '\n']);
-fprintf(fid,['  PLAMSA_ZAVG  = ' num2str(1,'%20.10E') '\n']);
+fprintf(fid,['  PLASMA_ZMEAN = ' num2str(1,'%20.10E') '\n']);
+fprintf(fid,['  PLASMA_ZAVG  = ' num2str(1,'%20.10E') '\n']);
 fprintf(fid, '!--------Universal Beam Parameters------\n');
 fprintf(fid, '  NPARTICLES_START = 65536\n');
 fprintf(fid,['  T_END_IN = ' num2str(ntotal,'%d') '*' num2str(t_end,'%-8.2E') '\n']);
