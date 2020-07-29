@@ -77,6 +77,12 @@ if data.lfreeb
     write_namelist_int(fid,'NVACSKIP',data.nvacskip);
 else
     write_namelist_boo(fid,'LFREEB',0);
+    if any(data.extcur ~= 0)
+        write_namelist_vec(fid,'EXTCUR',data.extcur);
+    end
+    if ~isempty(data.mgrid_file)
+        write_namelist_str(fid,'MGRID_FILE',data.mgrid_file);
+    end
 end
 fprintf(fid,'%s\n','!----- Pressure Parameters -----');
 write_namelist_flt(fid,'gamma',data.gamma);
