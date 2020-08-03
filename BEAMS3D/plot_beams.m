@@ -60,6 +60,7 @@ if nargin > 1
                     'distribution','heating','current','fueling',...
                     'injection','birth_image',...
                     'wall','wall_loss','wall_heat','wall_shine','benchmarks',...
+                    'wall_loss_2d','wall_heat_2d','wall_shine_2d',...
                     'grid','grid_s',...
                     'camview'}
                 plot_type=varargin{i};
@@ -1064,17 +1065,62 @@ else
             set(gca,'FontSize',24);
             xlabel('R [m]');
             ylabel('Z [m]');
-        case 'wall'
-            output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',zeros(beam_data.nvertex,3));
-            set(output_args{1},'EdgeColor','black','FaceColor','blue','FaceAlpha',0.33);
-        case 'wall_loss'
-            output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',beam_data.wall_strikes,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
-        case 'wall_shine'
-            output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',sum(beam_data.wall_shine(beamdex,:))','LineStyle','none','CDataMapping','scaled','FaceColor','flat');
+         case 'wall'
+             output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',zeros(beam_data.nvertex,3));
+             set(output_args{1},'EdgeColor','black','FaceColor','blue','FaceAlpha',0.33);
+        case {'wall_loss','wall_shine','wall_heat'}
+            switch lower(plot_type)
+                case 'wall_loss'
+                    val=beam_data.wall_strikes;
+                case 'wall_shine'
+                    val=sum(beam_data.wall_shine(beamdex,:))';
+                case 'wall_heat'
+                    val=sum(beam_data.wall_load(beamdex,:))';
+            end
+            output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',val,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
             colormap hot;
-        case 'wall_heat'
-            output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',sum(beam_data.wall_load(beamdex,:))','LineStyle','none','CDataMapping','scaled','FaceColor','flat');
+        case {'wall_heat_2d','wall_shine_2d','wall_loss_2d'}
+            verts = beam_data.wall_vertex;
+            faces = beam_data.wall_faces;
+            d1 = faces(:,1); d2=faces(:,2); d3=faces(:,3);
+            x=verts(:,1); y=verts(:,2); z=verts(:,3); 
+            phi = atan2(y,x); phi(phi<0) = phi(phi<0) + 2*pi;
+            r = sqrt(x.*x+y.*y);
+            [raxis, zaxis] = beams3d_magaxis(beam_data);
+            rax = pchip(beam_data.phiaxis,raxis,mod(phi,max(beam_data.phiaxis)));
+            zax = pchip(beam_data.phiaxis,zaxis,mod(phi,max(beam_data.phiaxis)));
+            a = r - rax;
+            b = z - zax;
+            th = atan2(b,a);
+            x = (phi(d1)+phi(d2)+phi(d3))./3;
+            y = (th(d1)+th(d2)+th(d3))./3;
+            switch lower(plot_type)
+                case 'wall_heat_2d'
+                    val = sum(beam_data.wall_load(beamdex,:))';
+                case 'wall_shine_2d'
+                    val = sum(beam_data.wall_shine(beamdex,:))';
+                case 'wall_loss_2d'
+                    val = beam_data.wall_strikes;
+            end
+            F = scatteredInterpolant(x,y,val);
+            xp = 0:2*pi./128:2*pi;
+            yp = -pi:2*pi./128:pi;
+            Fp = F({xp,yp});
+            pixplot(xp,yp,Fp);
             colormap hot;
+            caxis([0 max(caxis)]);
+            h = max(beam_data.phiaxis);
+            xtick=h/2:h:2*pi-h/2;
+            xticklabel={};
+            for i=1:length(xtick)
+                xticklabel{i} = num2str(i,'%i');
+            end
+            for i=1:length(xtick)-1
+                hold on;
+                plot([i i].*h,ylim,'w');
+            end
+            set(gca,'YTick',[-pi/2 0 pi/2],'YTickLabel',{'Lower','Outboard','Upper'},...
+                'XTick',xtick,'XTickLabel',xticklabel);
         case 'grid'
             x=[]; y=[]; z=[];
             raxis = beam_data.raxis;
