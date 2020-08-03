@@ -6,12 +6,12 @@ function output1 = AL31(X,ZEFF)
 %       X:      Ration of trapped to passing particles
 %       ZEFF:   Effective Ion Charge Number
 %
-% Maintained by: Samuel Lazerson (sameul.lazerson@ipp.mpg.de)
+% Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.00
 
 Z2 = ZEFF.*ZEFF;
-d  = 1.414.*ZEFF + z2 + X.*(0.754+2.657.*ZEFF+2.*Z2) + X.*X.*(0.348+1.243.*ZEFF+Z2);
+d  = 1.414.*ZEFF + Z2 + X.*(0.754+2.657.*ZEFF+2.*Z2) + X.*X.*(0.348+1.243.*ZEFF+Z2);
 a  = 0.754 + 2.21.*ZEFF + Z2 + X.*(0.348+1.243.*ZEFF+Z2);
-output1 = x.*a./d;
+output1 = X.*a./d;
 end
 
