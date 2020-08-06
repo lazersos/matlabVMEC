@@ -201,6 +201,7 @@ end
 filename = dir('boozmn_*.*.nc');
 if ~isempty(filename)
     handles.plot_types = [handles.plot_types; '-----BOOZ-----'];
+    handles.plot_types = [handles.plot_types; '|B|_MAX'];
     handles.plot_types = [handles.plot_types; 'QAS_ERROR'];
     handles.plot_types = [handles.plot_types; 'QPS_ERROR'];
     handles.plot_types = [handles.plot_types; 'QHS_ERROR'];
@@ -327,7 +328,8 @@ switch stemp
         xlabel('ITERATION');
         ylabel('Total \chi^2');
         title('TOTAL CHISQ');
-    case{'CURTOR_chisq','VOLUME_chisq','BETA_chisq','ASPECT_chisq','KAPPA_chisq'}
+    case{'CURTOR_chisq','VOLUME_chisq','BETA_chisq','ASPECT_chisq','KAPPA_chisq'...
+            'PHIEDGE_chisq','RBTOR_chisq','R0_chisq','B0_chisq','WP_chisq'}
         f = handles.data.(stemp);
         plot(handles.data.iter,f,marker,'MarkerSize',18,'LineWidth',4.0);
         set(gca,'YScale','log');
@@ -337,11 +339,13 @@ switch stemp
         title(tstr);
     case{'TXPORT_chisq','B_PROBES_chisq','FLUXLOOPS_chisq',...
             'BALLOON_chisq','NEO_chisq','HELICITY_chisq',...
+            'BOOTSTRAP_chisq',...
             'HELICITY_FULL_chisq','NELINE_chisq','IOTA_chisq',...
             'TELINE_chisq','TILINE_chisq','ZEFFLINE_chisq',...
             'SXR_chisq','ECEREFLECT_chisq',...
             'KINK_chisq','XICS_chisq','XICS_BRIGHT_chisq','XICS_V_chisq','XICS_W3_chisq',...
-            'S11_chisq','S12_chisq','S21_chisq','S22_chisq','MAGWELL_chisq'}
+            'S11_chisq','S12_chisq','S21_chisq','S22_chisq','MAGWELL_chisq',...
+            'FARADAY_chisq','NE_chisq','TI_chisq','TE_chisq'}
         f = sum(handles.data.(stemp),2);
         plot(handles.data.iter,f,marker,'MarkerSize',18,'LineWidth',4.0);
         set(gca,'YScale','log');
@@ -1082,6 +1086,30 @@ switch stemp
         title('Enclosed Toroidal Flux');
         xlabel('ITERATION');
         ylabel('Flux [Wb]');
+    case{'|B|_MAX'}
+        files = dir('boozmn*.*.nc');
+        % Use last values
+        booz_data=read_boozer(files(end).name);
+        bmax = max(abs(booz_data.bmnc)');
+        [~,idex]=maxk(bmax,6);
+        cla;
+        xlim([0 1]);
+        ylim([0 1]);
+        booz_data=read_boozer(files(1).name);
+        plot(booz_data.phi./booz_data.phi(end),booz_data.bmnc(idex,:)','--','LineWidth',2.0);
+        hold on;
+        for i=2:length(files)-1
+            booz_data=read_boozer(files(i).name);
+            plot(booz_data.phi./booz_data.phi(end),booz_data.bmnc(idex,:)','k');
+        end
+        booz_data=read_boozer(files(end).name);
+        plot(booz_data.phi./booz_data.phi(end),booz_data.bmnc(idex,:)','LineWidth',2.0);
+        %xlim([0 1]);
+        axis tight;
+        hold off;
+        title('Max Boozer Modes');
+        xlabel('Normalized Flux');
+        ylabel('$|B|_{n,m}$','Interpreter','latex');
     case{'QAS_ERROR'}
         files = dir('boozmn*.*.nc');
         cla;
