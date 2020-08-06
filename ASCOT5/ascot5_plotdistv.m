@@ -14,6 +14,7 @@ function fig = ascot5_plotdistv(a5file,runid)
 % Version:       1.0
 
 fig=[];
+amu=1.66054E-27;
 % Check for file
 if ~isfile(a5file)
     disp(['ERROR: ' a5file ' file not found!']);
@@ -35,6 +36,12 @@ x5 = h5read(a5file,[path '/abscissa_vec_03']); %Z
 x6 = h5read(a5file,[path '/abscissa_vec_02']); %phi [deg]
 x7 = h5read(a5file,[path '/abscissa_vec_01']); %R
 
+
+path = ['/results/run_' num2str(runid,'%10.10i') '/inistate/'];
+mass = h5read(a5file,[path '/mass']); %mass
+mass = mean(mass).*amu;
+
+
 % Make factors
 dx1 = (x1(end)-x1(1))./length(x1);
 dx2 = (x2(end)-x2(1))./length(x2);
@@ -49,8 +56,8 @@ dx7 = (x7(end)-x7(1))./length(x7);
 dist=squeeze(sum(dist,[5 6 7]))';
 %factor = dx1.*dx2.*dx5.*dx6.*dx7;
 factor = dx1.*dx5.*dx6.*dx7;
-x = x4./1E6;
-y = x3./1E6;
+x = x4./(1E6.*mass);
+y = x3./(1E6.*mass);
 xtick = unique(round(x));
 ytick = unique(round(y));
 xticklabel={};
