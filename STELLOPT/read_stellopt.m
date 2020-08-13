@@ -1043,6 +1043,14 @@ while ~feof(fid);
                 data.([tstr '_kappa_avg'])(niter,:) = temp(:,5);
                 data.([tstr '_kappa_max'])(niter,:) = temp(:,6);
                 data.([tstr '_phi'])(niter,:) = temp(:,7);
+            % Curvature Kurtosis
+            case {'CURVATURE_P2'}
+                data.([tstr '_target'])(niter,:) = temp(:,1);
+                data.([tstr '_sigma'])(niter,:) = temp(:,2);
+                data.([tstr '_equil'])(niter,:) = temp(:,3);
+                data.([tstr '_chisq'])(niter,:) = ((temp(:,1)-temp(:,3))./(temp(:,2))).^2;
+                data.([tstr '_p1'])(niter,:) = temp(:,4);
+                data.([tstr '_p2'])(niter,:) = temp(:,5);
             % COIL_BNORM (COILOPT++)
             case {'COIL_BNORM'}
                 data.([tstr '_target'])(niter,:) = temp(:,1);

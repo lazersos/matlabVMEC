@@ -63,7 +63,8 @@ handles.chi_types={'ASPECT','BETA','CURTOR','EXTCUR','SEPARATRIX',...
     'XICS','XICS_BRIGHT','XICS_V','XICS_W3','SXR','VPHI','VACIOTA',...
     'IOTA','BALLOON','BOOTSTRAP','DKES','HELICITY','HELICITY_FULL',...
     'KINK','ORBIT','JDOTB','J_STAR','NEO','TXPORT','ECEREFLECT'...
-    'S11','S12','S21','S22','MAGWELL','CURVATURE_KERT'};
+    'S11','S12','S21','S22','MAGWELL',...
+    'CURVATURE_KERT','CURVATURE_P2'};
 handles.data = read_stellopt(filename(1).name);  % Read the file
 handles.plot_types={'Chi-Squared';'Chi-Stacked'};
 for i=1:length(handles.chi_types)
@@ -74,6 +75,9 @@ end
 handles.plot_types = [handles.plot_types; '-----SPECIAL-----'];
 if isfield(handles.data,'BALLOON_chisq')
     handles.plot_types = [handles.plot_types; 'BALLOON_evolution'];
+end
+if isfield(handles.data,'BOOTSTRAP_chisq')
+    handles.plot_types = [handles.plot_types; 'BOOTSTRAP_evolution'];
 end
 if isfield(handles.data,'KINK_chisq')
     handles.plot_types = [handles.plot_types; 'KINK_evolution'];
@@ -179,6 +183,10 @@ if isfield(handles.data,'MSE_chisq')
 end
 if isfield(handles.data,'SXR_chisq')
     handles.plot_types = [handles.plot_types; 'SXR_evolution'];
+end
+if isfield(handles.data,'CURVATURE_P2_chisq')
+    handles.plot_types = [handles.plot_types; 'CURVATURE_P1_evolution'];
+    handles.plot_types = [handles.plot_types; 'CURVATURE_P2_evolution'];
 end
 % For targets that need both
 filename = dir('wout*.*.nc');
@@ -329,7 +337,8 @@ switch stemp
         ylabel('Total \chi^2');
         title('TOTAL CHISQ');
     case{'CURTOR_chisq','VOLUME_chisq','BETA_chisq','ASPECT_chisq','KAPPA_chisq'...
-            'PHIEDGE_chisq','RBTOR_chisq','R0_chisq','B0_chisq','WP_chisq'}
+            'PHIEDGE_chisq','RBTOR_chisq','R0_chisq','B0_chisq','WP_chisq',...
+            'CURVATURE_P2_chisq'}
         f = handles.data.(stemp);
         plot(handles.data.iter,f,marker,'MarkerSize',18,'LineWidth',4.0);
         set(gca,'YScale','log');
@@ -363,6 +372,15 @@ switch stemp
         xlabel('Surface Number');
         ylabel('Ballooning Stability');
         title('Ballooning Stability Evolution');
+    case{'BOOTSTRAP_evolution'}
+        plot(handles.data.BOOTSTRAP_s(:,:)',handles.data.BOOTSTRAP_jBbs(:,:)','k');
+        hold on;
+        plot(handles.data.BOOTSTRAP_s(1,:),handles.data.BOOTSTRAP_jBbs(1,:),cinitial,'LineWidth',2.0);
+        plot(handles.data.BOOTSTRAP_s(end,:),handles.data.BOOTSTRAP_jBbs(end,:),cfinal,'LineWidth',2.0);
+        hold off;
+        xlabel('Toroidal Flux');
+        ylabel('Bootstrap Current');
+        title('Bootstrap Current Evolution');
     case{'TXPORT_evolution'}
         plot(handles.data.TXPORT_s(:,:)',handles.data.TXPORT_equil(:,:)','k');
         hold on;
@@ -373,6 +391,24 @@ switch stemp
         xlabel('Normalized Flux');
         ylabel('Proxy Function');
         title('Turbulent Transport Evolution');
+    case{'CURVATURE_P1_evolution'}
+        if isfield(handles.data,'CURVATURE_P1_p1')
+            plot(handles.data.CURVATURE_P1_p1,'ok');
+        else
+            plot(handles.data.CURVATURE_P2_p1,'ok');
+        end
+        xlabel('Iteration');
+        ylabel('P1');
+        title('First Principal Curvature Evolution');
+    case{'CURVATURE_P2_evolution'}
+        if isfield(handles.data,'CURVATURE_P2_p2')
+            plot(handles.data.CURVATURE_P2_p2,'ok');
+        else
+            plot(handles.data.CURVATURE_P1_p2,'ok');
+        end
+        xlabel('Iteration');
+        ylabel('P2');
+        title('Second Principal Curvature Evolution');
     case{'ORBIT_evolution'}
         if (size(handles.data.ORBIT_s,2)==1)
             plot(handles.data.ORBIT_s(:,:),handles.data.ORBIT_equil(:,:),'k.');
