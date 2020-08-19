@@ -952,7 +952,10 @@ switch contents{get(handles.plottype,'Value')}
         if isfield(handles.data,'phipf')
             plot(0:1./(handles.data.ns-1):1,handles.data.phipf,'k')
         else
-            plot(0:1./(handles.data.ns-1):1,handles.data.phip,'k')
+            % half grid
+            x=0:1./(handles.data.ns-1):1;
+            x=0.5.*(x(1:end-1)+x(2:end));
+            plot(x,handles.data.phip(2:end),'k')
         end
         xlabel(handles.xlabel);
         ylabel('Ploidal Flux [Wb]');
@@ -1612,15 +1615,15 @@ switch contents{get(handles.plottype,'Value')}
         set(handles.theslide,'Enable','off');
         set(handles.torslide,'Enable','off');
         surfs=handles.data.ns;
-        nzeta=size(handles.zeta,2);
-        cuts=[1 round(nzeta/4)+1 round(nzeta/2)+1];
-        toroslice(handles.r,cuts(1),handles.z,surfs,'b');
+        r2=pchip(handles.zeta,handles.r,[0 pi/2 pi]);
+        z2=pchip(handles.zeta,handles.z,[0 pi/2 pi]);
+        toroslice(r2,1,z2,surfs,'b');
         hold on
-        toroslice(handles.r,cuts(2),handles.z,surfs,'g');
-        toroslice(handles.r,cuts(3),handles.z,surfs,'r');
-        plot(squeeze(handles.r(1,1,cuts(1))),squeeze(handles.z(1,1,cuts(1))),'+b');
-        plot(squeeze(handles.r(1,1,cuts(2))),squeeze(handles.z(1,1,cuts(2))),'+g');
-        plot(squeeze(handles.r(1,1,cuts(3))),squeeze(handles.z(1,1,cuts(3))),'+r');
+        toroslice(r2,2,z2,surfs,'g');
+        toroslice(r2,3,z2,surfs,'r');
+        plot(r2(1,1,1),z2(1,1,1),'+b');
+        plot(r2(1,1,2),z2(1,1,2),'+g');
+        plot(r2(1,1,3),z2(1,1,3),'+r');
         hold off
         title('Flux Surface Evolution');
         xlabel('R [m]');
@@ -2375,47 +2378,49 @@ switch handles.data.datatype
         end
         %handles.data.ns=sum(handles.data.idx);
         % Reset theta and zeta to 1D
-        handles.theta=0:2*pi/(handles.mpol-1):2*pi;
-        handles.zeta=0:2*pi/(handles.ntor-1):2*pi;
+        handles.data.ns = double(handles.data.ns);
+        %handles.theta=0:2*pi/(handles.mpol-1):2*pi;
+        %handles.zeta=0:2*pi/(handles.ntor-1):2*pi;
         pause(.01);
         % Calculate zeta transform
         set(handles.statustext,'String','Computing ptran');
         pause(.01);
-        handles.ptran=sfunct(handles.theta,handles.zeta,handles.data.pmns,handles.data.xm,handles.data.xn);
+        xn = handles.data.xn./handles.data.nfp;
+        handles.ptran=sfunct(handles.theta,handles.zeta,handles.data.pmns,handles.data.xm,xn);
         if handles.data.lasym
             handles.ptran=handles.ptran+...
-                cfunct(handles.theta,handles.zeta,handles.data.pmnc,handles.data.xm,handles.data.xn);
+                cfunct(handles.theta,handles.zeta,handles.data.pmnc,handles.data.xm,xn);
         end
         % Transform quantities
         set(handles.statustext,'String','Computing r');
         pause(.01);
-        handles.r=cfunct(handles.theta,handles.zeta,handles.data.rmnc,handles.data.xm,handles.data.xn);
+        handles.r=cfunct(handles.theta,handles.zeta,handles.data.rmnc,handles.data.xm,xn);
         set(handles.statustext,'String','Computing z');
         pause(.01);
-        handles.z=sfunct(handles.theta,handles.zeta,handles.data.zmns,handles.data.xm,handles.data.xn);
+        handles.z=sfunct(handles.theta,handles.zeta,handles.data.zmns,handles.data.xm,xn);
         set(handles.statustext,'String','Computing |B|');
         pause(.01);
-        handles.b=cfunct(handles.theta,handles.zeta,handles.data.bmnc,handles.data.xm,handles.data.xn);
+        handles.b=cfunct(handles.theta,handles.zeta,handles.data.bmnc,handles.data.xm,xn);
         set(handles.statustext,'String','Computing g');
         pause(.01);
-        handles.g=cfunct(handles.theta,handles.zeta,handles.data.gmnc,handles.data.xm,handles.data.xn);
+        handles.g=cfunct(handles.theta,handles.zeta,handles.data.gmnc,handles.data.xm,xn);
         if handles.data.lasym
             set(handles.statustext,'String','Computing r-sin');
             pause(.01);
             handles.r=handles.r+...
-                sfunct(handles.theta,handles.zeta,handles.data.rmns,handles.data.xm,handles.data.xn);
+                sfunct(handles.theta,handles.zeta,handles.data.rmns,handles.data.xm,xn);
             set(handles.statustext,'String','Computing z-cos');
             pause(.01);
             handles.z=handles.z+...
-                cfunct(handles.theta,handles.zeta,handles.data.zmnc,handles.data.xm,handles.data.xn);
+                cfunct(handles.theta,handles.zeta,handles.data.zmnc,handles.data.xm,xn);
             set(handles.statustext,'String','Computing |B|-sin');
             pause(.01);
             handles.b=handles.b+...
-                sfunct(handles.theta,handles.zeta,handles.data.bmns,handles.data.xm,handles.data.xn);
+                sfunct(handles.theta,handles.zeta,handles.data.bmns,handles.data.xm,xn);
             set(handles.statustext,'String','Computing g-sin');
             pause(.01);
             handles.g=hangles.g+...
-                sfunct(handles.theta,handles.zeta,handles.data.gmns,handles.data.xm,handles.data.xn);
+                sfunct(handles.theta,handles.zeta,handles.data.gmns,handles.data.xm,xn);
         end
     case 'FIELDLINES'
         handles.r = handles.data.raxis;
