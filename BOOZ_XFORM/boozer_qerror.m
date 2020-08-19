@@ -26,7 +26,7 @@ elseif n==0
     maskdex = booz_data.xm == 0;
 else
     d1 = booz_data.xm==m;
-    d2 = booz_data.xn==n;
+    d2 = booz_data.xn==(n.*booz_data.nfp);
     maskdex = and(d1,d2);
 end
 
