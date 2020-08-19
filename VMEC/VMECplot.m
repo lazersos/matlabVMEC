@@ -299,7 +299,8 @@ if handles.data.ntor == 0
     set(handles.torslide,'Value',1.0);
 else
     if ~handles.nvoverride
-        handles.ntor=max(nsin*(handles.data.ntor+1)*handles.data.nfp,32);
+        handles.ntor=max(4*handles.data.ntor+1,32);
+        %handles.ntor=max(nsin*(handles.data.ntor+1)*handles.data.nfp,32);
     end
     handles.mpol=64;
     %if ~handles.nuoverride, handles.mpol=handles.data.nu;end
@@ -307,19 +308,23 @@ else
     disp(strcat(' - ntheta=',num2str(handles.mpol)));
     disp(strcat(' - nzeta=',num2str(handles.ntor)));
     disp(' -- Loading Data, Please wait --');
-    handles.zeta=0:2*pi/double(handles.ntor):2*pi;          %nzeta and ntor+1 elements
+    handles.zeta=0:2*pi/double(handles.ntor-1):2*pi;          %nzeta and ntor+1 elements
     handles.theta=0:2*pi/double(handles.mpol-1):2*pi;
-    set(handles.torslide,'Max',round(int32(handles.ntor)/int32(handles.data.nfp))+1);
+    set(handles.torslide,'Max',handles.ntor);
     set(handles.torslide,'Min',1.0);
-    set(handles.torslide,'SliderStep',[1.0 1.0]./double(round(int32(handles.ntor)/int32(handles.data.nfp))+1-1));
+    set(handles.torslide,'SliderStep',[1.0 1.0]./double(int32(handles.ntor)-1));
     set(handles.torslide,'Value',1.0);
     set(handles.torslide,'Enable','off');
 end
 % Set Defaults
-set(handles.torslide,'Max',round(handles.ntor/handles.data.nfp)+1);
+set(handles.torslide,'Max',handles.ntor);
 set(handles.torslide,'Min',1.0);
-set(handles.torslide,'SliderStep',[1.0 1.0]./double(round(int32(handles.ntor)/int32(handles.data.nfp))+1-1));
+set(handles.torslide,'SliderStep',[1.0 1.0]./double(int32(handles.ntor)-1));
 set(handles.torslide,'Value',1.0);
+%set(handles.torslide,'Max',round(handles.ntor/handles.data.nfp)+1);
+%set(handles.torslide,'Min',1.0);
+%set(handles.torslide,'SliderStep',[1.0 1.0]./double(round(int32(handles.ntor)/int32(handles.data.nfp))+1-1));
+%set(handles.torslide,'Value',1.0);
 set(handles.theslide,'Max',handles.mpol);
 set(handles.theslide,'Min',1.0);
 set(handles.theslide,'SliderStep',[1.0 1.0]./double(int32(handles.mpol)-1));
@@ -520,8 +525,9 @@ if handles.data.ntor == 0
     set(handles.torslide,'SliderStep',[1.0 1.0]);
     set(handles.torslide,'Value',1.0);
 else
-    if ~handles.nvoverride,
-        handles.ntor=nsin*(handles.data.ntor+1)*handles.data.nfp;
+    if ~handles.nvoverride
+        %handles.ntor=nsin*(handles.data.ntor+1)*handles.data.nfp;
+        handles.ntor=max(4*handles.data.ntor+1,32);
     end
     if ~handles.nuoverride, handles.mpol=90; end
     %if ~handles.nuoverride, handles.mpol=handles.data.nu; end
@@ -529,11 +535,11 @@ else
     disp(strcat(' - ntheta=',num2str(handles.mpol)));
     disp(strcat(' - nzeta=',num2str(handles.ntor)));
     disp(' -- Loading Data, Please wait --');
-    handles.zeta=0:2*pi/handles.ntor:2*pi;          %nzeta and ntor+1 elements
-    handles.theta=0:2*pi/(handles.mpol-1):2*pi;
-    set(handles.torslide,'Max',round(handles.ntor/handles.data.nfp)+1);
+    handles.zeta=0:2*pi/double(handles.ntor-1):2*pi;          %nzeta and ntor+1 elements
+    handles.theta=0:2*pi/double(handles.mpol-1):2*pi;
+    set(handles.torslide,'Max',handles.ntor);
     set(handles.torslide,'Min',1.0);
-    set(handles.torslide,'SliderStep',[1.0 1.0]./(round(handles.ntor/handles.data.nfp)+1-1));
+    set(handles.torslide,'SliderStep',[1.0 1.0]./double(int32(handles.ntor)-1));
     set(handles.torslide,'Value',1.0);
     set(handles.torslide,'Enable','off');
 end
@@ -1204,7 +1210,7 @@ switch contents{get(handles.plottype,'Value')}
             ylabel(name);
             title([name ' at theta=',...
                 num2str(handles.theta(handles.thetaval)),...
-                ' \phi=',...
+                ' \zeta=',...
                 num2str(handles.zeta(handles.zetaval))]);
             % Code to overplot resonances
             y_lims=[min(f(:,handles.thetaval,handles.zetaval)) max(f(:,handles.thetaval,handles.zetaval))];
@@ -1228,11 +1234,11 @@ switch contents{get(handles.plottype,'Value')}
             xlabel('Theta (\theta) [rad]');
             ylabel(name);
             title([name 'on flux surface r=',num2str(handles.rval),...
-                ' at \phi=',num2str(handles.zeta(handles.zetaval))]);
+                ' at \zeta=',num2str(handles.zeta(handles.zetaval))]);
         elseif strcmp(handles.cuttype,'zeta1d')
             plot(squeeze(handles.zeta),...
                 squeeze(f(handles.rval,handles.thetaval,:)))
-            xlabel('Phi (\phi) [rad]');
+            xlabel('Zeta (\zeta) [rad]');
             ylabel(name);
             title([name ' on flux surface r=',num2str(handles.rval),...
                 ' at theta=',num2str(handles.theta(handles.thetaval))]);
@@ -1240,12 +1246,12 @@ switch contents{get(handles.plottype,'Value')}
             if handles.data.nfp==1
                 h=pcolor(handles.zeta,handles.theta,squeeze(f(handles.rval,:,:)));
             else
-                zetafp=handles.zeta(1:2+round(handles.ntor/handles.data.nfp));
+                zetafp=handles.zeta;
                 h=pcolor(zetafp,handles.theta,...
-                    squeeze(f(handles.rval,:,1:2+round(handles.ntor/handles.data.nfp))));
+                    squeeze(f(handles.rval,:,:)));
             end
             set(h,'EdgeColor','none');
-            xlabel('Phi (\phi) [rad]');
+            xlabel('Zeta (\zeta) [rad]');
             ylabel('Theta (\theta) [rad]');
             title([name ' on flux surface=',...
                 num2str(handles.rval)]);
@@ -1271,13 +1277,13 @@ switch contents{get(handles.plottype,'Value')}
                     1:handles.data.ns,...
                     squeeze(f(:,handles.thetaval,:)));
             else
-                zetafp=handles.zeta(1:2+round(handles.ntor/handles.data.nfp));
+                zetafp=handles.zeta;
                 h=pcolor(repmat(zetafp,[handles.data.ns 1]),...
                     1:handles.data.ns,...
-                    squeeze(f(:,handles.thetaval,1:2+round(handles.ntor/handles.data.nfp))));
+                    squeeze(f(:,handles.thetaval,:)));
             end
             set(h,'EdgeColor','none');
-            xlabel('Phi (\phi)');
+            xlabel('Zeta (\zeta)');
             ylabel('Radial Grid');
             title([name ' for \theta=',...
                 num2str(handles.theta(handles.thetaval))]);
@@ -1289,13 +1295,20 @@ switch contents{get(handles.plottype,'Value')}
             title([name ' at \phi=',num2str(handles.zeta(handles.zetaval))]);
         elseif strcmp(handles.cuttype,'3D')
             set(handles.rtext,'String','Flux');
+            r = repmat(handles.r(:,:,1:end-1),[1 1 handles.data.nfp]);
+            z = repmat(handles.z(:,:,1:end-1),[1 1 handles.data.nfp]);
+            f = repmat(f(:,:,1:end-1),[1 1 handles.data.nfp]);
+            r(:,:,end+1) = r(:,:,1);
+            z(:,:,end+1) = z(:,:,1);
+            f(:,:,end+1) = f(:,:,1);
+            phi = 0:2*pi/(size(r,3)-1):2*pi;
             if (handles.rval > 1)
-                isotoro(handles.r,handles.z,handles.zeta,handles.rval,f);
+                isotoro(r,z,phi,handles.rval,f);
                 title([name ' on Flux Surface (ns=',num2str(handles.rval),')']);
             else
-                plot3(squeeze(handles.r(1,1,:)).*cos(handles.zeta'),...
-                    squeeze(handles.r(1,1,:)).*sin(handles.zeta'),...
-                    squeeze(handles.z(1,1,:)),'k')
+                plot3(squeeze(r(1,1,:)).*cos(phi'),...
+                    squeeze(r(1,1,:)).*sin(phi'),...
+                    squeeze(z(1,1,:)),'k')
                 title('Magnetic Axis');
             end
             xlabel('X [m]');
@@ -1431,9 +1444,22 @@ switch contents{get(handles.plottype,'Value')}
             title(strcat('Flux Surfaces at zeta=',num2str(handles.zeta(handles.zetaval))));
             axis equal
         elseif strcmp(handles.cuttype,'3D')
+            
             set(handles.rtext,'String','Flux');
-            isotoro(handles.r,handles.z,handles.zeta,handles.rval);
-            title(strcat('Flux Surface (ns=',num2str(handles.rval),')'));
+            r = repmat(handles.r(:,:,1:end-1),[1 1 handles.data.nfp]);
+            z = repmat(handles.z(:,:,1:end-1),[1 1 handles.data.nfp]);
+            r(:,:,end+1) = r(:,:,1);
+            z(:,:,end+1) = z(:,:,1);
+            phi = 0:2*pi/(size(r,3)-1):2*pi;
+            if (handles.rval > 1)
+                isotoro(r,z,phi,handles.rval);
+                title(strcat('Flux Surface (ns=',num2str(handles.rval),')'));
+            else
+                plot3(squeeze(r(1,1,:)).*cos(phi'),...
+                    squeeze(r(1,1,:)).*sin(phi'),...
+                    squeeze(z(1,1,:)),'k')
+                title('Magnetic Axis');
+            end
             xlabel('X [m]');
             ylabel('Y [m]');
             zlabel('Z [m]');
@@ -1587,7 +1613,7 @@ switch contents{get(handles.plottype,'Value')}
         set(handles.torslide,'Enable','off');
         surfs=handles.data.ns;
         nzeta=size(handles.zeta,2);
-        cuts=[1 round(nzeta/handles.data.nfp/4)+1 round(nzeta/handles.data.nfp/2)+1];
+        cuts=[1 round(nzeta/4)+1 round(nzeta/2)+1];
         toroslice(handles.r,cuts(1),handles.z,surfs,'b');
         hold on
         toroslice(handles.r,cuts(2),handles.z,surfs,'g');
@@ -1858,10 +1884,10 @@ function nzeta_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of nzeta as
 %        a double
 handles.ntor=str2double(get(hObject,'String'));
-handles.zeta=0:2*pi/handles.ntor:2*pi;
-set(handles.torslide,'Max',round(handles.ntor/handles.data.nfp)+1);
+handles.zeta=0:2*pi/double(handles.ntor-1):2*pi;
+set(handles.torslide,'Max',handles.ntor);
 set(handles.torslide,'Min',1.0);
-set(handles.torslide,'SliderStep',[1.0 1.0]./(round(handles.ntor/handles.data.nfp)+1-1));
+set(handles.torslide,'SliderStep',[1.0 1.0]./double(int32(handles.ntor)-1));
 set(handles.torslide,'Value',1.0);
 guidata(hObject, handles);
 transf(hObject,handles);
@@ -1893,61 +1919,64 @@ switch handles.data.datatype
         handles.theta=0:2*pi/(handles.mpol-1):2*pi;
         set(handles.statustext,'String','Computing lambda');
         pause(.01);
+        % Switch to field period representation
+        xn = handles.data.xn./handles.data.nfp;
+        xn_nyq = handles.data.xn_nyq./handles.data.nfp;
         % Transform to straight field line coords
-        handles.l=sfunct(handles.theta,handles.zeta,handles.data.lmns,handles.data.xm,handles.data.xn);
+        handles.l=sfunct(handles.theta,handles.zeta,handles.data.lmns,handles.data.xm,xn);
         if handles.data.iasym==1
             set(handles.statustext,'String','Asymetric VMEC detected!');
             pause(.01);
             set(handles.statustext,'String','Adding lbc to lambda');
             pause(.01);
-            handles.l=handles.l-cfunct(handles.theta,handles.zeta,handles.data.lmnc,handles.data.xm,handles.data.xn);
+            handles.l=handles.l-cfunct(handles.theta,handles.zeta,handles.data.lmnc,handles.data.xm,xn);
         end
         % Transform quantities
         set(handles.statustext,'String','Computing r');
         pause(.01);
-        handles.r=cfunct(handles.theta,handles.zeta,handles.data.rmnc,handles.data.xm,handles.data.xn);
+        handles.r=cfunct(handles.theta,handles.zeta,handles.data.rmnc,handles.data.xm,xn);
         set(handles.statustext,'String','Computing z');
         pause(.01);
-        handles.z=sfunct(handles.theta,handles.zeta,handles.data.zmns,handles.data.xm,handles.data.xn);
+        handles.z=sfunct(handles.theta,handles.zeta,handles.data.zmns,handles.data.xm,xn);
         set(handles.statustext,'String','Computing lam');
         pause(.01);
-        handles.lam=sfunct(handles.theta,handles.zeta,handles.data.lmns,handles.data.xm,handles.data.xn);
+        handles.lam=sfunct(handles.theta,handles.zeta,handles.data.lmns,handles.data.xm,xn);
         set(handles.statustext,'String','Computing B');
         pause(.01);
-        handles.b=cfunct(handles.theta,handles.zeta,handles.data.bmnc,handles.data.xm_nyq,handles.data.xn_nyq);
+        handles.b=cfunct(handles.theta,handles.zeta,handles.data.bmnc,handles.data.xm_nyq,xn_nyq);
         set(handles.statustext,'String','Computing g');
         pause(.01);
-        handles.g=cfunct(handles.theta,handles.zeta,handles.data.gmnc,handles.data.xm_nyq,handles.data.xn_nyq);
+        handles.g=cfunct(handles.theta,handles.zeta,handles.data.gmnc,handles.data.xm_nyq,xn_nyq);
         set(handles.statustext,'String','Computing b_s');
         pause(.01);
-        handles.b_s=sfunct(handles.theta,handles.zeta,handles.data.bsubsmns,handles.data.xm_nyq,handles.data.xn_nyq);
+        handles.b_s=sfunct(handles.theta,handles.zeta,handles.data.bsubsmns,handles.data.xm_nyq,xn_nyq);
         set(handles.statustext,'String','Computing b_u');
         pause(.01);
-        handles.b_u=cfunct(handles.theta,handles.zeta,handles.data.bsubumnc,handles.data.xm_nyq,handles.data.xn_nyq);
+        handles.b_u=cfunct(handles.theta,handles.zeta,handles.data.bsubumnc,handles.data.xm_nyq,xn_nyq);
         set(handles.statustext,'String','Computing b_v');
         pause(.01);
-        handles.b_v=cfunct(handles.theta,handles.zeta,handles.data.bsubvmnc,handles.data.xm_nyq,handles.data.xn_nyq);
+        handles.b_v=cfunct(handles.theta,handles.zeta,handles.data.bsubvmnc,handles.data.xm_nyq,xn_nyq);
         set(handles.statustext,'String','Computing b^u');
         pause(.01);
-        handles.bu=cfunct(handles.theta,handles.zeta,handles.data.bsupumnc,handles.data.xm_nyq,handles.data.xn_nyq);
+        handles.bu=cfunct(handles.theta,handles.zeta,handles.data.bsupumnc,handles.data.xm_nyq,xn_nyq);
         set(handles.statustext,'String','Computing b^v');
         pause(.01);
-        handles.bv=cfunct(handles.theta,handles.zeta,handles.data.bsupvmnc,handles.data.xm_nyq,handles.data.xn_nyq);
+        handles.bv=cfunct(handles.theta,handles.zeta,handles.data.bsupvmnc,handles.data.xm_nyq,xn_nyq);
         set(handles.statustext,'String','Computing currv');
         pause(.01);
-        handles.currv=cfunct(handles.theta,handles.zeta,handles.data.currvmnc,handles.data.xm_nyq,handles.data.xn_nyq);
+        handles.currv=cfunct(handles.theta,handles.zeta,handles.data.currvmnc,handles.data.xm_nyq,xn_nyq);
         set(handles.statustext,'String','Computing dR/du');
         pause(.01);
-        handles.drdu=sfunct(handles.theta,handles.zeta,handles.data.rumns,handles.data.xm,handles.data.xn);
+        handles.drdu=sfunct(handles.theta,handles.zeta,handles.data.rumns,handles.data.xm,xn);
         set(handles.statustext,'String','Computing dR/dv');
         pause(.01);
-        handles.drdv=sfunct(handles.theta,handles.zeta,handles.data.rvmns,handles.data.xm,handles.data.xn);
+        handles.drdv=sfunct(handles.theta,handles.zeta,handles.data.rvmns,handles.data.xm,xn);
         set(handles.statustext,'String','Computing dZ/du');
         pause(.01);
-        handles.dzdu=cfunct(handles.theta,handles.zeta,handles.data.zumnc,handles.data.xm,handles.data.xn);
+        handles.dzdu=cfunct(handles.theta,handles.zeta,handles.data.zumnc,handles.data.xm,xn);
         set(handles.statustext,'String','Computing dZ/dv');
         pause(.01);
-        handles.dzdv=cfunct(handles.theta,handles.zeta,handles.data.zvmnc,handles.data.xm,handles.data.xn);
+        handles.dzdv=cfunct(handles.theta,handles.zeta,handles.data.zvmnc,handles.data.xm,xn);
         if isfield(handles,'prot')
             handles = rmfield(handles,'prot');
             handles = rmfield(handles,'U_rot');
@@ -1956,11 +1985,11 @@ switch handles.data.datatype
         end
         if isfield(handles.data,'protmnc')
             pause(.01);
-            handles.prot=cfunct(handles.theta,handles.zeta,handles.data.protmnc,handles.data.xm,handles.data.xn);
+            handles.prot=cfunct(handles.theta,handles.zeta,handles.data.protmnc,handles.data.xm,xn);
             pause(.01);
-            handles.U_rot=cfunct(handles.theta,handles.zeta,handles.data.protrsqmnc,handles.data.xm,handles.data.xn);
+            handles.U_rot=cfunct(handles.theta,handles.zeta,handles.data.protrsqmnc,handles.data.xm,xn);
             pause(.01);
-            handles.prpr=cfunct(handles.theta,handles.zeta,handles.data.prprmnc,handles.data.xm,handles.data.xn);
+            handles.prpr=cfunct(handles.theta,handles.zeta,handles.data.prprmnc,handles.data.xm,xn);
         end
         % Handle asymetric vars
         if handles.data.iasym==1
@@ -1972,54 +2001,54 @@ switch handles.data.datatype
             pause(.01);
             set(handles.statustext,'String','Adding rbs to R');
             pause(.01);
-            handles.r=handles.r+sfunct(handles.theta,handles.zeta,handles.data.rmns,handles.data.xm,handles.data.xn);
-            handles.drdu=handles.drdu+cfunct(handles.theta,handles.zeta,handles.data.rumnc,handles.data.xm,handles.data.xn);
-            handles.drdv=handles.drdv+cfunct(handles.theta,handles.zeta,handles.data.rvmnc,handles.data.xm,handles.data.xn);
+            handles.r=handles.r+sfunct(handles.theta,handles.zeta,handles.data.rmns,handles.data.xm,xn);
+            handles.drdu=handles.drdu+cfunct(handles.theta,handles.zeta,handles.data.rumnc,handles.data.xm,xn);
+            handles.drdv=handles.drdv+cfunct(handles.theta,handles.zeta,handles.data.rvmnc,handles.data.xm,xn);
             set(handles.statustext,'String','Adding zbc to Z');
             pause(.01);
-            handles.z=handles.z+cfunct(handles.theta,handles.zeta,handles.data.zmnc,handles.data.xm,handles.data.xn);
-            handles.dzdu=handles.dzdu+sfunct(handles.theta,handles.zeta,handles.data.zumns,handles.data.xm,handles.data.xn);
-            handles.dzdv=handles.dzdv+sfunct(handles.theta,handles.zeta,handles.data.zvmns,handles.data.xm,handles.data.xn);
-            handles.lam=handles.lam+cfunct(handles.theta,handles.zeta,handles.data.lmns,handles.data.xm,handles.data.xn);
+            handles.z=handles.z+cfunct(handles.theta,handles.zeta,handles.data.zmnc,handles.data.xm,xn);
+            handles.dzdu=handles.dzdu+sfunct(handles.theta,handles.zeta,handles.data.zumns,handles.data.xm,xn);
+            handles.dzdv=handles.dzdv+sfunct(handles.theta,handles.zeta,handles.data.zvmns,handles.data.xm,xn);
+            handles.lam=handles.lam+cfunct(handles.theta,handles.zeta,handles.data.lmns,handles.data.xm,xn);
             % Handle new asymetric VMEC values
             if isfield(handles.data,'bmns')
                 set(handles.statustext,'String','Adding bs to b');
                 pause(.01);
-                handles.b=handles.b+sfunct(handles.theta,handles.zeta,handles.data.bmns,handles.data.xm_nyq,handles.data.xn_nyq);
+                handles.b=handles.b+sfunct(handles.theta,handles.zeta,handles.data.bmns,handles.data.xm_nyq,xn_nyq);
             end
             if isfield(handles.data,'gmns')
                 set(handles.statustext,'String','Adding gs to g');
                 pause(.01);
-                handles.g=handles.g+sfunct(handles.theta,handles.zeta,handles.data.gmns,handles.data.xm_nyq,handles.data.xn_nyq);
+                handles.g=handles.g+sfunct(handles.theta,handles.zeta,handles.data.gmns,handles.data.xm_nyq,xn_nyq);
             end
             if isfield(handles.data,'bsubsmnc')
                 set(handles.statustext,'String','Adding b_sc to b_s');
                 pause(.01);
-                handles.b_s=handles.b_s+cfunct(handles.theta,handles.zeta,handles.data.bsubsmnc,handles.data.xm_nyq,handles.data.xn_nyq);
+                handles.b_s=handles.b_s+cfunct(handles.theta,handles.zeta,handles.data.bsubsmnc,handles.data.xm_nyq,xn_nyq);
             end
             if isfield(handles.data,'bsubumns')
                 set(handles.statustext,'String','Adding b_us to b_u');
                 pause(.01);
-                handles.b_u=handles.b_u+sfunct(handles.theta,handles.zeta,handles.data.bsubumns,handles.data.xm_nyq,handles.data.xn_nyq);
+                handles.b_u=handles.b_u+sfunct(handles.theta,handles.zeta,handles.data.bsubumns,handles.data.xm_nyq,xn_nyq);
             end
             if isfield(handles.data,'bsubvmns')
                 set(handles.statustext,'String','Adding b_vs to b_v');
                 pause(.01);
-                handles.b_v=handles.b_v+sfunct(handles.theta,handles.zeta,handles.data.bsubvmns,handles.data.xm_nyq,handles.data.xn_nyq);
+                handles.b_v=handles.b_v+sfunct(handles.theta,handles.zeta,handles.data.bsubvmns,handles.data.xm_nyq,xn_nyq);
             end
             if isfield(handles.data,'currvmns')
                 set(handles.statustext,'String','Adding currvs to currv');
                 pause(.01);
-                handles.currv=handles.currv+sfunct(handles.theta,handles.zeta,handles.data.currvmns,handles.data.xm_nyq,handles.data.xn_nyq);
-                %handles.b=handles.b+sfunct(handles.theta,handles.zeta,handles.data.bmns,handles.data.xm_nyq,handles.data.xn);
+                handles.currv=handles.currv+sfunct(handles.theta,handles.zeta,handles.data.currvmns,handles.data.xm_nyq,xn_nyq);
+                %handles.b=handles.b+sfunct(handles.theta,handles.zeta,handles.data.bmns,handles.data.xm_nyq,xn);
             end
             if isfield(handles.data,'protmns')
                 pause(.01);
-                handles.prot=handles.prot+sfunct(handles.theta,handles.zeta,handles.data.protmns,handles.data.xm,handles.data.xn);
+                handles.prot=handles.prot+sfunct(handles.theta,handles.zeta,handles.data.protmns,handles.data.xm,xn);
                 pause(.01);
-                handles.U_rot=handles.U_rot+sfunct(handles.theta,handles.zeta,handles.data.protrsqmns,handles.data.xm,handles.data.xn);
+                handles.U_rot=handles.U_rot+sfunct(handles.theta,handles.zeta,handles.data.protrsqmns,handles.data.xm,xn);
                 pause(.01);
-                handles.prpr=handles.prpr+sfunct(handles.theta,handles.zeta,handles.data.prprmns,handles.data.xm,handles.data.xn);
+                handles.prpr=handles.prpr+sfunct(handles.theta,handles.zeta,handles.data.prprmns,handles.data.xm,xn);
             end
         end
         % Fix jcurv as they are multiplied by gsqrt
@@ -2048,10 +2077,10 @@ switch handles.data.datatype
         if isfield(handles.data,'currumnc')
             set(handles.statustext,'String','Computing curru');
             pause(.01);
-            handles.curru=cfunct(handles.theta,handles.zeta,handles.data.currumnc,handles.data.xm_nyq,handles.data.xn_nyq);
+            handles.curru=cfunct(handles.theta,handles.zeta,handles.data.currumnc,handles.data.xm_nyq,xn_nyq);
             if handles.data.iasym==1
                 if isfield(handles.data,'currumns')
-                    handles.curru=handles.curru+sfunct(handles.theta,handles.zeta,handles.data.currumns,handles.data.xm_nyq,handles.data.xn_nyq);
+                    handles.curru=handles.curru+sfunct(handles.theta,handles.zeta,handles.data.currumns,handles.data.xm_nyq,xn_nyq);
                 end
             end
             handles.curru=handles.curru./handles.g;
