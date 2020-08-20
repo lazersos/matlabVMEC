@@ -18,6 +18,7 @@ function [varargout]=isotoro(r,z,zeta,s,varargin)
 % theta:    Magnetic polodial angle (theta)
 % s:        Vector of surfaces to plot
 % color:    Array of colors to plot on surface.
+% 'STL':    Will output to an STL file.
 %
 % Exmaple Usage (data assumed to have at least 10 flux surfaces)
 %      theta=0:2*pi/36:2*pi;
@@ -29,28 +30,36 @@ function [varargout]=isotoro(r,z,zeta,s,varargin)
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       2.05
-if nargin > 5
-    disp('-- Error too many arguments');
-    return
-elseif nargin >4
-    mincolor=min(min(min(varargin{1})));
-    maxcolor=max(max(max(varargin{1})));
-    cmap=colormap;
-    csize=size(cmap,1);
-    colorbar;
-    caxis([mincolor maxcolor]);
-    if size(r,3) == 1
-        for i=1:size(r,3)
-            new_color(:,:,i)=varargin{1}(:,:,1);
+
+new_color=[];
+loutputtoobj = 0; % Will output STL files if set to 1
+
+if nargin > 4
+    j=1;
+    while j<=length(varargin)
+        if isstr(varargin{j})
+            switch varargin{j}
+                case{'STL','stl'}
+                    loutputtoobj=1;
+            end
+        elseif isnumeric(varargin{j})
+            mincolor=min(min(min(varargin{j})));
+            maxcolor=max(max(max(varargin{j})));
+            cmap=colormap;
+            csize=size(cmap,1);
+            caxis([mincolor maxcolor]);
+            if size(r,3) == 1
+                for i=1:size(r,3)
+                    new_color(:,:,i)=varargin{j}(:,:,1);
+                end
+            else
+                new_color=varargin{j};
+            end
         end
-    else
-        new_color=varargin{1};
-    end 
-else
+        j=j+1;
+    end
     %cfacedata=[1 0 0];
 end
-
-loutputtoobj = 0; % Will output STL files if set to 1
 
 maxzeta=max(zeta);
 ns=size(squeeze(s),2);
@@ -122,7 +131,7 @@ for k=1:ns
     end
 end
 % Get Color Information
-if nargin > 4
+if ~isempty(new_color)
     for k=1:ns
         ivertex=1;
         for j=1:nzeta
@@ -149,28 +158,28 @@ end
 %end
 
 % check for 3D printer output
-scale = 1.0;
-if (loutputtoobj == 1)
-    maker_scale=150; %mm
-    xmax = max(vertex(:,1,ns));
-    ymax = max(vertex(:,2,ns));
-    zmax = max(vertex(:,3,ns));
-    xmin = min(vertex(:,1,ns));
-    ymin = min(vertex(:,2,ns));
-    zmin = min(vertex(:,3,ns));
-    xlen = xmax-xmin;
-    ylen = ymax-ymin;
-    zlen = zmax-zmin;
-    scale = min([maker_scale/xlen, maker_scale/ylen, maker_scale/zlen]);
-    x0   = xmin+0.5*xlen;
-    y0   = ymin+0.5*ylen;
-    z0   = zmin;
-end
+scale = 1.0; x0=0; y0=0; z0=0;
+%if (loutputtoobj == 1)
+%    maker_scale=150; %mm
+%    xmax = max(vertex(:,1,ns));
+%    ymax = max(vertex(:,2,ns));
+%    zmax = max(vertex(:,3,ns));
+%    xmin = min(vertex(:,1,ns));
+%    ymin = min(vertex(:,2,ns));
+%    zmin = min(vertex(:,3,ns));
+%    xlen = xmax-xmin;
+%    ylen = ymax-ymin;
+%    zlen = zmax-zmin;
+%    scale = min([maker_scale/xlen, maker_scale/ylen, maker_scale/zlen]);
+%    x0   = xmin+0.5*xlen;
+%    y0   = ymin+0.5*ylen;
+%    z0   = zmin;
+%end
 
 % Handle plotting a single surface
 if ns==1
     hpatch=patch('Vertices',vertex,'Faces',faces,'FaceVertexCData',cfacedata);
-    if nargin > 4
+    if ~isempty(new_color)
         set(hpatch,'EdgeColor','none','FaceColor','interp','CDataMapping','direct');
     else        
         set(hpatch,'EdgeColor','none','FaceColor','red');
