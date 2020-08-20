@@ -49,6 +49,16 @@ if isfield(data,'B_PHI')
     data.B_R = data.B_R.*data.B_PHI./r_temp;
     data.B_Z = data.B_Z.*data.B_PHI./r_temp;
 end
+
+% Handle torlines output
+if ~isfield(data,'phiaxis')
+    data.nv = double(data.nv);
+    data.nu = double(data.nu);
+    data.nfp = double(data.nfp);
+    data.phiaxis=0:1./(data.nv-1):1;
+    data.phiaxis=2*pi.*data.phiaxis./data.nfp;
+end
+
 if ~liota, return; end
 
 
