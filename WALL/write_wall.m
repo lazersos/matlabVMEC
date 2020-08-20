@@ -34,7 +34,7 @@ function data = write_wall(data,filename )
 %   Date:           9/29/16
 % Check arguments
 if nargin<2
-    disp('ERROR: read_vessel requires wall structure and filename');
+    disp('ERROR: write_wall requires wall structure and filename');
     return
 end
 % Open File
