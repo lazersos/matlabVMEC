@@ -34,40 +34,42 @@ function dist = beams3d_getdistrpz(data,r,phi,z,vll,vperp)
 
 
 % Helpers
-nfp=round(2*pi./data.phiaxis(end));
-pt=mod(phi,data.phiaxis(end))./data.phiaxis(end);
 vt=vll+data.partvmax;
 ds=1.0;
 du=2*pi;
+dp=2*pi;
 dv=2*data.partvmax;
 dw=data.partvmax;
 
 % Interpolate
 S   = permute(data.S_ARR,[2 1 3]);
 U   = permute(data.U_ARR,[2 1 3]);
+pgrid = mod(phi,data.phiaxis(end));
 sval= interp3(data.raxis,data.phiaxis,data.zaxis,...
-    S,r,phi,z);
+    S,r,pgrid,z);
 uval= interp3(data.raxis,data.phiaxis,data.zaxis,...
-    U,r,phi,z);
+    U,r,pgrid,z);
+pval = mod(phi,2*pi);
+rhoval = sqrt(sval);
+
 
 % Calculate indexes
-dexs=floor(double(data.ns_prof1).*sval./ds)+1;
-dexu=floor(double(data.ns_prof2).*uval./du)+1;
-dexp=floor(double(data.ns_prof3).*pt)+1;
+dexr=floor(double(data.ns_prof1).*rhoval./ds)+1;
+dexu=min(floor(double(data.ns_prof2).*uval./du)+1,double(data.ns_prof2));
+dexp=floor(double(data.ns_prof3).*pval./dp)+1;
 dexv=floor(double(data.ns_prof4).*vt./dv)+1;
 dexw=floor(double(data.ns_prof5).*vperp./dw)+1; %verp defined as zero
 
-mask1=and(dexs>0,dexs<data.ns_prof1);
-mask2=and(dexu>0,dexu<data.ns_prof2);
+mask1=and(dexr>0,dexr<data.ns_prof1);
 mask3=and(dexp>0,dexp<data.ns_prof3);
 mask4=and(dexv>0,dexv<data.ns_prof4);
 mask5=and(dexw>0,dexw<data.ns_prof5);
-maskt=(mask1+mask2+mask3+mask4+mask5)==5;
+maskt=(mask1+mask3+mask4+mask5)==4;
 
 dist=zeros(data.nbeams,length(r));
 for i=1:length(maskt)
     if maskt(i)
-        dist(:,i) = data.dist_prof(:,dexs(i),dexu(i),dexp(i),dexv(i),dexw(i));
+        dist(:,i) = data.dist_prof(:,dexr(i),dexu(i),dexp(i),dexv(i),dexw(i));
     end
 end
 
