@@ -196,7 +196,7 @@ else
     % Calc Last Index for each particle
     last_dex=zeros(1,beam_data.nparticles);
     for i=1:beam_data.nparticles
-        last_dex(i) =find(beam_data.R_lines(:,i)>0,1,'last');
+        last_dex(i) = max([find(beam_data.R_lines(:,i)==0,1,'last') beam_data.npoinc+1]);
     end
     % Make plots
     switch lower(plot_type)
@@ -215,7 +215,7 @@ else
             axis equal;
             axis off;
             title('Orbiting Particles');
-        case 'xyz_thermalized'
+        case 'xyz_therm'
             x1  = beam_data.X_lines(:,therm_dex);
             y1  = beam_data.Y_lines(:,therm_dex);
             z1  = beam_data.Z_lines(:,therm_dex);
@@ -425,7 +425,10 @@ else
         case 'rho_therm'
             cdex=pchip([0 1],[1 0 0; 0 1 0]',0:1./double(beam_data.npoinc):1)';
             colororder(cdex);
+            leg_text={};
+            dt = double(beam_data.t_end(1))./double(beam_data.npoinc);
             for j=1:beam_data.npoinc+1
+                leg_text{j} = ['t=' num2str(dt.*double(j-1).*1000,'%3.0f')];
                 x1 =  sqrt(beam_data.S_lines(j,therm_dex));
                 h  = 1.2/64.0;
                 edges = 0:h:1.2;
@@ -437,11 +440,14 @@ else
                     y(i) =sum(and(sm,sp));
                 end
                 plot(rho,y);
+                hold on;
             end
+            hold off;
             xlim([0 1.2]);
             xlabel('r/a');
             ylabel('# Particles');
             title('Thermalized Particles');
+            legend(leg_text);
         case 'rho_birth'
             x1 =  sqrt(beam_data.S_lines(dex1,born_dex));
             h  = 1.2/64.0;
@@ -475,7 +481,7 @@ else
             ylabel('# Particles');
             title('Intial Orbiting Particles');
         case 'rho_lost_initial'
-            x1 =  sqrt(beam_data.S_lines(dex1,rho_dex));
+            x1 =  sqrt(beam_data.S_lines(dex1,lost_dex));
             h  = 1.2/64.0;
             edges = 0:h:1.2;
             rho   = 0.5.*(edges(1:end-1)+edges(2:end));
