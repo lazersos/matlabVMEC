@@ -44,7 +44,7 @@ if ~isempty(varargin)
             case 'therm_birth'
                 etarg=etherm;
                 llast=0;
-            case 'therm_end'
+            case 'therm_last'
                 etarg=etherm;
                 llast=1;
             case 'wall_birth'
@@ -70,30 +70,32 @@ if ~isempty(varargin)
     end
 end
 
-mask=~(beam_data.end_state'==etarg);
+end_state=double(beam_data.end_state');
+
+mask=~(end_state==etarg);
 
 % Handle a hitonly run
-if size(beam_data.R_lines,1) == 3
-    disp('WARNING:  Possible hit_only run!');
-    disp('      dex=1 Before hit');
-    disp('      dex=2 Wall hit or last point');
-    disp('      dex=3 Point beyond wall');
-    dex = ones(1,beam_data.npoinc)+1;
-    if llast
-        dex = dex + 1;
-    end
-    return;
-else
+%if size(beam_data.R_lines,1) == 3
+%    disp('WARNING:  Possible hit_only run!');
+%    disp('      dex=1 Before hit');
+%    disp('      dex=2 Wall hit or last point');
+%    disp('      dex=3 Point beyond wall');
+%    dex = ones(1,beam_data.npoinc)+1;
+%    if llast
+%        dex = dex + 1;
+%    end
+%    return;
+%else
     
     if llast
         dex=zeros(1,beam_data.nparticles);
         for i=1:beam_data.nparticles
-            dex(i) = find(beam_data.R_lines(:,i)>0,1,'last');
+            dex(i) = min([find(beam_data.R_lines(:,i)==0,1,'first')-1 beam_data.npoinc+1]);
         end
     else
         dex = ones(1,beam_data.nparticles);
     end
-end
+%end
 dex(mask) = 0;
 
 return;
