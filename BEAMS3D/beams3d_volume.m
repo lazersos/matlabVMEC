@@ -34,13 +34,12 @@ for i = 1:beam_data.nphi-1
     dv(:,i,:) = grid.*vol2d;
 end
 
-ns = double(beam_data.ns_prof1);
+ns = beam_data.ns_prof1;
 ds = 1./(ns-1);
 edges = 0:ds:1;
 s = 0.5.*(edges(1:end-1)+edges(2:end));
 
 % Create profile
-plasma_vol=zeros(1,ns-1);
 plasma_dvolds = zeros(1,ns-1);
 for i=1:ns-1
     dex1 = beam_data.S_ARR > edges(i);
