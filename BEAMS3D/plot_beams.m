@@ -31,6 +31,7 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      plot_beams(beam_data,'wall_loss'); % # of particle lost
 %      plot_beams(beam_data,'wall_shine'); % [W/m^3]
 %      plot_beams(beam_data,'wall_heat'); % [W/m^3]
+%      plot_beams(beam_data,'wall_heat_2d'); % [W/m^3]
 %      plot_beams(beam_data,'benchmark'); % Old benchmark plots
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
@@ -449,66 +450,70 @@ else
             title('Thermalized Particles');
             legend(leg_text);
         case 'rho_birth'
-            x1 =  sqrt(beam_data.S_lines(dex1,born_dex));
-            h  = 1.2/64.0;
-            edges = 0:h:1.2;
-            rho   = 0.5.*(edges(1:end-1)+edges(2:end));
-            y=zeros(1,64);
-            for i=1:length(edges)-1
-                sm = x1 > edges(i);
-                sp = x1 <= edges(i+1);
-                y(i) =sum(and(sm,sp));
-            end
-            plot(rho,y,'k');
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            x1 =  sqrt(abs(beam_data.S_lines(dex1,born_dex)));
+            w = double(beam_data.Weight(born_dex));
+            nres = 64;
+            y_size=[0 1.2];
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_y = numel(ybins);
+            Yi = round( interp1(ybins, 1:NumBins_y, x1, 'linear', 'extrap') );
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray(Yi', w,[NumBins_y 1]);
+            plot(ybins,vals,'k','LineWidth',4);
             xlim([0 1.2]);
+            set(gca,'FontSize',24);
             xlabel('r/a');
             ylabel('# Particles');
             title('Born Particles');
         case 'rho_initial'
-            x1 =  sqrt(beam_data.S_lines(dex1,orbit_dex));
-            h  = 1.2/64.0;
-            edges = 0:h:1.2;
-            rho   = 0.5.*(edges(1:end-1)+edges(2:end));
-            y=zeros(1,64);
-            for i=1:length(edges)-1
-                sm = x1 > edges(i);
-                sp = x1 <= edges(i+1);
-                y(i) =sum(and(sm,sp));
-            end
-            plot(rho,y,'k');
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            x1 =  sqrt(abs(beam_data.S_lines(dex1,orbit_dex)));
+            w = double(beam_data.Weight(orbit_dex));
+            nres = 64;
+            y_size=[0 1.2];
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_y = numel(ybins);
+            Yi = round( interp1(ybins, 1:NumBins_y, x1, 'linear', 'extrap') );
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray(Yi', w,[NumBins_y 1]);
+            plot(ybins,vals,'k','LineWidth',4);
             xlim([0 1.2]);
+            set(gca,'FontSize',24);
             xlabel('r/a');
             ylabel('# Particles');
             title('Intial Orbiting Particles');
         case 'rho_lost_initial'
-            x1 =  sqrt(beam_data.S_lines(dex1,lost_dex));
-            h  = 1.2/64.0;
-            edges = 0:h:1.2;
-            rho   = 0.5.*(edges(1:end-1)+edges(2:end));
-            y=zeros(1,64);
-            for i=1:length(edges)-1
-                sm = x1 > edges(i);
-                sp = x1 <= edges(i+1);
-                y(i) =sum(and(sm,sp));
-            end
-            plot(rho,y,'k');
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            x1 =  sqrt(abs(beam_data.S_lines(dex1,lost_dex)));
+            w = double(beam_data.Weight(lost_dex));
+            nres = 64;
+            y_size=[0 1.2];
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_y = numel(ybins);
+            Yi = round( interp1(ybins, 1:NumBins_y, x1, 'linear', 'extrap') );
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray(Yi', w,[NumBins_y 1]);
+            plot(ybins,vals,'k','LineWidth',4);
             xlim([0 1.2]);
+            set(gca,'FontSize',24);
             xlabel('r/a');
             ylabel('# Particles');
             title('Intial Lost Particles');
         case 'rho_therm_initial'
-            x1 =  sqrt(beam_data.S_lines(dex1,therm_dex));
-            h  = 1.2/64.0;
-            edges = 0:h:1.2;
-            rho   = 0.5.*(edges(1:end-1)+edges(2:end));
-            y=zeros(1,64);
-            for i=1:length(edges)-1
-                sm = x1 > edges(i);
-                sp = x1 <= edges(i+1);
-                y(i) =sum(and(sm,sp));
-            end
-            plot(rho,y,'k');
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            x1 =  sqrt(abs(beam_data.S_lines(dex1,therm_dex)));
+            w = double(beam_data.Weight(therm_dex));
+            nres = 64;
+            y_size=[0 1.2];
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_y = numel(ybins);
+            Yi = round( interp1(ybins, 1:NumBins_y, x1, 'linear', 'extrap') );
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray(Yi', w,[NumBins_y 1]);
+            plot(ybins,vals,'k','LineWidth',4);
             xlim([0 1.2]);
+            set(gca,'FontSize',24);
             xlabel('r/a');
             ylabel('# Particles');
             title('Intial Thermalized Particles');
@@ -516,6 +521,7 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(:,orbit_dex);
+            w = double(beam_data.Weight(orbit_dex));
             vperp = vperp(:,orbit_dex);
             pitch = atan2d(vll,vperp);
             ld    = last_dex(orbit_dex);
@@ -523,11 +529,14 @@ else
             for i=1:length(ld)
                 p2(i) = pitch(ld(i),i);
             end
-            y_size=[min(p2) max(p2)];
             nres = 128;
-            edges= y_size(1):diff(y_size)./nres:y_size(2);
-            vals = hist(p2,edges);
-            plot(edges,vals,'k','LineWidth',4);
+            y_size=[min(p2) max(p2)];
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_y = numel(ybins);
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray(Yi', w);
+            plot(ybins,vals,'k','LineWidth',4);
             set(gca,'FontSize',24);
             xlabel('Pitch Angle [^o]');
             ylabel('Counts');
@@ -536,6 +545,7 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(:,therm_dex);
+            w = double(beam_data.Weight(therm_dex));
             vperp = vperp(:,therm_dex);
             pitch = atan2d(vll,vperp);
             ld    = last_dex(therm_dex);
@@ -543,31 +553,37 @@ else
             for i=1:length(ld)
                 p2(i) = pitch(ld(i),i);
             end
-            y_size=[min(p2) max(p2)];
             nres = 128;
-            edges= y_size(1):diff(y_size)./nres:y_size(2);
-            vals = hist(p2,edges);
-            plot(edges,vals,'k','LineWidth',4);
+            y_size=[min(p2) max(p2)];
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_y = numel(ybins);
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray(Yi', w);
+            plot(ybins,vals,'k','LineWidth',4);
             set(gca,'FontSize',24);
             xlabel('Pitch Angle [^o]');
             ylabel('Counts');
             title('Thermalized Particle Pitch');
         case 'pitch_lost'
+            disp('BROKEN')
+            return;
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(:,lost_dex);
+            w = double(beam_data.Weight(lost_dex));
             vperp = vperp(:,lost_dex);
             pitch = atan2d(vll,vperp);
             ld    = last_dex(lost_dex);
             p2    = length(ld);
-            for i=1:length(ld)
-                p2(i) = pitch(ld(i),i);
-            end
-            y_size=[min(p2) max(p2)];
             nres = 128;
-            edges= y_size(1):diff(y_size)./nres:y_size(2);
-            vals = hist(p2,edges);
-            plot(edges,vals,'k','LineWidth',4);
+            y_size=[min(p2) max(p2)];
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_y = numel(ybins);
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray(Yi', w);
+            plot(ybins,vals,'k','LineWidth',4);
             set(gca,'FontSize',24);
             xlabel('Pitch Angle [^o]');
             ylabel('Counts');
@@ -576,14 +592,18 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(dex1,born_dex);
+            w = double(beam_data.Weight(born_dex));
             vperp = vperp(dex1,born_dex);
             pitch = atan2d(vll,vperp);
             p2    = pitch(1,:);
-            y_size=[min(p2) max(p2)];
             nres = 128;
-            edges= y_size(1):diff(y_size)./nres:y_size(2);
-            vals = hist(p2,edges);
-            plot(edges,vals,'k','LineWidth',4);
+            y_size=[min(p2) max(p2)];
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_y = numel(ybins);
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray(Yi', w);
+            plot(ybins,vals,'k','LineWidth',4);
             set(gca,'FontSize',24);
             xlabel('Pitch Angle [^o]');
             ylabel('Counts');
@@ -592,15 +612,19 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(:,orbit_dex);
+            w = double(beam_data.Weight(orbit_dex));
             vperp = vperp(:,orbit_dex);
             pitch = atan2d(vll,vperp);
             ld    = last_dex(orbit_dex);
             p2    = pitch(1,:);
-            y_size=[min(p2) max(p2)];
             nres = 128;
-            edges= y_size(1):diff(y_size)./nres:y_size(2);
-            vals = hist(p2,edges);
-            plot(edges,vals,'k','LineWidth',4);
+            y_size=[min(p2) max(p2)];
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_y = numel(ybins);
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray(Yi', w);
+            plot(ybins,vals,'k','LineWidth',4);
             set(gca,'FontSize',24);
             xlabel('Pitch Angle [^o]');
             ylabel('Counts');
@@ -609,15 +633,19 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(:,therm_dex);
+            w = double(beam_data.Weight(therm_dex));
             vperp = vperp(:,therm_dex);
             pitch = atan2d(vll,vperp);
             ld    = last_dex(therm_dex);
             p2    = pitch(1,:);
-            y_size=[min(p2) max(p2)];
             nres = 128;
-            edges= y_size(1):diff(y_size)./nres:y_size(2);
-            vals = hist(p2,edges);
-            plot(edges,vals,'k','LineWidth',4);
+            y_size=[min(p2) max(p2)];
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_y = numel(ybins);
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray(Yi', w);
+            plot(ybins,vals,'k','LineWidth',4);
             set(gca,'FontSize',24);
             xlabel('Pitch Angle [^o]');
             ylabel('Counts');
@@ -626,15 +654,19 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(:,lost_dex);
+            w = double(beam_data.Weight(lost_dex));
             vperp = vperp(:,lost_dex);
             pitch = atan2d(vll,vperp);
             ld    = last_dex(lost_dex);
             p2    = pitch(1,:);
-            y_size=[min(p2) max(p2)];
             nres = 128;
-            edges= y_size(1):diff(y_size)./nres:y_size(2);
-            vals = hist(p2,edges);
-            plot(edges,vals,'k','LineWidth',4);
+            y_size=[min(p2) max(p2)];
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_y = numel(ybins);
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray(Yi', w);
+            plot(ybins,vals,'k','LineWidth',4);
             set(gca,'FontSize',24);
             xlabel('Pitch Angle [^o]');
             ylabel('Counts');
@@ -643,20 +675,27 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(:,orbit_dex);
+            w = double(beam_data.Weight(orbit_dex));
             vperp = vperp(:,orbit_dex);
             ld    = last_dex(orbit_dex);
-            p1    = length(ld);
-            p2    = length(ld);
+            p1    = zeros(1,length(ld));
+            p2    = zeros(1,length(ld));
             for i=1:length(ld)
                 p1(i) = vll(ld(i),i);
                 p2(i) = vperp(ld(i),i);
             end
+            nres = 256;
             x_size=[-1 1].*beam_data.partvmax;
             y_size=[ 0 1].*beam_data.partvmax;
-            nres = 256;
-            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
-                y_size(1):diff(y_size)./nres:y_size(2)};
-            vals = hist3([p1; p2]',edges);
+            xbins = x_size(1):diff(x_size)./nres:x_size(2);
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_x = numel(xbins);
+            NumBins_y = numel(ybins);
+            Xi = round( interp1(xbins, 1:NumBins_x, p1, 'linear', 'extrap') );
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Xi = max( min(Xi,NumBins_x), 1);
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray([Xi; Yi]', w, [NumBins_x NumBins_y]);
             if max(abs(x_size)) > 1E6
                 norm = 1E6;
                 units = 'Mm/s';
@@ -668,7 +707,7 @@ else
                 units = 'm/s';
             end
             colormap jet;
-            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            ha=pcolor(xbins./norm,ybins./norm,vals');
             set(ha,'LineStyle','none');
             set(gca,'FontSize',24);
             xlabel(['Parallel Velocity (v_{||}) [' units ']']);
@@ -678,20 +717,27 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(:,therm_dex);
+            w = double(beam_data.Weight(therm_dex));
             vperp = vperp(:,therm_dex);
             ld    = last_dex(therm_dex);
-            p1    = length(ld);
-            p2    = length(ld);
+            p1    = zeros(1,length(ld));
+            p2    = zeros(1,length(ld));
             for i=1:length(ld)
                 p1(i) = vll(ld(i),i);
                 p2(i) = vperp(ld(i),i);
             end
+            nres = 256;
             x_size=[-1 1].*beam_data.partvmax;
             y_size=[ 0 1].*beam_data.partvmax;
-            nres = 256;
-            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
-                y_size(1):diff(y_size)./nres:y_size(2)};
-            vals = hist3([p1; p2]',edges);
+            xbins = x_size(1):diff(x_size)./nres:x_size(2);
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_x = numel(xbins);
+            NumBins_y = numel(ybins);
+            Xi = round( interp1(xbins, 1:NumBins_x, p1, 'linear', 'extrap') );
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Xi = max( min(Xi,NumBins_x), 1);
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray([Xi; Yi]', w, [NumBins_x NumBins_y]);
             if max(abs(x_size)) > 1E6
                 norm = 1E6;
                 units = 'Mm/s';
@@ -703,7 +749,7 @@ else
                 units = 'm/s';
             end
             colormap jet;
-            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            ha=pcolor(xbins./norm,ybins./norm,vals');
             set(ha,'LineStyle','none');
             set(gca,'FontSize',24);
             xlabel(['Parallel Velocity (v_{||}) [' units ']']);
@@ -713,20 +759,27 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(:,lost_dex);
+            w = double(beam_data.Weight(lost_dex));
             vperp = vperp(:,lost_dex);
             ld    = last_dex(lost_dex);
-            p1    = length(ld);
-            p2    = length(ld);
+            p1    = zeros(1,length(ld));
+            p2    = zeros(1,length(ld));
             for i=1:length(ld)
                 p1(i) = vll(ld(i),i);
                 p2(i) = vperp(ld(i),i);
             end
+            nres = 256;
             x_size=[-1 1].*beam_data.partvmax;
             y_size=[ 0 1].*beam_data.partvmax;
-            nres = 256;
-            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
-                y_size(1):diff(y_size)./nres:y_size(2)};
-            vals = hist3([p1; p2]',edges);
+            xbins = x_size(1):diff(x_size)./nres:x_size(2);
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_x = numel(xbins);
+            NumBins_y = numel(ybins);
+            Xi = round( interp1(xbins, 1:NumBins_x, p1, 'linear', 'extrap') );
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Xi = max( min(Xi,NumBins_x), 1);
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray([Xi; Yi]', w, [NumBins_x NumBins_y]);
             if max(abs(x_size)) > 1E6
                 norm = 1E6;
                 units = 'Mm/s';
@@ -738,7 +791,7 @@ else
                 units = 'm/s';
             end
             colormap jet;
-            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            ha=pcolor(xbins./norm,ybins./norm,vals');
             set(ha,'LineStyle','none');
             set(gca,'FontSize',24);
             xlabel(['Parallel Velocity (v_{||}) [' units ']']);
@@ -748,15 +801,23 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(dex1,orbit_dex);
+            w = double(beam_data.Weight(orbit_dex));
             vperp = vperp(dex1,orbit_dex);
             p1    = vll(1,:);
             p2    = vperp(1,:);
-            x_size=[-1 1].*beam_data.partvmax;
-            y_size=[ 0 1].*beam_data.partvmax;
             nres = 256;
-            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
-                y_size(1):diff(y_size)./nres:y_size(2)};
-            vals = hist3([p1; p2]',edges);
+            vmax = sqrt(max(p1.*p1+p2.*p2));
+            x_size=[-1 1].*max(beam_data.partvmax,vmax);
+            y_size=[ 0 1].*max(beam_data.partvmax,vmax);
+            xbins = x_size(1):diff(x_size)./nres:x_size(2);
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_x = numel(xbins);
+            NumBins_y = numel(ybins);
+            Xi = round( interp1(xbins, 1:NumBins_x, p1, 'linear', 'extrap') );
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Xi = max( min(Xi,NumBins_x), 1);
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray([Xi; Yi]', w, [NumBins_x NumBins_y]);
             if max(abs(x_size)) > 1E6
                 norm = 1E6;
                 units = 'Mm/s';
@@ -768,7 +829,7 @@ else
                 units = 'm/s';
             end
             colormap jet;
-            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            ha=pcolor(xbins./norm,ybins./norm,vals');
             set(ha,'LineStyle','none');
             set(gca,'FontSize',24);
             xlabel(['Parallel Velocity (v_{||}) [' units ']']);
@@ -778,16 +839,23 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(:,orbit_dex);
+            w = double(beam_data.Weight(orbit_dex));
             vperp = vperp(:,orbit_dex);
-            ld    = last_dex(orbit_dex);
             p1    = vll(1,:);
             p2    = vperp(1,:);
-            x_size=[-1 1].*beam_data.partvmax;
-            y_size=[ 0 1].*beam_data.partvmax;
             nres = 256;
-            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
-                y_size(1):diff(y_size)./nres:y_size(2)};
-            vals = hist3([p1; p2]',edges);
+            vmax = sqrt(max(p1.*p1+p2.*p2));
+            x_size=[-1 1].*max(beam_data.partvmax,vmax);
+            y_size=[ 0 1].*max(beam_data.partvmax,vmax);
+            xbins = x_size(1):diff(x_size)./nres:x_size(2);
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_x = numel(xbins);
+            NumBins_y = numel(ybins);
+            Xi = round( interp1(xbins, 1:NumBins_x, p1, 'linear', 'extrap') );
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Xi = max( min(Xi,NumBins_x), 1);
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray([Xi; Yi]', w, [NumBins_x NumBins_y]);
             if max(abs(x_size)) > 1E6
                 norm = 1E6;
                 units = 'Mm/s';
@@ -799,7 +867,7 @@ else
                 units = 'm/s';
             end
             colormap jet;
-            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            ha=pcolor(xbins./norm,ybins./norm,vals');
             set(ha,'LineStyle','none');
             set(gca,'FontSize',24);
             xlabel(['Parallel Velocity (v_{||}) [' units ']']);
@@ -809,16 +877,23 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(:,therm_dex);
+            w = double(beam_data.Weight(therm_dex));
             vperp = vperp(:,therm_dex);
-            ld    = last_dex(therm_dex);
             p1    = vll(1,:);
             p2    = vperp(1,:);
-            x_size=[-1 1].*beam_data.partvmax;
-            y_size=[ 0 1].*beam_data.partvmax;
             nres = 256;
-            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
-                y_size(1):diff(y_size)./nres:y_size(2)};
-            vals = hist3([p1; p2]',edges);
+            vmax = sqrt(max(p1.*p1+p2.*p2));
+            x_size=[-1 1].*max(beam_data.partvmax,vmax);
+            y_size=[ 0 1].*max(beam_data.partvmax,vmax);
+            xbins = x_size(1):diff(x_size)./nres:x_size(2);
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_x = numel(xbins);
+            NumBins_y = numel(ybins);
+            Xi = round( interp1(xbins, 1:NumBins_x, p1, 'linear', 'extrap') );
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Xi = max( min(Xi,NumBins_x), 1);
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray([Xi; Yi]', w, [NumBins_x NumBins_y]);
             if max(abs(x_size)) > 1E6
                 norm = 1E6;
                 units = 'Mm/s';
@@ -830,7 +905,7 @@ else
                 units = 'm/s';
             end
             colormap jet;
-            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            ha=pcolor(xbins./norm,ybins./norm,vals');
             set(ha,'LineStyle','none');
             set(gca,'FontSize',24);
             xlabel(['Parallel Velocity (v_{||}) [' units ']']);
@@ -840,16 +915,23 @@ else
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             vperp = beams3d_calc_vperp(beam_data);
             vll = beam_data.vll_lines(:,lost_dex);
+            w = double(beam_data.Weight(lost_dex));
             vperp = vperp(:,lost_dex);
-            ld    = last_dex(lost_dex);
             p1    = vll(1,:);
             p2    = vperp(1,:);
-            x_size=[-1 1].*beam_data.partvmax;
-            y_size=[ 0 1].*beam_data.partvmax;
             nres = 256;
-            edges={x_size(1):diff(x_size)./nres:x_size(2) ...
-                y_size(1):diff(y_size)./nres:y_size(2)};
-            vals = hist3([p1; p2]',edges);
+            vmax = sqrt(max(p1.*p1+p2.*p2));
+            x_size=[-1 1].*max(beam_data.partvmax,vmax);
+            y_size=[ 0 1].*max(beam_data.partvmax,vmax);
+            xbins = x_size(1):diff(x_size)./nres:x_size(2);
+            ybins = y_size(1):diff(y_size)./nres:y_size(2);
+            NumBins_x = numel(xbins);
+            NumBins_y = numel(ybins);
+            Xi = round( interp1(xbins, 1:NumBins_x, p1, 'linear', 'extrap') );
+            Yi = round( interp1(ybins, 1:NumBins_y, p2, 'linear', 'extrap') );
+            Xi = max( min(Xi,NumBins_x), 1);
+            Yi = max( min(Yi,NumBins_y), 1);
+            vals = accumarray([Xi; Yi]', w, [NumBins_x NumBins_y]);
             if max(abs(x_size)) > 1E6
                 norm = 1E6;
                 units = 'Mm/s';
@@ -861,7 +943,7 @@ else
                 units = 'm/s';
             end
             colormap jet;
-            ha=pcolor(edges{1}./norm,edges{2}./norm,vals');
+            ha=pcolor(xbins./norm,ybins./norm,vals');
             set(ha,'LineStyle','none');
             set(gca,'FontSize',24);
             xlabel(['Parallel Velocity (v_{||}) [' units ']']);
@@ -1100,23 +1182,49 @@ else
             th = atan2(b,a);
             x = (phi(d1)+phi(d2)+phi(d3))./3;
             y = (th(d1)+th(d2)+th(d3))./3;
+            factor=1;
+            clabel='hits';
             switch lower(plot_type)
                 case 'wall_heat_2d'
                     val = sum(beam_data.wall_load(beamdex,:))';
+                    if max(val) > 1E6
+                        factor = 1E6;
+                        clabel = 'MW/m^2';
+                    elseif max(val) > 1E3
+                        factor = 1E3;
+                        clabel = 'kW/m^2';
+                    else
+                        factor = 1E3;
+                        clabel = 'W/m^2';
+                    end
                 case 'wall_shine_2d'
                     val = sum(beam_data.wall_shine(beamdex,:))';
+                    if max(val) > 1E6
+                        factor = 1E6;
+                        clabel = 'MW/m^2';
+                    elseif max(val) > 1E3
+                        factor = 1E3;
+                        clabel = 'kW/m^2';
+                    else
+                        factor = 1E3;
+                        clabel = 'W/m^2';
+                    end
                 case 'wall_loss_2d'
                     val = beam_data.wall_strikes;
             end
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             F = scatteredInterpolant(x,y,val);
-            xp = 0:2*pi./128:2*pi;
-            yp = -pi:2*pi./128:pi;
+            xp = 0:2*pi./256:2*pi;
+            yp = -pi:2*pi./256:pi;
             Fp = F({xp,yp});
-            pixplot(xp,yp,Fp);
+            pixplot(xp,yp,Fp./factor);
             colormap hot;
             caxis([0 max(caxis)]);
             h = max(beam_data.phiaxis);
-            xtick=h/2:h:2*pi-h/2;
+            %xtick=0:h:2*pi;
+            x0 = h/2;
+            xf = 2*pi;
+            xtick=x0:h:xf;
             xticklabel={};
             for i=1:length(xtick)
                 xticklabel{i} = num2str(i,'%i');
@@ -1126,7 +1234,12 @@ else
                 plot([i i].*h,ylim,'w');
             end
             set(gca,'YTick',[-pi/2 0 pi/2],'YTickLabel',{'Lower','Outboard','Upper'},...
-                'XTick',xtick,'XTickLabel',xticklabel);
+                'XTick',xtick,'XTickLabel',xticklabel,'FontSize',24);
+            xlabel('Field Period');
+            ylabel('Poloidal Extent');
+            title('BEAMS3D 2D Wall Losses');
+            ha = colorbar;
+            ylabel(ha,clabel);
         case 'grid'
             x=[]; y=[]; z=[];
             raxis = beam_data.raxis;
