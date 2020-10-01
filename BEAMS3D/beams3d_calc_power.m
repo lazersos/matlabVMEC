@@ -37,6 +37,10 @@ if ~isfield(vmec_data,'vp')
     disp('ERROR: No Vp volume array found in vmec_data!');
     return;
 end
+if isfield(beam_data,'dist_prof_fix')
+    disp('ERROR: dist_prof is normalized to 5D volume, this isnt tested');
+    return;
+end
 
 % setup grid
 nrho = double(beam_data.ns_prof1);
