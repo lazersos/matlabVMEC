@@ -32,10 +32,15 @@ if (strcmp(filename(end-1:end),'h5'))
         data.wall_strikes = double(data.wall_strikes);
         data.lwall=1;
     end
+    % Fix non-double values
+    for k={'ns_prof1','ns_prof2','ns_prof3','ns_prof4','ns_prof5','Beam',...
+            'end_state','neut_lines','wall_faces'}
+        data.(k{1})=double(data.(k{1}));
+    end
     % Catch some old format issues
     if isfield(data,'ns_prof1')
         data.ns_prof = data.ns_prof1;
-        h = 1./double(data.ns_prof1);
+        h = 1./data.ns_prof1;
         data.rho = h/2.:h:(1-h/2);
     end
     if isfield(data,'dist_prof') && ~isfield(data,'dist2d_prof')
@@ -52,6 +57,28 @@ if (strcmp(filename(end-1:end),'h5'))
             data.dense_prof  = data.dense_prof./drho;
         end
     end
+    % Make the 5D Axis variables
+    data.dist_rhoaxis=(double(1:data.ns_prof1)-0.5)./(data.ns_prof1);
+    data.dist_uaxis=2.*pi.*(double(1:data.ns_prof2)-0.5)./(data.ns_prof2);
+    data.dist_paxis=2.*pi.*(double(1:data.ns_prof3)-0.5)./(data.ns_prof3);
+    d4=data.partvmax.*2./(data.ns_prof4);
+    d5=data.partvmax./data.ns_prof5;
+    data.dist_Vaxis= (-data.partvmax+d4.*0.5):d4:(data.partvmax-d4.*0.5);
+    data.dist_Waxis=data.partvmax.*(double(1:data.ns_prof5)-0.5)./(data.ns_prof5);
+    % Fix arrays where dist_prof isn't normalized to dV
+%     if data.VERSION<2.8
+%         vmax    = data.partvmax;
+%         [s, ~, dVds] = beams3d_volume(data);
+%         rho = sqrt(s);
+%         dVdrho = 2.*rho.*dVds;
+%         dV5d = (dVdrho.*d4)'*data.dist_Waxis.*d5.*2*pi;
+%         for i=1:size(dV5d,1)
+%             for j=1:size(dV5d,2)
+%                 data.dist_prof(:,i,:,:,:,j)=data.dist_prof(:,i,:,:,:,j)./dV5d(i,j);
+%             end
+%         end
+%         data.dist_prof_fix='NOTE: dist_prof output without normalization, normalized for dV5d in matlab';
+%     end
 elseif (strcmp(filename(1:12),'beams3d_diag'))
     
     fid=fopen(filename,'r');
