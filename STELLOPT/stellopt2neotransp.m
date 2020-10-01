@@ -15,7 +15,7 @@ function stellopt2neotransp(ext,varargin)
 %       stellopt2neotransp('test');
 %       stellopt2neotransp([],'list'); % List equil database
 %
-% Maintained by: Samuel Lazerson (sameul.lazerson@ipp.mpg.de)
+% Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.00
 
 
