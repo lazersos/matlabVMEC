@@ -22,6 +22,7 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      plot_beams(beam_data,'orbit_rz'); % Full particle Orbit in RZ
 %      plot_beams(beam_data,'orbit_flux'); % Full particle Orbit in flux
 %      plot_beams(beam_data,'orbit_vspace'); % Full particle Orbit in V
+%      plot_beams(beam_data,'frac_loss'); % Loss fraction
 %      plot_beams(beam_data,'distribution'); % 2D vll/vperp distribution
 %      plot_beams(beam_data,'heating'); % 1D Heating profiles
 %      plot_beams(beam_data,'current'); % 1D Current Density profiles
@@ -58,6 +59,7 @@ if nargin > 1
                     'orbit_rz','orbit_flux','orbit_vspace',...
                     'rho','rho_therm','rho_birth','rho_total',...
                     'rho_initial','rho_lost_initial','rho_therm_initial',...
+                    'frac_loss',...
                     'distribution','heating','current','fueling',...
                     'injection','birth_image',...
                     'wall','wall_loss','wall_heat','wall_shine','benchmarks',...
@@ -1273,6 +1275,29 @@ else
                 end
             end
             scatter3(x,y,z,s.*0.0+1,s,'o');
+        case 'frac_loss'
+            ftotal = sum(beam_data.Weight(beam_dex));
+            w   = repmat(beam_data.Weight',[beam_data.npoinc+1,1]);
+            dex = beam_data.S_lines;
+            dex(dex<=1) = 0;
+            dex(dex>1)  = 1;
+            dex = dex.*w;
+            f = sum(dex(:,beam_dex)');
+            tend = max(beam_data.t_end(beam_dex));
+            t = 0:tend./double(beam_data.npoinc):tend;
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            units = '[ms]'; factor =1E3;
+            if (tend < 1E-6)
+                units = '[ns]'; factor = 1E9;
+            elseif (tend<1E-3)
+                units = '[µs]'; factor = 1E6;
+            end
+            plot(t.*factor,100.*f./ftotal,'k','LineWidth',4);
+            xlabel(['Time ' units]);
+            ylabel('Percentage Lost [%]');
+            title('Loss Fraction Evolution');
+            ylim([0 min(1.2*max(ylim),100)]);
+            set(gca,'FontSize',24);
         case 'camview'
             if isempty(camera), camera=[1024 768]; end
             x_cam = campos;
