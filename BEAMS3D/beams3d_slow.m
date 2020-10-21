@@ -61,9 +61,44 @@ if isempty(beam_data)
     return;
 end
 
-if isempty(vmec_data)
-    disp('  You must provide VMEC_DATA structure for Vp');
+%if isempty(vmec_data)
+%    disp('  You must provide VMEC_DATA structure for Vp');
+%    return;
+%end
+
+%Default to all beams
+if isempty(beam_dex)
+    beam_dex = unique(double(beam_data.Beam)');
+end
+
+% Sanity check on beams
+if max(beam_dex) > max(beam_data.Beam)
+    disp( '  Selected beam larger than availalbe beams');
+    disp(['      beams: ' num2str(max(beam_dex),'%i')]);
+    disp(['      beam_data: ' num2str(max(beam_data.Beam),'%i')]);
     return;
+end
+
+% Downselect beams
+dex = zeros(1,length(beam_data.Beam));
+for i = beam_dex(1:end)
+    dex = dex + (beam_data.Beam' == i);
+end
+dex = dex > 0;
+
+% Calc Vperp
+vperp = beams3d_calc_vperp(beam_data);
+
+% Calc dV/ds
+if isempty(vmec_data)
+    [s, ~, dVds] = beams3d_volume(beam_data);
+    ra = sqrt(s);
+    vp_spl = pchip(ra,2.*ra.*dVds);
+else
+    vmec_factor = 4*pi*pi; % normalization on Vp in VMEC
+    s = 0:1./(vmec_data.ns-1):1;
+    ra = sqrt(s);
+    vp_spl = pchip(ra,2.*ra.*vmec_data.vp.*vmec_factor);
 end
 
 % Handle lack of plasma mass
@@ -74,31 +109,33 @@ if isempty(plasma_mass)
     end
 end
 
-%Downselect beams
-if isempty(beam_dex)
-    beam_dex = unique(double(beam_data.Beam)');
+% Check to see what type of run it is and extract information
+if any(beam_data.neut_lines(1,:) > 0) %NBI run
+    NEUT   = beam_data.neut_lines(2,:);
+    dex    = and(NEUT == 0,dex);
+    R_BEAM = beam_data.R_lines(2,dex);
+    P_BEAM = mod(beam_data.PHI_lines(2,dex),max(beam_data.phiaxis));
+    Z_BEAM = beam_data.Z_lines(2,dex);
+    S_BEAM = beam_data.S_lines(2,dex);
+    SPEED  = sqrt(beam_data.vll_lines(2,dex).^2+vperp(2,dex).^2);
+    PITCH  = beam_data.vll_lines(2,dex)./SPEED;
+else
+    NEUT   = beam_data.neut_lines(1,:);
+    dex    = and(NEUT == 0,dex);
+    R_BEAM = beam_data.R_lines(1,dex);
+    P_BEAM = mod(beam_data.PHI_lines(1,dex),max(beam_data.phiaxis));
+    Z_BEAM = beam_data.Z_lines(1,dex);
+    S_BEAM = beam_data.S_lines(1,dex);
+    SPEED  = sqrt(beam_data.vll_lines(1,dex).^2+vperp(1,dex).^2);
+    PITCH  = beam_data.vll_lines(1,dex)./SPEED;
 end
-dex = zeros(1,length(beam_data.Beam));
-for i = beam_dex(1:end)
-    dex = dex + (beam_data.Beam' == i);
-end
-dex = dex > 0;
-
-% Extract information from BEAMS3D
-NEUT   = beam_data.neut_lines(2,:);
-dex    = and(NEUT == 0,dex);
-R_BEAM = beam_data.R_lines(2,dex);
-P_BEAM = mod(beam_data.PHI_lines(2,dex),max(beam_data.phiaxis));
-Z_BEAM = beam_data.Z_lines(2,dex);
-S_BEAM = beam_data.S_lines(2,dex);
 W_BEAM = beam_data.Weight(dex)';
-%BEAM   = double(beam_data.Beam(dex))';
-SPEED  = beam_data.vll_lines(1,dex);
 MASS   = beam_data.mass(dex)';
 CHARGE = beam_data.charge(dex)';
 myZ    = CHARGE./ec;
-PITCH  = beam_data.vll_lines(3,dex)./SPEED;
 E_BEAM = (0.5).*MASS.*SPEED.*SPEED;
+
+% Get profile information
 NE   = permute(beam_data.NE,[2 1 3]);
 TI   = permute(beam_data.TI,[2 1 3]);
 TE   = permute(beam_data.TE,[2 1 3]);
@@ -174,18 +211,10 @@ for i = 1:length(RHO)-1
     PI_RHO(i+1) = sum(Pi(dex));
     J_RHO(i+1) = sum(J(dex));
 end 
-    
 
-% Add total if not just one beam
-%if length(unique(BEAM))>1
-%    PE_RHO = [PE_RHO; sum(PE_RHO)];
-%    PI_RHO = [PI_RHO; sum(PI_RHO)];
-%    J_RHO = [J_RHO; sum(J_RHO)];
-%end
-
-% Calculate Vp for new grid
-s = 0:1./(vmec_data.ns-1):1;
-vp = pchip(s,2.*s.*vmec_data.vp*4*pi*pi./length(RHO),RHO);
+% Calculate Volume for each radial point
+% dV = dV/drho * drho
+vp = ppval(vp_spl,RHO)./length(RHO);
 
 if lplot
     if max(PE_RHO) > 1E6 || max(PI_RHO) > 1E6
@@ -227,7 +256,7 @@ if lplot
         ['P_{depo} = ' num2str(Pinj./1E6,'%5.2f [MW]')],'Color','black','FontSize',36);
     text(min(xlim)+0.025*diff(xlim),...
         max(ylim)-0.110*diff(ylim),...
-        ['\tau_{slow} = ' num2str(round(t.*1E3),'%4i [ms]')],'Color','black','FontSize',36);
+        ['\tau_{therm} = ' num2str(round(t.*1E3),'%4i [ms]')],'Color','black','FontSize',36);
     figure('Position',[1 1 1024 768],'Color','white');
     plot(RHO,factorj.*J_RHO./vp2,'k','LineWidth',4);
     text(min(xlim)+0.025*diff(xlim),...
