@@ -110,25 +110,18 @@ if isempty(plasma_mass)
 end
 
 % Check to see what type of run it is and extract information
+ldex=1;
 if any(beam_data.neut_lines(1,:) > 0) %NBI run
-    NEUT   = beam_data.neut_lines(2,:);
-    dex    = and(NEUT == 0,dex);
-    R_BEAM = beam_data.R_lines(2,dex);
-    P_BEAM = mod(beam_data.PHI_lines(2,dex),max(beam_data.phiaxis));
-    Z_BEAM = beam_data.Z_lines(2,dex);
-    S_BEAM = beam_data.S_lines(2,dex);
-    SPEED  = sqrt(beam_data.vll_lines(2,dex).^2+vperp(2,dex).^2);
-    PITCH  = beam_data.vll_lines(2,dex)./SPEED;
-else
-    NEUT   = beam_data.neut_lines(1,:);
-    dex    = and(NEUT == 0,dex);
-    R_BEAM = beam_data.R_lines(1,dex);
-    P_BEAM = mod(beam_data.PHI_lines(1,dex),max(beam_data.phiaxis));
-    Z_BEAM = beam_data.Z_lines(1,dex);
-    S_BEAM = beam_data.S_lines(1,dex);
-    SPEED  = sqrt(beam_data.vll_lines(1,dex).^2+vperp(1,dex).^2);
-    PITCH  = beam_data.vll_lines(1,dex)./SPEED;
+    ldex=2;
 end
+NEUT   = beam_data.neut_lines(ldex,:);
+dex    = and(NEUT == 0,dex);
+R_BEAM = beam_data.R_lines(ldex,dex);
+P_BEAM = mod(beam_data.PHI_lines(ldex,dex),max(beam_data.phiaxis));
+Z_BEAM = beam_data.Z_lines(ldex,dex);
+S_BEAM = beam_data.S_lines(ldex,dex);
+SPEED  = sqrt(beam_data.vll_lines(ldex,dex).^2+vperp(ldex,dex).^2);
+PITCH  = beam_data.vll_lines(ldex,dex)./SPEED;
 W_BEAM = beam_data.Weight(dex)';
 MASS   = beam_data.mass(dex)';
 CHARGE = beam_data.charge(dex)';
@@ -159,18 +152,14 @@ coulomb_log(dex) = 23 - log(myZ(dex).*sqrt(NE_BEAM(dex).*1E-6./TE3(dex)));
 dex = ~dex;
 coulomb_log(dex) = 24 - log(sqrt(NE_BEAM(dex).*1E-6)./TE_BEAM(dex));
 coulomb_log(coulomb_log <=1) = 1;
-%v_crit = ((1.5.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
 v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./plasma_mass);
-%v_crit = ((0.75.*sqrt(pi.*MASS./me).*MASS./plasma_mass).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./MASS);
-%v_crit = ((0.75*sqrt(pi).*me./MASS).^(1./3)).*sqrt(TE_BEAM).*5.93096892024E5;
 vcrit_cube = v_crit.^3;
 tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
 
 % Integrate
 C1 = 1./tau_spit;
 C2 = vcrit_cube./tau_spit;
-%v_sound = 1.5*sqrt(ec.*TI_BEAM./MASS);
-v_sound = sqrt(1.5)*sqrt(ec.*TI_BEAM./MASS);
+v_sound = 1.5*sqrt(ec.*TI_BEAM./plasma_mass);
 V  = SPEED;
 V2 = V;
 dt = 1E-4;
@@ -253,7 +242,7 @@ if lplot
     legend('P_{electrons}','P_{ions}');
     text(min(xlim)+0.025*diff(xlim),...
         max(ylim)-0.050*diff(ylim),...
-        ['P_{depo} = ' num2str(Pinj./1E6,'%5.2f [MW]')],'Color','black','FontSize',36);
+        ['P_{injected} = ' num2str(Pinj./1E6,'%5.2f [MW]')],'Color','black','FontSize',36);
     text(min(xlim)+0.025*diff(xlim),...
         max(ylim)-0.110*diff(ylim),...
         ['\tau_{therm} = ' num2str(round(t.*1E3),'%4i [ms]')],'Color','black','FontSize',36);
