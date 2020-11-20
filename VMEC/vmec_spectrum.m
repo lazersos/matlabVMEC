@@ -45,7 +45,7 @@ if nargin > 1
     end
 end
 if (lspec || lnescoil || lfocus), lvmec=0; end
-if (isempty(s)) s = data.ns;
+if (isempty(s)), s = data.ns; end
 
 % Flip toroidal direction
 if (lflip)
@@ -62,8 +62,7 @@ if (lflip)
     data.xn = -data.xn;
 end
 
-% Note -xn is needed because we use (mu+nv) in MATLAB but VMEC needs
-% (mu-nv)
+% Note that the VMEC Kernel in MATLAB is (mu+nv) based on read_vmec
 if (data.iasym == 0)
     if lspec
         disp('mn   m   n   rmnc   zmns');
@@ -79,11 +78,13 @@ if (data.iasym == 0)
         for i=1:data.mnmax
             disp(['   ' num2str(data.xm(i),'%2.2d') '   ' num2str(data.xn(i)./data.nfp,'%+2.2d') '   ' num2str(data.rmnc(i,s),'%e') '   ' num2str(data.zmns(i,s),'%e') '   ' num2str(data.lmns(i,s),'%e') '      0.0000000000E+00     0.0000000000E+00     0.0000000000E+00' ]);
         end
-    elseif lvmec
-        disp(['  RAXIS = ' num2str(data.rmnc(1:data.ntor+1,1)',' %20.12E ')]);
-        disp(['  ZAXIS = ' num2str(data.zmns(1:data.ntor+1,1)',' %20.12E ')]);
+    elseif lvmec 
+        rax = data.rmnc(1:data.ntor+1,1);
+        zax = -data.zmns(1:data.ntor+1,1);
+        disp(['  RAXIS = ' num2str(rax',' %20.12E ')]);
+        disp(['  ZAXIS = ' num2str(zax',' %20.12E ')]);
         for i=1:data.mnmax
-            disp(['  RBC(' num2str(data.xn(i)./data.nfp,'%2.2d') ',' num2str(data.xm(i),'%2.2d') ') = ' num2str(data.rmnc(i,s),'%20.12E') '  ZBS(' num2str(data.xn(i)./data.nfp,'%2.2d') ',' num2str(data.xm(i),'%2.2d') ') = ' num2str(data.zmns(i,s),'%20.12E') ]);
+            disp(['  RBC(' num2str(-data.xn(i)./data.nfp,'%2.2d') ',' num2str(data.xm(i),'%2.2d') ') = ' num2str(data.rmnc(i,s),'%20.12E') '  ZBS(' num2str(-data.xn(i)./data.nfp,'%2.2d') ',' num2str(data.xm(i),'%2.2d') ') = ' num2str(data.zmns(i,s),'%20.12E') ]);
         end
     elseif lfocus
         disp('#bmn  bNfp nbf');
@@ -125,10 +126,16 @@ else
             disp(['   '  num2str(data.xn(i),'%+2.2d') '   ' num2str(data.xm(i),'%2.2d') '   ' num2str(data.rmnc(i,s),'%e') '   ' num2str(-data.rmns(i,s),'%e') '   ' num2str(data.zmnc(i,s),'%e') '   ' num2str(-data.zmns(i,s),'%e') ]);
         end
     elseif lvmec
-        disp(['  RAXIS_CC = ' num2str(data.rmnc(1:data.ntor+1,1)',' %20.12E %20.12E %20.12E %20.12E %20.12E ')]);
-        disp(['  RAXIS_CS = ' num2str(data.rmns(1:data.ntor+1,1)',' %20.12E %20.12E %20.12E %20.12E %20.12E ')]);
-        disp(['  ZAXIS_CS = ' num2str(data.zmns(1:data.ntor+1,1)',' %20.12E %20.12E %20.12E %20.12E %20.12E ')]);
-        disp(['  ZAXIS_CC = ' num2str(data.zmnc(1:data.ntor+1,1)',' %20.12E %20.12E %20.12E %20.12E %20.12E ')]);
+        rax_cc = data.rmnc(1:data.ntor+1,1);
+        zax_cs = -data.zmns(1:data.ntor+1,1);
+        rax_cs = -data.rmns(1:data.ntor+1,1);
+        zax_cc = data.zmnc(1:data.ntor+1,1);
+        disp(['  RAXIS = ' num2str(rax',' %20.12E ')]);
+        disp(['  ZAXIS = ' num2str(zax',' %20.12E ')]);
+        disp(['  RAXIS_CC = ' num2str(rax_cc',' %20.12E %20.12E %20.12E %20.12E %20.12E ')]);
+        disp(['  RAXIS_CS = ' num2str(rax_cs',' %20.12E %20.12E %20.12E %20.12E %20.12E ')]);
+        disp(['  ZAXIS_CS = ' num2str(zax_cs',' %20.12E %20.12E %20.12E %20.12E %20.12E ')]);
+        disp(['  ZAXIS_CC = ' num2str(zax_cc',' %20.12E %20.12E %20.12E %20.12E %20.12E ')]);
         for i=1:data.mnmax
             disp(['  RBC(' num2str(-data.xn(i)./data.nfp,'%2.2d') ',' num2str(data.xm(i),'%2.2d') ') = ' num2str(data.rmnc(i,s),'%20.12E') '  ZBS(' num2str(-data.xn(i)./data.nfp,'%2.2d') ',' num2str(data.xm(i),'%2.2d') ') = ' num2str(data.zmns(i,s),'%20.12E') ]);
             disp(['    RBS(' num2str(-data.xn(i)./data.nfp,'%2.2d') ',' num2str(data.xm(i),'%2.2d') ') = ' num2str(data.rmns(i,s),'%20.12E') '    ZBC(' num2str(-data.xn(i)./data.nfp,'%2.2d') ',' num2str(data.xm(i),'%2.2d') ') = ' num2str(data.zmnc(i,s),'%20.12E') ]);
