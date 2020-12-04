@@ -35,13 +35,13 @@ for i = 1:beam_data.nphi-1
 end
 
 ns = beam_data.ns_prof1;
-ds = 1./(ns-1);
+ds = 1./(ns);
 edges = 0:ds:1;
 s = 0.5.*(edges(1:end-1)+edges(2:end));
 
 % Create profile
 plasma_dvolds = zeros(1,ns-1);
-for i=1:ns-1
+for i=1:ns
     dex1 = beam_data.S_ARR > edges(i);
     dex2 = beam_data.S_ARR <= edges(i+1);
     dex = and(dex1,dex2);
