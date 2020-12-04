@@ -95,10 +95,15 @@ end
 switch plottype
     case{0}
         line_dex = nphi:npoinc:nsteps;
-        for i=1:skip:nlines
-            hold on;
-            plot(data.R_lines(i,line_dex),data.Z_lines(i,line_dex),'.','Color',line_color,'MarkerSize',0.1);
-            hold off;
+        x=data.R_lines(1:skip:nlines,line_dex);
+        y=data.Z_lines(1:skip:nlines,line_dex);
+        if isfield(data,'rho')
+            s=ones(data.nlines,length(line_dex));
+            c=repmat(data.rho,[1 length(line_dex)]);
+            scatter(x(:),y(:),s(:).*0.1,c(:),'.');
+        else
+            plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
+            caxis([0 fieldlines_data.rho(end-1)]);
         end
         if isfield(data,'Rhc_lines')
             line_dex = nphi:npoinc:size(data.Rhc_lines,2);
@@ -138,12 +143,20 @@ switch plottype
             if isempty(n2); n2=length(phi2)-1; end
             R(i,1:n2) = pchip(phi,data.R_lines(i,1:n),phi2(1:n2));
             Z(i,1:n2) = pchip(phi,data.Z_lines(i,1:n),phi2(1:n2));
-            %hold on;
-            %plot(R(i,:),Z(i,:),'.','Color',line_color,'MarkerSize',0.1);
-            %hold off;
-            %drawnow;
         end
-        plot(R(1:skip:data.nlines,:),Z(1:skip:nlines,:),'.','Color',line_color,'MarkerSize',0.1);
+        x=R(1:skip:nlines,:);
+        y=Z(1:skip:nlines,:);
+        if isfield(data,'rho')
+            n1 = size(x,1);
+            n2 = size(x,2);
+            s=ones(n1,n2);
+            c=repmat(data.rho(1:skip:nlines),[1 n2]);
+            scatter(x(:),y(:),s(:).*0.1,c(:),'.');
+        else
+            plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
+            caxis([0 fieldlines_data.rho(end-1)]);
+        end
+        %plot(R(1:skip:data.nlines,:),Z(1:skip:nlines,:),'.','Color',line_color,'MarkerSize',0.1);
         axis equal
     case{103}
         phi2 = phi0:2*pi./data.nfp:max(max(data.PHI_lines));
