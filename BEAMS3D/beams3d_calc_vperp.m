@@ -17,6 +17,7 @@ mass = repmat(beam_data.mass',[nsteps 1]);
 mu = beam_data.moment_lines;
 B  = beam_data.B_lines;
 vperp = sqrt(2.*mu.*B./mass);
+vperp(B<=0) = 0;
 return
 end
 
