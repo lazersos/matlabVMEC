@@ -83,7 +83,7 @@ orbit_dex=beam_data.end_state==0;
 % Handle orbiting particles
 P_orbit = zeros(1,beam_data.nparticles);
 if any(orbit_dex>0)
-    if lverb, disp('Circulating Particles found'); end;
+    if lverb, disp('Circulating Particles found'); end
     orbit_index=beams3d_finddex(beam_data,'orbit_last');
     for i=1:beam_data.nparticles
         if orbit_index(i)==0, continue; end
