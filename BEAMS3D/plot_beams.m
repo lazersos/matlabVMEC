@@ -533,7 +533,7 @@ else
             vll = beam_data.vll_lines(:,orbit_dex);
             w = double(beam_data.Weight(orbit_dex));
             vperp = vperp(:,orbit_dex);
-            pitch = atan2d(vll,vperp);
+            pitch = atan2d(vperp,vll);
             ld    = last_dex(orbit_dex);
             p2    = length(ld);
             for i=1:length(ld)
@@ -557,7 +557,7 @@ else
             vll = beam_data.vll_lines(:,therm_dex);
             w = double(beam_data.Weight(therm_dex));
             vperp = vperp(:,therm_dex);
-            pitch = atan2d(vll,vperp);
+            pitch = atan2d(vperp,vll);
             ld    = last_dex(therm_dex);
             p2    = length(ld);
             for i=1:length(ld)
@@ -583,7 +583,7 @@ else
             vll = beam_data.vll_lines(:,lost_dex);
             w = double(beam_data.Weight(lost_dex));
             vperp = vperp(:,lost_dex);
-            pitch = atan2d(vll,vperp);
+            pitch = atan2d(vperp,vll);
             ld    = last_dex(lost_dex);
             p2    = length(ld);
             nres = 128;
@@ -604,7 +604,7 @@ else
             vll = beam_data.vll_lines(dex1,born_dex);
             w = double(beam_data.Weight(born_dex));
             vperp = vperp(dex1,born_dex);
-            pitch = atan2d(vll,vperp);
+            pitch = atan2d(vperp,vll);
             p2    = pitch(1,:);
             nres = 128;
             y_size=[min(p2) max(p2)];
@@ -624,7 +624,7 @@ else
             vll = beam_data.vll_lines(:,orbit_dex);
             w = double(beam_data.Weight(orbit_dex));
             vperp = vperp(:,orbit_dex);
-            pitch = atan2d(vll,vperp);
+            pitch = atan2d(vperp,vll);
             ld    = last_dex(orbit_dex);
             p2    = pitch(1,:);
             nres = 128;
@@ -645,7 +645,7 @@ else
             vll = beam_data.vll_lines(:,therm_dex);
             w = double(beam_data.Weight(therm_dex));
             vperp = vperp(:,therm_dex);
-            pitch = atan2d(vll,vperp);
+            pitch = atan2d(vperp,vll);
             ld    = last_dex(therm_dex);
             p2    = pitch(1,:);
             nres = 128;
@@ -666,7 +666,7 @@ else
             vll = beam_data.vll_lines(:,lost_dex);
             w = double(beam_data.Weight(lost_dex));
             vperp = vperp(:,lost_dex);
-            pitch = atan2d(vll,vperp);
+            pitch = atan2d(vperp,vll);
             ld    = last_dex(lost_dex);
             p2    = pitch(1,:);
             nres = 128;
@@ -1176,7 +1176,9 @@ else
                     val=sum(beam_data.wall_load(beamdex,:),1)';
             end
             output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',val,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
-            colormap hot;
+            cmap = colormap('hot');
+            cmap(1,:) = [0.2 0.2 0.2]; % grey
+            colormap(cmap);
         case {'wall_heat_2d','wall_shine_2d','wall_loss_2d'}
             verts = beam_data.wall_vertex;
             faces = beam_data.wall_faces;
@@ -1285,9 +1287,12 @@ else
             scatter3(x,y,z,s.*0.0+1,s,'o');
         case 'frac_loss'
             w   = repmat(beam_data.Weight',[beam_data.npoinc+1,1]);
+            %dex = zeros(beam_data.npoinc+1,beam_data.nparticles);
+            temp=repmat(beam_data.end_state',[beam_data.npoinc+1 1]);
             dex = beam_data.S_lines;
             dex(dex<=1) = 0;
             dex(dex>1)  = 1;
+            dex(temp<=1)=0; % %orbit and therm particles not lost
             dex = dex.*w;
             % Plot Total
             f = sum(dex(dex1:end,beam_dex)');
@@ -1312,7 +1317,7 @@ else
                     f = sum(dex(dex1:end,sub_dex)');
                     %ftotal = sum(beam_data.Weight(sub_dex));
                     tend = max(beam_data.t_end(sub_dex));
-            t = 0:tend./double(beam_data.npoinc-dex1+1):tend;
+                    t = 0:tend./double(beam_data.npoinc-dex1+1):tend;
                     plot(t.*factor,100.*f./ftotal,'LineWidth',4);
                 end
                 legend(leg_text);
