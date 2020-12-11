@@ -154,7 +154,6 @@ switch plottype
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
         else
             plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
-            caxis([0 fieldlines_data.rho(end-1)]);
         end
         %plot(R(1:skip:data.nlines,:),Z(1:skip:nlines,:),'.','Color',line_color,'MarkerSize',0.1);
         axis equal
