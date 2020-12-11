@@ -36,6 +36,7 @@ te_s=[]; te_f=[];
 ti_s=[]; ti_f=[];
 zeff_s=[]; zeff_f=[];
 pot_s=[]; pot_f=[];
+nr=128; nz=128; nphi=[];
 Zatom=1;
 species_type='H';
 ec  = 1.60217662E-19; % electron charge [C]
@@ -102,6 +103,15 @@ if (nargin > 6)
                 case {'t_end'}
                     j=j+1;
                     t_end=varargin{j};
+                case {'nr'}
+                    j=j+1;
+                    nr=varargin{j};
+                case {'nphi'}
+                    j=j+1;
+                    nphi=varargin{j};
+                case {'nz'}
+                    j=j+1;
+                    nz=varargin{j};
             end
         end
         j=j+1;
@@ -178,6 +188,9 @@ if (vmec_data.iasym==1)
 else
     zmin = -vmec_data.zmax_surf-delta;
 end
+if isempty(nphi)
+    nphi = max(round(360/(2*vmec_data.nfp)),1);
+end
 
 % Handle no profiles passed
 if isempty(ne_f)
@@ -199,9 +212,9 @@ end
 
 % Output values to screen
 fprintf(fid, '&BEAMS3D_INPUT\n');
-fprintf(fid, '  NR = 128\n');
-fprintf(fid,['  NPHI = ' num2str(360/(2*vmec_data.nfp),'%d') '\n']);
-fprintf(fid, '  NZ = 128\n');
+fprintf(fid,['  NR = ' num2str(nr,'%d') '\n']);
+fprintf(fid,['  NPHI = ' num2str(nphi,'%d') '\n']);
+fprintf(fid,['  NZ = ' num2str(nz,'%d') '\n']);
 fprintf(fid,['  RMIN = ' num2str(rmin,'%20.10E') '\n']);
 fprintf(fid,['  RMAX = ' num2str(rmax,'%20.10E') '\n']);
 fprintf(fid,['  ZMIN = ' num2str(zmin,'%20.10E') '\n']);
@@ -255,7 +268,7 @@ for i=1:nbeams
         n=n+1;
     end
 end
-fprintf(fid,'/');
+fprintf(fid,'/\n');
 
 if lplots
     fig=figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
