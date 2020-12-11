@@ -62,16 +62,8 @@ if nargin > 1
                     species=varargin{i};
                 case 'plots'
                     next_varargin = [next_varargin varargin{i}];
-                case {'TE','TI','NE','ZEFF','POT'}
-                    next_varargin = [next_varargin varargin{i}];
-                    i = i+1;
-                    next_varargin = [next_varargin varargin{i}];
                 case 'write_beams3d'
                     lwrite_beams3d=1;
-                case {'filename','file'}
-                    next_varargin = [next_varargin varargin{i}];
-                    i = i+1;
-                    next_varargin = [next_varargin varargin{i}];
                 case 'grid'
                     i=i+1;
                     grid=varargin{i};
@@ -80,6 +72,12 @@ if nargin > 1
                 case 't_end'
                     i=i+1;
                     t_end=varargin{i};
+                % These are just passed to the next routine
+                case {'filename','file','mass','TE','TI','NE','ZEFF',...
+                        'POT','nr','nz','nphi'}
+                    next_varargin = [next_varargin varargin{i}];
+                    i = i+1;
+                    next_varargin = [next_varargin varargin{i}];
             end
         end
         i = i+1;
