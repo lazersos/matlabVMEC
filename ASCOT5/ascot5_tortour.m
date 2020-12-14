@@ -143,16 +143,13 @@ if ~isempty(runid)
         F = cross(V0,V1);
         A = 0.5.*sqrt(sum(F.*F));
         
+        %Construct wall_load using accumarray
+        walltile(walltile==0) = size(x1x2x3,2) + 1; %set 0's from before to extra value to be able to truncate (accumarray needs positive integers)
         % Convert to heatflux
-        qflux=[];
-        for i = mask'
-            if (i==0), continue; end
-            dex = walltile==i;
-            qtemp = q(dex);
-            qflux = [qflux; sum(qtemp)];
-        end
-        wall_load(mask2)=qflux;
+        wall_load = accumarray(walltile,q); %Sum all entries in q that have the same value in walltile, put result at the position given by walltile
+        wall_load = wall_load(1:end-1)'; %truncate "0's"
         wall_load = wall_load./A;
+        
         % Always filter
         dex = wall_strikes==0;
         wall_load(dex) = 0;

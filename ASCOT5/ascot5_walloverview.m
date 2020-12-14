@@ -100,16 +100,11 @@ mask = unique(walltile)+1;
 %end
 %wall_strikes(mask) = nhits;
 
+%Construct wall_load using accumarray
+walltile(walltile==0) = size(x1x2x3,2) + 1; %set 0's from before to extra value to be able to truncate (accumarray needs positive integers)
 % Convert to heatflux
-wall_load = zeros(1,length(xm));
-qflux=[];
-for i = mask'
-    if (i==0), continue; end
-    dex = walltile==i;
-    qtemp = q(dex);
-    qflux = [qflux; sum(qtemp)];
-end
-wall_load(mask)=qflux;
+wall_load = accumarray(walltile,q); %Sum all entries in q that have the same value in walltile, put result at the position given by walltile
+wall_load = wall_load(1:end-1)'; %truncate "0's"
 wall_load = wall_load./A;
 
 %temp = ones(1,length(pm))+10;

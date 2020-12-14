@@ -62,15 +62,10 @@ if isempty(wallid)
     wallid=h5readatt(a5file,'/wall','active');
     disp(['  Using wallid: ' wallid]);
 end
-if isempty(runid)
-    try
-        runid=h5readatt(a5file,'/results','active');
-        disp(['  Using runid: ' runid]);
-    catch
-        runid=[];
-        disp('  No runid found, displaying wall only.');
-    end
-end
+% if isempty(runid)
+%     runid=h5readatt(a5file,'/results','active');
+%     disp(['  Using runid: ' runid]);
+% end
 
 % Pull Wall
 path = ['/wall/wall_3D_' num2str(wallid,'%10.10i')];
@@ -109,9 +104,9 @@ end
     
 % Handle Log plots
 if llog
-    if lhits && ~isempty(wall_strikes)
+    if lhits
         wall_strikes = log10(wall_strikes);
-    elseif ~isempty(wall_load)
+    else
         wall_load = log10(wall_load);
     end
     disp('Log10 color contours');
@@ -120,23 +115,22 @@ end
 % Make plot
 fig=figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
 if isempty(wall_load) && isempty(wall_strikes)
-    hp=patch('XData',x1x2x3,'YData',y1y2y3,'ZData',z1z2z3,'EdgeColor','none','FaceColor',[1 1 1].*0.25);
-%set(hp,'AmbientStrength',1.0,'SpecularStrength',0.75,'DiffuseStrength',0.9,'SpecularColorReflectance',0.5);
+    hp=patch(x1x2x3,y1y2y3,z1z2z3,zeros(1,size(x1x2x3,2)),'EdgeColor','none');
 else
     if lhits
         hp=patch(x1x2x3,y1y2y3,z1z2z3,wall_strikes,'EdgeColor','none');
     else
         hp=patch(x1x2x3,y1y2y3,z1z2z3,wall_load,'EdgeColor','none');
     end
-    %set(hp,'AmbientStrength',1.0,'SpecularStrength',0.75,'DiffuseStrength',1);
-    set(hp,'AmbientStrength',1.0,'SpecularStrength',0.75,'DiffuseStrength',0.9,'SpecularColorReflectance',0);
+    
 end
+set(hp,'AmbientStrength',1.0,'SpecularStrength',0,'DiffuseStrength',1);
 if lpts
     hold on;
     plot3(x_pts,y_pts,z_pts,'.r','MarkerSize',0.1);
     hold on;
 end
-set(gca,'Color','blue');
+set(gca,'Color','black');
 
 %cmap
 %r0 = [138; 138; 138]./255.0;
@@ -147,7 +141,7 @@ dr = (r1-r0);
 cmap = r0+dr*(0:1.0/127:1);
 dr = (r2-r1);
 cmap = [cmap r1+dr*(0:1.0/127:1)];
-colormap(cmap');
+colormap('parula');
 
 return;
 

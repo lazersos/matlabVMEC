@@ -20,7 +20,6 @@ function wall_load = ascot5_calcwallload(a5file,wallid,runid,varargin)
 % Version:       1.0  
 
 amu = 1.66053906660E-27;
-wall_load = [];
 lhits = 0;
 
 % Handle varargin
@@ -63,8 +62,6 @@ catch
     return;
 end
 
-wall_load = zeros(1,size(x1x2x3,2));
-
 % Pull particle data
 path_run = ['/results/run_' num2str(runid,'%10.10i') '/endstate'];
 try
@@ -78,10 +75,7 @@ walltile = h5read(a5file,[path_run '/walltile'])+1; % now in matlab index
 % Correct walltile
 dex = endcond ~= 8; % endcond=8 is wall hit
 walltile(dex) = 0;
-% Count hits
-nhits=[];
-mask = unique(walltile);
-mask_final = mask(mask>0);
+
 if ~lhits
     y1y2y3 = h5read(a5file,[path_wall '/y1y2y3']);
     z1z2z3 = h5read(a5file,[path_wall '/z1z2z3']);
@@ -105,23 +99,17 @@ if ~lhits
     V1=[x1x2x3(3,:)-x1x2x3(1,:);y1y2y3(3,:)-y1y2y3(1,:);z1z2z3(3,:)-z1z2z3(1,:)];
     F = cross(V0,V1);
     A = 0.5.*sqrt(sum(F.*F));
+    
+    %Construct wall_load using accumarray
+    walltile(walltile==0) = size(x1x2x3,2) + 1; %set 0's from before to extra value to be able to truncate (accumarray needs positive integers)
     % Convert to heatflux
-    qflux=[];
-    for i = mask'
-        if (i==0), continue; end
-        dex = walltile==i;
-        qtemp = q(dex);
-        qflux = [qflux; sum(qtemp)];
-    end
-    wall_load(mask_final)=qflux;
+    wall_load = accumarray(walltile,q); %Sum all entries in q that have the same value in walltile, put result at the position given by walltile
+    wall_load = wall_load(1:end-1)'; %truncate "0's"
     wall_load = wall_load./A;
 else
-    for i = mask'
-        if (i==0), continue; end
-        dex = walltile==i;
-        nhits = [nhits; sum(dex)];
-    end
-    wall_load(mask_final) = nhits;
+    walltile(walltile==0) = size(x1x2x3,2) + 1;
+    wall_load = accumarray(walltile,1); %Sum all entries with same value in walltile, put result at the position given by the value
+    wall_load = wall_load(1:end-1)'; 
 end
 
 return;
