@@ -16,8 +16,8 @@ function wall_load = ascot5_calcwallload(a5file,wallid,runid,varargin)
 %       wall_load = ascot5_calcwallload(a5file,[],[]); %Active ID's
 %       wall_load = ascot5_calcwallload(a5file,[],[],'hits'); % Strikes
 %     
-% Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
-% Version:       1.0  
+%   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
+%   Version:       1.0  
 
 amu = 1.66053906660E-27;
 wall_load = [];
