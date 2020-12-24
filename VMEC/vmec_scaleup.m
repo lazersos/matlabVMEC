@@ -34,7 +34,8 @@ if ~isempty(varargin)
 end
 
 vmec_out=vmec_data;
-dexa = abs(vmec_data.rmnc(:,1))>0;
+dexa = vmec_data.xm==0;
+%dexa = abs(vmec_data.rmnc(:,1))>0;
 
 % Remove geometric axis
 if lfixmajor
@@ -84,8 +85,17 @@ if lplot
     zeta  = deg2rad([0 0.25 0.5 0.75].*round(360./vmec_data.nfp));
     rv    = cfunct(theta,zeta,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
     zv    = sfunct(theta,zeta,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
+    if vmec_data.iasym==1
+        rv    = rv+sfunct(theta,zeta,vmec_data.rmns,vmec_data.xm,vmec_data.xn);
+        zv    = zv+cfunct(theta,zeta,vmec_data.zmnc,vmec_data.xm,vmec_data.xn);
+    end
+        
     ro    = cfunct(theta,zeta,vmec_out.rmnc,vmec_out.xm,vmec_out.xn);
     zo    = sfunct(theta,zeta,vmec_out.zmns,vmec_out.xm,vmec_out.xn);
+    if vmec_out.iasym==1
+        ro    = ro+sfunct(theta,zeta,vmec_out.rmns,vmec_out.xm,vmec_out.xn);
+        zo    = zo+cfunct(theta,zeta,vmec_out.zmnc,vmec_out.xm,vmec_out.xn);
+    end
     figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
     for i=1:4
         subplot(1,4,i);
