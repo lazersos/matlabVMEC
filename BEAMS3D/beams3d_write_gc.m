@@ -73,10 +73,10 @@ else
         disp(['     NPARTICLES:  ' num2str(beam_data.nparticles,'%i')]);
         return;
     end
-    if any(dex > beam_data.npoinc)
-        disp('ERROR: dex values must not be larger than beam_data.npoinc');
+    if any(dex > beam_data.npoinc+1)
+        disp('ERROR: dex values must not be larger than beam_data.npoinc+1');
         disp(['     MAX(DEX): ' num2str(max(dex),'%i')]);
-        disp(['     NPOINC:  ' num2str(beam_data.npoinc,'%i')]);
+        disp(['     NPOINC+1:  ' num2str(beam_data.npoinc+1,'%i')]);
         return;
     end
     mask = dex>0;
@@ -85,6 +85,7 @@ end
 
 % Now process subarrays
 nnew=sum(dex_local>0);
+nold   = nnew;
 r      = zeros(1,nnew);
 phi    = zeros(1,nnew);
 z      = zeros(1,nnew);
@@ -154,6 +155,15 @@ if pertcent >= 0
     legend('Original (BEAMS3D)','New (ASCOT5)');
     xlim([-1.05 1.05].*max(abs(vtotal)).*scale);
     ylim([0 1.05].*max(abs(vtotal)).*scale);
+    annotation('textbox',[0.15 0.15 0.1 0.1],...
+        'String',['Original: ' num2str(nold,'%i') ' particles'],...
+        'FontSize',24,'LineStyle','none');
+    annotation('textbox',[0.15 0.10 0.1 0.1],...
+        'String',['New: ' num2str(nnew,'%i') ' particles'],...
+        'FontSize',24,'LineStyle','none');
+    annotation('textbox',[0.75 0.10 0.1 0.1],...
+        'String',['Pert.: ' num2str(pertcent.*100,'%5.2f') ' %'],...
+        'FontSize',24,'LineStyle','none');
 end
 
 % Now output
