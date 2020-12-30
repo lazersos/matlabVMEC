@@ -364,9 +364,9 @@ if isfield(f,'protrsqmns'), f.protrsqmns = f.protrsqmns ./ (pi*4.0E-7); end
 if isfield(f,'prprmns'), f.prprmns = f.prprmns ./ (pi*4.0E-7); end
 % Calculate the stored energy
 if (numel(f.vp) == f.ns)
-    f.eplasma=1.5*pi*pi*sum(f.vp.*f.presf)./f.ns;
+    f.eplasma=1.5*4*pi*pi*sum(f.vp.*f.presf)./f.ns;
 else
-    f.eplasma=1.5*pi*pi*sum(f.vp.*f.pres)./(f.ns-1);
+    f.eplasma=1.5*4*pi*pi*sum(f.vp.*f.pres)./(f.ns-1);
 end
 % Set some defaults
 f.nu=2.*(f.mpol+1)+6;
