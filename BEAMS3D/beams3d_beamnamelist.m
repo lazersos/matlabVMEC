@@ -37,8 +37,11 @@ ti_s=[]; ti_f=[];
 zeff_s=[]; zeff_f=[];
 pot_s=[]; pot_f=[];
 nr=128; nz=128; nphi=[];
+npoinc=2;
 Zatom=1;
 species_type='H';
+vc_adapt_tol = 0.005;
+nparticles_start = 65536;
 ec  = 1.60217662E-19; % electron charge [C]
 amu = 1.66053906660E-27; % Dalton [kg]
 t_end = 1.0E-3;
@@ -112,6 +115,15 @@ if (nargin > 6)
                 case {'nz'}
                     j=j+1;
                     nz=varargin{j};
+                case {'NPOINC'}
+                    j=j+1;
+                    npoinc=varargin{j};
+                case {'VC_ADAPT_TOL'}
+                    j=j+1;
+                    vc_adapt_tol=varargin{j};
+                case {'NPARTICLES_START'}
+                    j=j+1;
+                    nparticles_start=varargin{j};
             end
         end
         j=j+1;
@@ -223,8 +235,8 @@ fprintf(fid, '  PHIMIN = 0.0\n');
 fprintf(fid,['  PHIMAX = ' num2str(2.*pi./vmec_data.nfp,'%20.10E') '\n']);
 fprintf(fid, '  INT_TYPE = ''LSODE''\n');
 fprintf(fid, '  FOLLOW_TOL = 1.0E-9\n');
-fprintf(fid, '  VC_ADAPT_TOL = 1.0E-2\n');
-fprintf(fid, '  NPOINC = 2\n');
+fprintf(fid,['  VC_ADAPT_TOL = ' num2str(vc_adapt_tol,'%20.10E') '\n']);
+fprintf(fid,['  NPOINC = ' num2str(npoinc,'%d') '\n']);
 fprintf(fid, '!--------PROFILES ----\n');
 fprintf(fid,[ '  NE_AUX_S = ' num2str(ne_s,'%12.6E  ') '\n']);
 fprintf(fid,[ '  NE_AUX_F = ' num2str(ne_f,'%12.6E  ') '\n']);
@@ -242,7 +254,7 @@ fprintf(fid,['  PLASMA_MASS = ' num2str(mass,'%20.10E') '\n']);
 fprintf(fid,['  PLASMA_ZMEAN = ' num2str(1,'%20.10E') '\n']);
 fprintf(fid,['  PLASMA_ZAVG  = ' num2str(1,'%20.10E') '\n']);
 fprintf(fid, '!--------Universal Beam Parameters------\n');
-fprintf(fid, '  NPARTICLES_START = 65536\n');
+fprintf(fid,['  NPARTICLES_START = ' num2str(nparticles_start,'%d') '\n']);
 fprintf(fid,['  T_END_IN = ' num2str(ntotal,'%d') '*' num2str(t_end,'%-8.2E') '\n']);
 fprintf(fid,['  MASS_BEAMS = ' num2str(ntotal,'%d') '*' num2str(mass,'%-20.10E') '\n']);
 fprintf(fid,['  ZATOM_BEAMS = ' num2str(ntotal,'%d') '*' num2str(Zatom,'%-20.10E') '\n']);
