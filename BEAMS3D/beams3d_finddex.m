@@ -75,18 +75,17 @@ end_state=double(beam_data.end_state');
 mask=~(end_state==etarg);
 
 % Handle a hitonly run
-%if size(beam_data.R_lines,1) == 3
-%    disp('WARNING:  Possible hit_only run!');
-%    disp('      dex=1 Before hit');
-%    disp('      dex=2 Wall hit or last point');
-%    disp('      dex=3 Point beyond wall');
-%    dex = ones(1,beam_data.npoinc)+1;
-%    if llast
-%        dex = dex + 1;
-%    end
-%    return;
-%else
-    
+if size(beam_data.R_lines,1) == 3
+    disp('WARNING:  Possible hit_only run!');
+    disp('      dex=1 Before hit');
+    disp('      dex=2 Wall hit or last point');
+    disp('      dex=3 Point beyond wall');
+    dex = ones(1,beam_data.npoinc)+1;
+    if llast
+        dex = dex + 1;
+    end
+    return;
+else    
     if llast
         dex=zeros(1,beam_data.nparticles);
         for i=1:beam_data.nparticles
@@ -95,7 +94,7 @@ mask=~(end_state==etarg);
     else
         dex = ones(1,beam_data.nparticles);
     end
-%end
+end
 dex(mask) = 0;
 
 return;
