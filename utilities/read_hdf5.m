@@ -34,15 +34,12 @@ for i = 1: nvars
     data.(name_local) = h5read(filename,['/' data_info.Datasets(i).Name]);
     natts = length(data_info.Datasets(i).Attributes);
     for j=1:natts
-        data.([data_info.Datasets(i).Attributes(j).Name]) = data_info.Datasets(i).Attributes(j).Value{1};
+        att_name_local=data_info.Datasets(i).Attributes(j).Name;
+        if ~contains(att_name_local,name_local)
+            att_name_local=[name_local '_' strrep(att_name_local,' ','_')];
+        end
+        data.(att_name_local) = data_info.Datasets(i).Attributes(j).Value{1};
     end
-    % Fix by Weatherby,Gerard <gweatherby@uchc.edu> 10/17/13
-    %for j=2:natts
-    %    data.([data_info.Datasets(i).Attributes(j).Name]) = data_info.Datasets(i).Attributes(j).Value{1};
-    %end
-    %if natts == 1
-    %    data.([data_info.Datasets(i).Attributes(1).Name]) = data_info.Datasets(i).Attributes(1);
-    %end
 end
 
 % Get each subgroup
