@@ -99,9 +99,9 @@ if ~isempty(runid)
     end
     if lpts
         path = ['/results/run_' num2str(runid,'%10.10i') '/endstate'];
-        r_pts = h5read(a5file,[path '/r']);
-        p_pts = h5read(a5file,[path '/phi']);
-        z_pts = h5read(a5file,[path '/z']);
+        r_pts = h5read(a5file,[path '/rprt']);
+        p_pts = h5read(a5file,[path '/phiprt']);
+        z_pts = h5read(a5file,[path '/zprt']);
         x_pts = r_pts.*cosd(p_pts);
         y_pts = r_pts.*sind(p_pts);
     end
@@ -133,7 +133,7 @@ else
 end
 if lpts
     hold on;
-    plot3(x_pts,y_pts,z_pts,'.r','MarkerSize',0.1);
+    plot3(x_pts,y_pts,z_pts,'.k','MarkerSize',0.1);
     hold on;
 end
 set(gca,'Color','blue');
