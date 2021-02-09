@@ -73,7 +73,8 @@ catch
     disp(['ERROR: Could not result: ' num2str(runid,'%10.10i')]);
     return;
 end
-walltile = h5read(a5file,[path_run '/walltile'])+1; % now in matlab index
+%walltile = h5read(a5file,[path_run '/walltile'])+1; % now in matlab index
+walltile = h5read(a5file,[path_run '/walltile']); % Old index (better?)
 
 % Correct walltile
 dex = endcond ~= 8; % endcond=8 is wall hit
