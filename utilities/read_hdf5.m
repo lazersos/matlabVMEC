@@ -38,7 +38,8 @@ for i = 1: nvars
         if ~contains(att_name_local,name_local)
             att_name_local=[name_local '_' strrep(att_name_local,' ','_')];
         end
-        data.(att_name_local) = data_info.Datasets(i).Attributes(j).Value{1};
+        %data.(att_name_local) = data_info.Datasets(i).Attributes(j).Value{1};
+        data.(att_name_local) = data_info.Datasets(i).Attributes(j).Value;
     end
 end
 
