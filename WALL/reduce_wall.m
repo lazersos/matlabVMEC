@@ -12,7 +12,7 @@ function wall_out = reduce_wall(wall_data,dr)
 %  See also read_wall, truncate_wall, plot_wall.
 %
 %   Written by:     S.Lazerson (samuel.lazerson@ipp.mpg.de)
-%   Version:        1.0
+%   Version:        1.5
 %   Date:           6/17/20
 
 wall_out=[];
@@ -135,11 +135,24 @@ wall_out.machine=['Created by reduce_wall' ...
     ' dr: ' num2str(dr,'%5.2f') ];
 wall_out.coords=p_obj.Vertices';
 wall_out.faces=p_obj.Faces';
+delete(p_obj);
+close(fig);
 wall_out.datatype='limiter_trimesh';
 wall_out.nvertex=size(wall_out.coords,2);
 wall_out.nfaces=size(wall_out.faces,2);
-delete(p_obj);
-close(fig);
+% For collisions
+dex1 = wall_out.faces(1,:);
+dex2 = wall_out.faces(2,:);
+dex3 = wall_out.faces(3,:);
+wall_out.A  = wall_out.coords(:,dex1);
+wall_out.V0 = wall_out.coords(:,dex3)-wall_out.coords(:,dex1);
+wall_out.V1 = wall_out.coords(:,dex2)-wall_out.coords(:,dex1);
+wall_out.FN = cross(wall_out.V1,wall_out.V0);
+wall_out.DOT00=dot(wall_out.V0,wall_out.V0);
+wall_out.DOT01=dot(wall_out.V0,wall_out.V1);
+wall_out.DOT11=dot(wall_out.V1,wall_out.V1);
+wall_out.invDenom = 1.0./(wall_out.DOT00.*wall_out.DOT11-wall_out.DOT01.*wall_out.DOT01);
+wall_out.d = dot(wall_out.FN,wall_out.A);
 
 end
 
