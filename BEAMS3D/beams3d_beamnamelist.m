@@ -53,6 +53,10 @@ if (nargin > 6)
     while j<=numel(varargin)
         if ischar(varargin{j})
             switch(varargin{j})
+                case {'H2'}
+                    species_type = 'H';
+                case {'D2'}
+                    species_type = 'D';
                 case {'H','D','T','He'}
                     species_type = varargin{j};
                 case {'pfrac','power_frac','power_fraction'}
