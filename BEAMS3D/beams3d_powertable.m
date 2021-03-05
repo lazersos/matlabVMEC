@@ -121,12 +121,24 @@ for i=1:beam_data.nbeams
 end
 
 P = [P_INITIAL; P_PORTS; P_SHINE; P_IDEPO; P_EDEPO; P_WALL; P_ORBIT; P_THERM];
+
+% Handle units
+units = ' W';
+unit_factor = 1E0;
+if any(P_INITIAL > 10E6)
+    units = ' MW';
+    unit_factor = 1E-6;
+elseif any(P_INITIAL > 10E3)
+    units = ' kW';
+    unit_factor = 1E-3;
+end
+
 if lverb
     disp('POWER TOTAL   PORTS   SHINE    IONS    ELEC    WALL   ORBIT   THERM');
     for i=1:size(P,2)
-        disp(['BEAM' num2str(i,'%i') ':  ' num2str(round(P(:,i)./1E3)',' %6i ') ' kW']);
+        disp(['BEAM' num2str(i,'%i') ':  ' num2str(round(P(:,i).*unit_factor)',' %6i ') units]);
     end
-    disp(['TOTAL:  ' num2str(round(sum(P,2)./1E3)',' %6i ') ' kW']);
+    disp(['TOTAL:  ' num2str(round(sum(P,2).*unit_factor)',' %6i ') units]);
 end
 return;
 end
