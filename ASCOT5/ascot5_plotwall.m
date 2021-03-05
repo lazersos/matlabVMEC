@@ -24,6 +24,7 @@ nfilter=0;
 lhits=0;
 llog=0;
 lpts=0;
+pts_mask=[];
 amu = 1.66053906660E-27;
 ec = 1.60217662E-19;
 
@@ -42,6 +43,9 @@ if nargin > 3
                 nfilter=varargin{i};
             case{'points'}
                 lpts=1;
+            case{'mask_points'}
+                i=i+1;
+                pts_mask=varargin{i};
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -90,7 +94,11 @@ if ~isempty(runid)
     if (lhits)
         wall_strikes = ascot5_calcwallload(a5file,wallid,runid,'hits');
     else
-        wall_load = ascot5_calcwallload(a5file,wallid,runid);
+        if isempty(pts_mask)
+            wall_load = ascot5_calcwallload(a5file,wallid,runid);
+        else
+            wall_load = ascot5_calcwallload(a5file,wallid,runid,'mask_points',pts_mask);
+        end
         if nfilter > 0
             wall_strikes = ascot5_calcwallload(a5file,wallid,runid,'hits');
             dex = wall_strikes <= nfilter;
