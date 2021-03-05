@@ -42,7 +42,9 @@ if (strcmp(filename(end-1:end),'h5'))
         % Fix non-double values
         for k={'ns_prof1','ns_prof2','ns_prof3','ns_prof4','ns_prof5','Beam',...
                 'end_state','neut_lines','wall_faces'}
-            data.(k{1})=double(data.(k{1}));
+            if isfield(data,k{1})
+                data.(k{1})=double(data.(k{1}));
+            end
         end
         % Catch some old format issues
         if isfield(data,'ns_prof1')
