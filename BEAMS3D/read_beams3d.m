@@ -53,7 +53,10 @@ if (strcmp(filename(end-1:end),'h5'))
             data.rho = h/2.:h:(1-h/2);
         end
         if isfield(data,'dist_prof') && ~isfield(data,'dist2d_prof')
-            data.dist2d_prof = squeeze(sum(data.dist_prof,[2 3 4]));
+            % This is a patch for 2018a still used by IPP-HGW because of
+            % reasons
+            data.dist2d_prof = squeeze(sum(sum(sum(data.dist_prof,4),3),2));
+            %data.dist2d_prof = squeeze(sum(data.dist_prof,[2 3 4]));
         end
         % Fix quantities multiplied not multiplied by drho
         if data.VERSION<2.7
