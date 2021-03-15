@@ -76,7 +76,7 @@ A = 0.5*sqrt(sum(FN.*FN,2));
 % Shine dexes
 port_dex=beam_data.end_state==4;
 shine_dex=beam_data.end_state==3;
-wall_dex=beam_data.end_state==2;
+%wall_dex=beam_data.end_state==2;
 therm_dex=beam_data.end_state==1;
 orbit_dex=beam_data.end_state==0;
 
@@ -95,7 +95,7 @@ end
 P_therm = zeros(1,beam_data.nparticles);
 if any(therm_dex>0)
     if lverb, disp('Thermalized Particles found'); end
-    therm_index=beams3d_finddex(beam_data,'therm_end');
+    therm_index=beams3d_finddex(beam_data,'therm_last');
     for i=1:beam_data.nparticles
         if therm_index(i)==0, continue; end
         P_therm(i) = P(therm_index(i),i);
