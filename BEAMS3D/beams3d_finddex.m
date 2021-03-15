@@ -86,7 +86,7 @@ if size(beam_data.R_lines,1) == 3
     if llast
         dex = dex + 1;
     end
-    return;
+    %return;
 else    
     if llast
         dex=zeros(1,beam_data.nparticles);
