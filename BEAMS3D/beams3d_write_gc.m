@@ -35,6 +35,7 @@ lbeams3d = 1;
 lascot5  = 0;
 ndiv = 1;
 pertcent = 0;
+pertdeg=0;
 ec = 1.60217662E-19;
 amu = 1.66053906660E-27;
 aux_str='';
@@ -51,6 +52,10 @@ if ~isempty(varargin)
                 n=n+1;
                 pertcent = varargin{n};
                 aux_str=[aux_str ' pert: ',num2str(pertcent,'%5.4f') ';'];
+            case 'pert_deg'
+                n=n+1;
+                pertdeg = varargin{n};
+                aux_str=[aux_str ' pert: ',num2str(pertdeg,'%3.1f') ' ^o;'];
             case 'ndiv'
                 n=n+1;
                 ndiv = varargin{n};
@@ -128,7 +133,7 @@ if ndiv>1
 end
 
 % Add perturbation
-if pertcent >= 0
+if or(pertcent > 0,pertdeg >0)
     vperp2 = 2.*mu.*b./mass;
     vtotal = sqrt(vll.*vll+vperp2);
     pitch  = vll./vtotal;
@@ -141,9 +146,15 @@ if pertcent >= 0
     end
     fig = figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
     plot(vll.*scale,sqrt(vperp2).*scale,'or');
-    temp   = 1 - pertcent + 2*pertcent.*rand(1,length(pitch));
-    temp(1:ndiv:end) = 1; % Keep the original particle
-    pitch  = pitch.*temp;
+    if pertcent >0
+        temp   = 1 - pertcent + 2*pertcent.*rand(1,length(pitch));
+        temp(1:ndiv:end) = 1; % Keep the original particle
+        pitch  = pitch.*temp;
+    elseif pertdeg >0
+        temp   = cosd(acosd(pitch) - pertdeg + 2*pertdeg.*rand(1,length(pitch))); % pert in deg
+        temp(1:ndiv:end) = pitch(1:ndiv:end); % Keep the original particle
+        pitch  = temp;
+    end
     vll    = pitch.*vtotal;
     vperp2 = abs(vtotal.*vtotal - vll.*vll);
     mu     = 0.5.*vperp2.*mass./b;
@@ -161,9 +172,15 @@ if pertcent >= 0
     annotation('textbox',[0.15 0.10 0.1 0.1],...
         'String',['New: ' num2str(nnew,'%i') ' particles'],...
         'FontSize',24,'LineStyle','none');
-    annotation('textbox',[0.75 0.10 0.1 0.1],...
-        'String',['Pert.: ' num2str(pertcent.*100,'%5.2f') ' %'],...
-        'FontSize',24,'LineStyle','none');
+    if pertcent >0
+        annotation('textbox',[0.75 0.10 0.1 0.1],...
+            'String',['Pert.: ' num2str(pertcent.*100,'%5.2f') ' %'],...
+            'FontSize',24,'LineStyle','none');
+    elseif pertdeg >=0
+        annotation('textbox',[0.75 0.10 0.1 0.1],...
+            'String',['Pert.: ' num2str(pertdeg,'%3.1f') ' ^o'],...
+            'FontSize',24,'LineStyle','none');
+    end
 end
 
 % Now output
