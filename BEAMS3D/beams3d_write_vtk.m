@@ -10,6 +10,7 @@ function beams3d_write_vtk(beam_data,quantity)
 %       wall:       Basic Wall Output
 %       wall_loss:  Lost particle depostion pattern
 %       wall_power: Wall power deposition
+%       wall_shine: Shinethrough wall power
 %
 % Example usage
 %      data=read_beams3d('beams3d_test.h5');  % Reads BEAMS3D HDF5 file
@@ -96,6 +97,24 @@ switch quantity
         fprintf(fid,'SCALARS Heatflux float 1\n');
         fprintf(fid,'LOOKUP_TABLE default\n');
         fprintf(fid,'%7.4f\n',sum(beam_data.wall_load));
+        fclose(fid);
+    case {'wall_shine'}
+        filename='beams3d_vtk_wall_shine.vtk';
+        fid = fopen(filename,'w');
+        fprintf(fid,'# vtk DataFile Version 2.0\n');
+        fprintf(fid,['BEAMS3D DATA by beams3d_write_vtk :' quantity '\n']);
+        fprintf(fid,'ASCII\n');
+        fprintf(fid,'DATASET POLYDATA\n');
+        n = size(beam_data.wall_vertex,1);
+        n2 = size(beam_data.wall_faces,1);
+        fprintf(fid,'POINTS %i float\n',n);
+        fprintf(fid,'%7.4f %7.4f %7.4f\n',beam_data.wall_vertex');
+        fprintf(fid,'POLYGONS %i %i\n',n2,4*n2);
+        fprintf(fid,'3 %i %i %i\n',beam_data.wall_faces'-1);
+        fprintf(fid,'CELL_DATA %i\n',n2);
+        fprintf(fid,'SCALARS Heatflux float 1\n');
+        fprintf(fid,'LOOKUP_TABLE default\n');
+        fprintf(fid,'%7.4f\n',sum(beam_data.wall_shine));
         fclose(fid);
     case {'beam'}
         n = 2;
