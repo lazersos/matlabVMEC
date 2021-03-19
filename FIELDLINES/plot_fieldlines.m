@@ -157,6 +157,17 @@ switch plottype
         end
         %plot(R(1:skip:data.nlines,:),Z(1:skip:nlines,:),'.','Color',line_color,'MarkerSize',0.1);
         axis equal
+        x1=min(min(x(x>0)));
+        x2=max(xlim);
+        y1=min(min(y));
+        y2=max(max(y));
+        d1=x2-x1;
+        d2=y2-y1;
+        d=max(d1,d2).*0.5;
+        c=(x2+x1).*0.5;
+        d=d.*1.1;
+        xlim([-d d]+c);
+        ylim([-d d]);
     case{103}
         phi2 = phi0:2*pi./data.nfp:max(max(data.PHI_lines));
         R=zeros(data.nlines,length(phi2));
@@ -172,7 +183,7 @@ switch plottype
         X = R.*cos(phi0);
         Y = R.*sin(phi0);
         hold on;
-        plot3(X,Y,Z,'.','Color',line_color,'MarkerSize',0.1);
+        plot3(X',Y',Z','.','Color',line_color,'MarkerSize',0.1);
         axis equal
     case{1}
         if isempty(camera), camera=[1024 1024];end

@@ -17,6 +17,7 @@ function ascot5_writewall(filename,wall_data,varargin)
 
 % defaults
 desc_text=[];
+partid=[];
 
 % Handle varargin
 if nargin > 2
@@ -47,6 +48,11 @@ else
     return;
 end
 
+% Check for modelid data
+if isfield(wall_data,'partid')
+    partid = wall_data.partid;
+end
+
 
 % Default descirption if not provided
 if isempty(desc_text)
@@ -74,6 +80,10 @@ h5create(filename,['/wall/wall_3D_' id '/nelements'],1,'Datatype','int32');
 h5create(filename,['/wall/wall_3D_' id '/x1x2x3'],size(x123));
 h5create(filename,['/wall/wall_3D_' id '/y1y2y3'],size(y123));
 h5create(filename,['/wall/wall_3D_' id '/z1z2z3'],size(z123));
+if ~isempty(partid)
+    h5create(filename,['/wall/wall_3D_' id '/partid'],size(partid));
+end
+    
 
 % Write Attributes
 h5writeatt(filename,'/wall','active',id,'TextEncoding','system');
@@ -86,6 +96,9 @@ h5write(filename,['/wall/wall_3D_' id '/nelements'],int32(wall_data.nfaces));
 h5write(filename,['/wall/wall_3D_' id '/x1x2x3'],x123);
 h5write(filename,['/wall/wall_3D_' id '/y1y2y3'],y123);
 h5write(filename,['/wall/wall_3D_' id '/z1z2z3'],z123);
+if ~isempty(partid)
+    h5write(filename,['/wall/wall_3D_' id '/partid'],partid);
+end
 
 return;
 
