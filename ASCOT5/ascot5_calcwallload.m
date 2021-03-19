@@ -21,6 +21,10 @@ function wall_load = ascot5_calcwallload(a5file,wallid,runid,varargin)
 %   Version:       1.0  
 
 amu = 1.66053906660E-27;
+<<<<<<< HEAD
+=======
+
+>>>>>>> c770c2b4c0f132f4d340294c621a9baf15bf2e28
 wall_load = [];
 pts_mask=[];
 lhits = 0;
@@ -78,7 +82,11 @@ catch
     disp(['ERROR: Could not result: ' num2str(runid,'%10.10i')]);
     return;
 end
+<<<<<<< HEAD
 walltile = h5read(a5file,[path_run '/walltile']); % now in matlab index
+=======
+
+>>>>>>> c770c2b4c0f132f4d340294c621a9baf15bf2e28
 %walltile = h5read(a5file,[path_run '/walltile'])+1; % now in matlab index
 
 % Handle downselect of particles

@@ -99,9 +99,15 @@ else
     else
         dex = ones(1,beam_data.nparticles);
     end
+<<<<<<< HEAD
 %end
 
 end
+=======
+
+end
+
+>>>>>>> c770c2b4c0f132f4d340294c621a9baf15bf2e28
 dex(mask) = 0;
 
 return;
