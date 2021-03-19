@@ -10,14 +10,25 @@ function ha = wall_colorbar
 % Version:       1.00
 
 ha=colorbar;
-caxis([0 1E6]);
+cmax = max(caxis);
+scale = 1.0;
+units = '[W/m^2]';
+if cmax>1E6
+    scale = 1E-6;
+    units = '[MW/m^2]';
+elseif cmax > 1E3
+    scale = 1E-3;
+    units = '[kW/m^2]';
+end
 set(ha,'FontSize',24,'Color','white');
-ytick=0:250E3:1E6;
-yticklable={};
+ymax = max(ha.Ticks);
+ytick = (0:0.25:1).*ymax;
+
+yticklabel={};
 for i=1:length(ytick)
-    yticklabel{i} = num2str(ytick(i)./1E6,'%3.2f');
+    yticklabel{i} = num2str(round(ytick(i).*scale),'%4i');
 end
 set(ha,'YTick',ytick,'YTickLabel',yticklabel);
-ylabel(ha,'Heat Flux [MW/m^2]');
+ylabel(ha,['Heat Flux ' units]);
 end
 

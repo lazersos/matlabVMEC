@@ -17,10 +17,12 @@ function wall_load = ascot5_calcwallload(a5file,wallid,runid,varargin)
 %       wall_load = ascot5_calcwallload(a5file,[],[],'hits'); % Strikes
 %       wall_load = ascot5_calcwallload(a5file,[],[],'power'); % Power
 %     
-% Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
-% Version:       1.0  
+%   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
+%   Version:       1.0  
 
 amu = 1.66053906660E-27;
+wall_load = [];
+pts_mask=[];
 lhits = 0;
 lpow = 0;
 % Handle varargin
@@ -32,6 +34,9 @@ if nargin > 3
                 lhits = 1;
             case 'power'
                 lpow = 1;
+            case{'mask_points'}
+                i=i+1;
+                pts_mask=varargin{i};
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -74,6 +79,13 @@ catch
     return;
 end
 walltile = h5read(a5file,[path_run '/walltile']); % now in matlab index
+%walltile = h5read(a5file,[path_run '/walltile'])+1; % now in matlab index
+
+% Handle downselect of particles
+if ~isempty(pts_mask)
+    endcond(pts_mask) = 0;
+    disp(' -- Masking points');
+end
 
 % Correct walltile
 dex = endcond ~= 8; % endcond=8 is wall hit
