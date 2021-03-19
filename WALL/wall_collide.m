@@ -1,6 +1,18 @@
 function [XW, YW, ZW, ik] = wall_collide(wall,x0,y0,z0,x1,y1,z1)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+%WALL_COLLIDE routine for calculating wall collisions
+%   The WALL_COLLIDE routine calculates the intersection of a ray and a
+%   wall structure as returned by the READ_WALL routine.  It takes a
+%   starting point (x0,y0,z0) and endpoint of the ray (x1,y1,z1) as input
+%   and outputs the location of the ray intersection (xw,yw,zw) along with
+%   the index of the face which was intersected (ik).
+%
+%   Example:
+%       wall_data=read_wall('mywall_data.dat');
+%       [xw,wy,zw,ik] = wall_collide(wall_data,0.5,0.25,-0.1,0.4,0.8,0.1);
+%
+% Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
+% Version:       1.00
+
 XW=[];
 YW=[];
 ZW=[];

@@ -200,7 +200,7 @@ else
     % Calc Last Index for each particle
     last_dex=zeros(1,beam_data.nparticles);
     for i=1:beam_data.nparticles
-        last_dex(i) = max([find(beam_data.R_lines(:,i)==0,1,'last') beam_data.npoinc+1]);
+        last_dex(i) = max([find(beam_data.R_lines(:,i)>0,1,'last') beam_data.npoinc+1]);
     end
     % Make plots
     switch lower(plot_type)

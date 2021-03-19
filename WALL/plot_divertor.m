@@ -55,6 +55,10 @@ elseif (nargin>1)
                 plottype='phi';
                 i=i+1;
                 phi=varargin{i};
+            case 'z'
+                plottype='z';
+                i=i+1;
+                zcut=varargin{i};
             case {'wire','simple','solid'}
                 plottype=varargin{i};
             otherwise
@@ -108,7 +112,36 @@ switch plottype
         y2 = intSurface.vertices(:,2);
         z2 = intSurface.vertices(:,3);
         r2 = sqrt(x2.*x2+y2.*y2);
-        plot(r2(intSurface.edges'),z2(intSurface.edges'),'k')
+        if isempty(varargin_temp)
+            plot(r2(intSurface.edges'),z2(intSurface.edges'),'k')
+        else
+            plot(r2(intSurface.edges'),z2(intSurface.edges'),varargin_temp{:})
+        end
+    case 'z'
+        if exist('SurfaceIntersection','file')~=2
+            disp(' Please download the SurfaceIntersection Routine from:')
+            disp('     https://www.mathworks.com/matlabcentral/fileexchange/48613-surface-intersection');
+            return;
+        end
+        xmax=max(x).*1.2;
+        xmin=min(x)*.8;
+        ymax=max(y).*1.2;
+        ymin=min(y).*1.2;
+        surf1.vertices = data.coords';
+        surf1.faces = data.faces';
+        surf2.vertices=[xmin ymin zcut; xmax ymin zcut;...
+            xmin ymax zcut; xmax ymax zcut];
+        surf2.faces = [1 2 3; 3 2 4];
+        [intMatrix, intSurface] = SurfaceIntersection(surf1, surf2);
+        x2 = intSurface.vertices(:,1);
+        y2 = intSurface.vertices(:,2);
+        z2 = intSurface.vertices(:,3);
+        r2 = sqrt(x2.*x2+y2.*y2);
+        if isempty(varargin_temp)
+            plot(x2(intSurface.edges'),y2(intSurface.edges'),'k')
+        else
+            plot(x2(intSurface.edges'),y2(intSurface.edges'),varargin_temp{:})
+        end
     case 'phi2'
         if strcmp(data.datatype,'limiter_trimesh')
             % Take from (http://www.mathworks.com/matlabcentral/newsreader/view_thread/29075)

@@ -32,10 +32,11 @@ ti_temp = [flipud(ti_temp); ti_temp];
 zeff_temp = [flipud(zeff_temp); zeff_temp];
 
 % spline
-ne = pchip(C,ne_temp,s);
-te = pchip(C,te_temp,s);
-ti = pchip(C,ti_temp,s);
-zeff = pchip(C,zeff_temp,s);
+[C, IA, ~] = unique(C);
+ne = pchip(C,ne_temp(IA),s);
+te = pchip(C,te_temp(IA),s);
+ti = pchip(C,ti_temp(IA),s);
+zeff = pchip(C,zeff_temp(IA),s);
 
 end
 

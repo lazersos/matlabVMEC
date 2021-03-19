@@ -38,10 +38,10 @@ end
 % Fix profs
 if lfix
     disp('  Correcting minimum value of profs');
-    te(te<10) = 10;
-    ti(ti<10) = 10;
-    ne(ne<1E18) = 1E18;
-    ni(ni<1D18) = 1E18;
+    te(te<0.03) = 0.03;
+    ti(ti<0.03) = 0.03;
+    ne(ne<1E10) = 1E10;
+    ni(ni<1D10) = 1E10;
 end
 
 % Create random id string

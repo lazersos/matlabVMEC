@@ -22,8 +22,8 @@ function w7x_beam_params( source ,varargin)
 %       w7x_beams_params(1:8,'plots','H2','write_beams3d','grid',60);
 %
 %   Created by: S. Lazerson (samuel.lazerson@ipp.mpg.de)
-%   Version:    1.5
-%   Date:       06/08/16
+%   Version:    2.0
+%   Date:       12/28/20
 
 % Defaults
 lplots = 0;
@@ -74,7 +74,8 @@ if nargin > 1
                     t_end=varargin{i};
                 % These are just passed to the next routine
                 case {'filename','file','mass','TE','TI','NE','ZEFF',...
-                        'POT','nr','nz','nphi'}
+                        'POT','nr','nz','nphi','NPOINC',...
+                        'NPARTICLES_START','VC_ADAPT_TOL'}
                     next_varargin = [next_varargin varargin{i}];
                     i = i+1;
                     next_varargin = [next_varargin varargin{i}];
