@@ -27,6 +27,12 @@ if ~isfile(a5file)
 end
 
 % Pull Wall
+%Use active
+if isempty(wallid)
+    wallid=h5readatt(a5file,'/wall','active');
+    disp(['  Using wallid: ' wallid]);
+    
+end
 path = ['/wall/wall_3D_' num2str(wallid,'%10.10i')];
 try
     x1x2x3 = h5read(a5file,[path '/x1x2x3']);
@@ -36,13 +42,20 @@ catch
 end
 y1y2y3 = h5read(a5file,[path '/y1y2y3']);
 z1z2z3 = h5read(a5file,[path '/z1z2z3']);
-p=patch(x1x2x3,y1y2y3,z1z2z3);
-[faces, vertex]=reducepatch(p,1.0);
+%p=patch(x1x2x3,y1y2y3,z1z2z3);
+%[faces, vertex]=reducepatch(p,1.0);
 
 
 % Pull magnetic axis
-path = ['/bfield/B_STS_' num2str(bid,'%10.10i')];
+if isempty(bid)
+    bid=h5readatt(a5file,'/bfield','active');
+    disp(['  Using bid: ' bid]);
+end
+
+ path = ['/bfield/B_STS_' num2str(bid,'%10.10i')];
+ 
 try
+    
     axisr = h5read(a5file,[path '/axisr']);
 catch
     disp(['ERROR: Could not find bfield: ' num2str(bid,'%10.10i')]);
@@ -56,6 +69,11 @@ axisp = deg2rad(axisp);
 pmax  = deg2rad(axisp1);
 
 % Pull run information
+if isempty(runid)
+    runid=h5readatt(a5file,'/results','active');
+    disp(['  Using runid: ' runid]);
+end
+
 path = ['/results/run_' num2str(runid,'%10.10i') '/endstate'];
 try
     walltile = h5read(a5file,[path '/walltile']);
@@ -64,10 +82,20 @@ catch
     return;
 end
 weight = h5read(a5file,[path '/weight']);
-vr = h5read(a5file,[path '/vr']);
-vphi = h5read(a5file,[path '/vphi']);
-vz = h5read(a5file,[path '/vz']);
 mass = h5read(a5file,[path '/mass']).*amu; %in amu
+    try
+        vr = h5read(a5file,[path '/vr']);
+        vphi = h5read(a5file,[path '/vphi']);
+        vz = h5read(a5file,[path '/vz']);
+    catch
+        pr = h5read(a5file,[path '/prprt']);
+        pphi = h5read(a5file,[path '/pphiprt']);
+        pz = h5read(a5file,[path '/pzprt']);
+        vr = pr./mass;
+        vphi=pphi./mass;
+        vz = pz./mass;
+    end
+
 v2 = vr.*vr+vphi.*vphi+vz.*vz;
 q  = 0.5.*mass.*v2.*weight;
 
@@ -146,35 +174,35 @@ for i=1:nfp
     dex_save = dex_save(dex);
     temp = ones(1,length(x_temp))+10;
     scatter(x_temp(dex),y_temp(dex),temp(dex),c_temp(dex),'fill');
-    colormap jet;
+    colormap hot;
     caxis([0 1]);
     ylim([-1 1].*pi);
     title(['Module ' num2str(i,'%i')]);
     xlabel('\phi');
     ylabel('\theta');
-    outdex=overplot_largest(x_temp(dex),y_temp(dex),c_temp(dex));
-    if (l3d)
-        x_3d = x1x2x3(:,mdex{i});
-        y_3d = y1y2y3(:,mdex{i});
-        z_3d = z1z2z3(:,mdex{i});
-        x0_3d = r0m(mdex{i}).*cos(pm(mdex{i}));
-        y0_3d = r0m(mdex{i}).*sin(pm(mdex{i}));
-        z0_3d = z0m(mdex{i});
-        for j = 1: length(outdex)
-            tdex = dex_save(outdex(j));
-            fig3d=figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
-            patch(x_3d,y_3d,z_3d,c_temp,'EdgeColor','none');
-            campos([x0_3d(tdex),y0_3d(tdex),z0_3d(tdex)]);
-            camtarget([mean(x_3d(:,tdex)),mean(y_3d(:,tdex)),mean(z_3d(:,tdex))]);
-            patch(x_3d(:,tdex),y_3d(:,tdex),z_3d(:,tdex),c_temp(:,tdex),'EdgeColor','white');
-            camva(60);
-            camproj perspective;
-            title(['Module ' num2str(i,'%i') ' Spot #' num2str(j,'%i')]);
-            colormap jet;
-            caxis([0 c_temp(tdex)]);
-            drawnow;
-        end
-    end
+    %outdex=overplot_largest(x_temp(dex),y_temp(dex),c_temp(dex));
+%     if (l3d)
+%         x_3d = x1x2x3(:,mdex{i});
+%         y_3d = y1y2y3(:,mdex{i});
+%         z_3d = z1z2z3(:,mdex{i});
+%         x0_3d = r0m(mdex{i}).*cos(pm(mdex{i}));
+%         y0_3d = r0m(mdex{i}).*sin(pm(mdex{i}));
+%         z0_3d = z0m(mdex{i});
+%         for j = 1: length(outdex)
+%             tdex = dex_save(outdex(j));
+%             fig3d=figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+%             patch(x_3d,y_3d,z_3d,c_temp,'EdgeColor','none');
+%             campos([x0_3d(tdex),y0_3d(tdex),z0_3d(tdex)]);
+%             camtarget([mean(x_3d(:,tdex)),mean(y_3d(:,tdex)),mean(z_3d(:,tdex))]);
+%             patch(x_3d(:,tdex),y_3d(:,tdex),z_3d(:,tdex),c_temp(:,tdex),'EdgeColor','white');
+%             camva(60);
+%             camproj perspective;
+%             title(['Module ' num2str(i,'%i') ' Spot #' num2str(j,'%i')]);
+%             colormap jet;
+%             caxis([0 c_temp(tdex)]);
+%             drawnow;
+%         end
+    %end
 end
 ha = colorbar('Location','EastOutside');
 set(ha,'FontSize',24);

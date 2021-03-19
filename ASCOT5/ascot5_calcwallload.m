@@ -15,13 +15,14 @@ function wall_load = ascot5_calcwallload(a5file,wallid,runid,varargin)
 %       wall_load = ascot5_calcwallload(a5file,wallid,runid); %Heat flux [W/m^2]
 %       wall_load = ascot5_calcwallload(a5file,[],[]); %Active ID's
 %       wall_load = ascot5_calcwallload(a5file,[],[],'hits'); % Strikes
+%       wall_load = ascot5_calcwallload(a5file,[],[],'power'); % Power
 %     
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.0  
 
 amu = 1.66053906660E-27;
 lhits = 0;
-
+lpow = 0;
 % Handle varargin
 if nargin > 3
     i=1;
@@ -29,6 +30,8 @@ if nargin > 3
         switch varargin{i}
             case{'hits','nhits'}
                 lhits = 1;
+            case 'power'
+                lpow = 1;
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -95,17 +98,21 @@ if ~lhits
     end
     v2 = vr.*vr+vphi.*vphi+vz.*vz;
     q  = 0.5.*mass.*v2.*weight;
-    V0=[x1x2x3(2,:)-x1x2x3(1,:);y1y2y3(2,:)-y1y2y3(1,:);z1z2z3(2,:)-z1z2z3(1,:)];
-    V1=[x1x2x3(3,:)-x1x2x3(1,:);y1y2y3(3,:)-y1y2y3(1,:);z1z2z3(3,:)-z1z2z3(1,:)];
-    F = cross(V0,V1);
-    A = 0.5.*sqrt(sum(F.*F));
-    
+    if ~lpow
+        V0=[x1x2x3(2,:)-x1x2x3(1,:);y1y2y3(2,:)-y1y2y3(1,:);z1z2z3(2,:)-z1z2z3(1,:)];
+        V1=[x1x2x3(3,:)-x1x2x3(1,:);y1y2y3(3,:)-y1y2y3(1,:);z1z2z3(3,:)-z1z2z3(1,:)];
+        F = cross(V0,V1);
+        A = 0.5.*sqrt(sum(F.*F));
+    end
     %Construct wall_load using accumarray
     walltile(walltile==0) = size(x1x2x3,2) + 1; %set 0's from before to extra value to be able to truncate (accumarray needs positive integers)
     % Convert to heatflux
     wall_load = accumarray(walltile,q); %Sum all entries in q that have the same value in walltile, put result at the position given by walltile
     wall_load = wall_load(1:end-1)'; %truncate "0's"
-    wall_load = wall_load./A;
+    if ~lpow
+        wall_load = wall_load./A;
+    end
+        
 else
     walltile(walltile==0) = size(x1x2x3,2) + 1;
     wall_load = accumarray(walltile,1); %Sum all entries with same value in walltile, put result at the position given by the value
