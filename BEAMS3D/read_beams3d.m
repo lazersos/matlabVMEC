@@ -37,7 +37,7 @@ if (strcmp(filename(end-1:end),'h5'))
         data.wall_strikes = double(data.wall_strikes);
         data.lwall=1;
     end
-    if data.VERSION < 3
+    if and(data.VERSION < 3,isfield(data,'ns_prof1'))
         disp('Old version be careful with distribution function');
         % Fix non-double values
         for k={'ns_prof1','ns_prof2','ns_prof3','ns_prof4','ns_prof5','Beam',...
@@ -81,8 +81,12 @@ if (strcmp(filename(end-1:end),'h5'))
         % Fix non-double values
         for k={'ndist1','ndist2','ndist3','ndist3','ndist1','Beam',...
                 'end_state','neut_lines','wall_faces','npoinc'}
-            data.(k{1})=double(data.(k{1}));
-            data.ns_prof1 = size(data.ipower_prof,2);
+            if isfield(data,k{1})
+                data.(k{1})=double(data.(k{1}));
+            end
+            if isfield(data,'ns_prof1')
+                data.ns_prof1 = size(data.ipower_prof,2);
+            end
         end
     end
 elseif (strcmp(filename(1:12),'beams3d_diag'))
