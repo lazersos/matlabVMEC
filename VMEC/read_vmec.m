@@ -204,6 +204,8 @@ else
     offset=min(f.xn./f.nfp)-1;
     xn=f.xn;
     xm=f.xm;
+    f.xm_nyq=f.xm;
+    f.xn_nyq=f.xn;
 end
 f.bc=zeros(msize+1,nsize,f.ns);
 f.gc=zeros(msize+1,nsize,f.ns);
@@ -2093,6 +2095,14 @@ function f=half2fullmesh(f)
 % The following quantities are on 1D full mesh from 2:ns-1
 % Dmerc, Dshear, Dwell, Dcurr, Dgeod
 
+% Check to make sure the half grid quantities are stored on the full grid
+if length(f.iotas) ~= f.ns, f.iotas(2:f.ns) = f.iotas; end
+if length(f.pres) ~= f.ns, f.pres(2:f.ns) = f.pres; end
+if length(f.buco) ~= f.ns, f.buco(2:f.ns) = f.buco; end
+if length(f.bvco) ~= f.ns, f.bvco(2:f.ns) = f.bvco; end
+if length(f.overr) ~= f.ns, f.overr(2:f.ns) = f.overr; end
+if length(f.specw) ~= f.ns, f.specw(2:f.ns) = f.specw; end
+if length(f.vp) ~= f.ns, f.vp(2:f.ns) = f.vp; end
 % Now we create full mesh quantities for those that have full mesh names
 if ~isfield(f,'iotaf')
     f.iotaf=h2f(f.iotas,f.ns);
@@ -2101,10 +2111,14 @@ if ~isfield(f,'presf')
     f.presf=h2f(f.pres,f.ns);
 end
 if ~isfield(f,'phipf')
+    if length(f.phip) ~= f.ns, f.phip(2:f.ns) = f.phip; end
     f.phipf=h2f(f.phip,f.ns);
 end
 % Now the rest of the quantities are remapped to full mesh
-if isfield(f,'beta_vol'), f.beta_vol=h2f(f.beta_vol,f.ns); end
+if isfield(f,'beta_vol')
+    if length(f.beta_vol) ~= f.ns, f.beta_vol(2:f.ns) = f.beta_vol; end
+    f.beta_vol=h2f(f.beta_vol,f.ns);
+end
 f.buco=h2f(f.buco,f.ns);
 f.bvco=h2f(f.bvco,f.ns);
 f.vp=h2f(f.vp,length(f.vp));
