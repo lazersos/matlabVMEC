@@ -90,23 +90,12 @@ for i=1:length(grid_blocks)
     vertices = vertices(mask);
     
     % check how many faces in block
-    counter = 0;
-    for j=1:length(vertices)
-        counter = counter + ...
-            sum(wall.faces(1, :) == vertices(j) | wall.faces(2, :) == vertices(j) | wall.faces(3, :) == vertices(j));
-    end
+    counter = int32(CountOccurance(vertices, int32(wall.faces)));
     
     % initialize faces and fill them after
     faces = zeros(3, counter);
     grid_blocks(i).nfaces = counter;
-    counter = 1;
-    for j=1:length(vertices)
-        mask = wall.faces(1, :) == vertices(j) | wall.faces(2, :) == vertices(j) | wall.faces(3, :) == vertices(j);
-        local_faces = wall.faces(:, mask);
-        n = size(local_faces, 2);
-        faces(:, counter:counter + n - 1) = local_faces;
-        counter = counter + n;
-    end   
+    faces = MakeFaces(vertices, int32(wall.faces), counter);
     % store the unique faces, since you could get double from method above
     grid_blocks(i).faces = unique(faces', 'rows')';
     grid_blocks(i).nfaces = size(grid_blocks(i).faces,2);
@@ -129,7 +118,7 @@ n_new_faces = sum([wall_accelerated.blocks.nfaces]);
 if n_new_faces ~= wall.nfaces
    wall_accelerated.nfaces = sum([wall_accelerated.blocks.nfaces]);
    fprintf("More faces created by accelerated wall due to faces being in multiple blocks. Not an issue, just a warning\n");
-   fprintf("Old number of faces: %d", wall.nfaces);
-   fprintf("New number of faces: %d", wall_accelerated.nfaces);
+   fprintf("Old number of faces: %d\n", wall.nfaces);
+   fprintf("New number of faces: %d\n", wall_accelerated.nfaces);
 end
 end

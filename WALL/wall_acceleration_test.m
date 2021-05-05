@@ -1,11 +1,9 @@
 %% initialize
-clear all; close all; clc;
+clear all; close all; addpath('c');
 
 
-filename = '/home/dion/WALL_TEST/a10_tokamak_wall.dat';
-block_size = 5;
-
-
+filename = '/home/dion/WALL_TEST/a10_tokamak_wall_highres.dat';
+block_size = 0.5;
 
 wall = read_wall(filename);
 %% plot
@@ -34,5 +32,5 @@ while 1
 end
 
 %% Save new mesh
-filename_new = strcat(filename(1:end-4), '_acc', str(block_size), filename(end-3:end));
+filename_new = strcat(filename(1:end-4), '_acc', num2str(block_size), filename(end-3:end));
 write_wall_accelerated(wall_accelerated, filename_new);
