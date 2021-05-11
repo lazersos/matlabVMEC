@@ -65,11 +65,11 @@ for xi=1:length(xs)
           x = xs(xi);
           y = ys(yi);
           z = zs(zi);
-          block.x_min = x;
+          block.x_min = x - epsilon / 2;
           block.x_max = x + block_size;
-          block.y_min = y;
+          block.y_min = y - epsilon / 2;
           block.y_max = y + block_size;
-          block.z_min = z;
+          block.z_min = z - epsilon / 2;
           block.z_max = z + block_size;
           block.nfaces = 0;
           block.faces = zeros(3, 1);
@@ -81,10 +81,16 @@ end
 %% assign triangles to grid
 for i=1:length(grid_blocks)
     tmp = grid_blocks(i);
+    xmax = tmp.x_max + epsilon;
+    ymax = tmp.y_max + epsilon;
+    zmax = tmp.z_max + epsilon;
+    xmin = tmp.x_min - epsilon;
+    ymin = tmp.y_min - epsilon;
+    zmin = tmp.z_min - epsilon;
     % check which vertices in this block
-    mask = wall.coords(1, :) < tmp.x_max & wall.coords(1, :) >= tmp.x_min ...
-        & wall.coords(2, :) < tmp.y_max & wall.coords(2, :) >= tmp.y_min ...
-        & wall.coords(3, :) < tmp.z_max & wall.coords(3, :) >= tmp.z_min;
+    mask = wall.coords(1, :) < xmax & wall.coords(1, :) >= xmin ...
+        & wall.coords(2, :) < ymax & wall.coords(2, :) >= ymin ...
+        & wall.coords(3, :) < zmax & wall.coords(3, :) >= zmin;
     % get those vertex indexes
     vertices = int32(1:wall.nvertex);
     vertices = vertices(mask);
@@ -108,6 +114,10 @@ wall_accelerated.nfaces = wall.nfaces;
 wall_accelerated.coords = wall.coords;
 wall_accelerated.faces = wall.faces;
 wall_accelerated.nblocks = length(grid_blocks);
+wall_accelerated.nblocks_x = xi;
+wall_accelerated.nblocks_y = yi;
+wall_accelerated.nblocks_z = zi;
+wall_accelerated.block_size = block_size;
 wall_accelerated.blocks = grid_blocks;
 wall_accelerated.datatype = wall.datatype;
 wall_accelerated.zstep = 1;

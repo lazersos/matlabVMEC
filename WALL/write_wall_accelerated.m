@@ -50,6 +50,7 @@ fprintf(fid,'%i %i\n',data.nvertex,data.nfaces);
 fprintf(fid,'%20.10E %20.10E %20.10E\n',data.coords);
 % Write each block with its faces
 fprintf(fid, '%i %i %i %i\n', data.nblocks, data.xstep, data.ystep, data.zstep);
+fprintf(fid, '%20.10E %i %i %i\n', data.block_size, data.nblocks_x, data.nblocks_y, data.nblocks_z);
 for i=1:data.nblocks
     tmp = data.blocks(i);
     fprintf(fid, '%20.10E %20.10E %20.10E %20.10E %20.10E %20.10E\n', tmp.x_min, tmp.x_max, tmp.y_min, tmp.y_max, tmp.z_min, tmp.z_max);

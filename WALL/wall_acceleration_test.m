@@ -2,7 +2,7 @@
 clear all; close all; addpath('c');
 
 
-filename = '/home/dion/WALL_TEST/a10_tokamak_wall_highres.dat';
+filename = '/home/dion/Documents/W7X_FILES/w7x_fullwall_ports_trunc.dat';
 block_size = 0.5;
 
 wall = read_wall(filename);
@@ -32,5 +32,5 @@ while 1
 end
 
 %% Save new mesh
-filename_new = strcat(filename(1:end-4), '_acc', num2str(block_size), filename(end-3:end));
+filename_new = strcat(filename(1:end-4), '_acc', num2str(block_size), 'v3', filename(end-3:end));
 write_wall_accelerated(wall_accelerated, filename_new);
