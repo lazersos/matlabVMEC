@@ -24,6 +24,7 @@ nfilter=0;
 lhits=0;
 llog=0;
 lpts=0;
+lmap_nfp=0;
 pts_mask=[];
 amu = 1.66053906660E-27;
 ec = 1.60217662E-19;
@@ -46,6 +47,8 @@ if nargin > 3
             case{'mask_points'}
                 i=i+1;
                 pts_mask=varargin{i};
+            case{'map_to_single_period'}
+                lmap_nfp=1;
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -123,6 +126,15 @@ if llog
         wall_load = log10(wall_load);
     end
     disp('Log10 color contours');
+end
+
+% Hanlde remapping everything to a single field period
+if lmap_nfp
+    x = mean(x1x2x3);
+    y = mean(y1y2y3);
+    z = mean(z1z2z3);
+    p = atan2(y,z);
+    
 end
 
 % Make plot
