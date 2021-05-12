@@ -44,7 +44,8 @@ void MakeFaces(int *inList, int *inFaces, double *result, int length, mwSize N, 
                 result[counter] = (double)inFaces[3*j];
                 result[counter+1] = (double)inFaces[3*j+1];
                 result[counter+2] = (double)inFaces[3*j+2];
-                counter = counter + 3;
+                result[counter+3] = j + 1; // +1 for MATLAB/FORTRAN counting
+                counter = counter + 4;
             }
         }
     }
@@ -123,7 +124,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     length = mxGetData(prhs[2]);
        
     /* create the output matrix */
-    plhs[0] = mxCreateDoubleMatrix(3, *length,mxREAL);
+    plhs[0] = mxCreateDoubleMatrix(4, *length,mxREAL);
         
     /* get a pointer to the real data in the output matrix */    
     #if MX_HAS_INTERLEAVED_COMPLEX

@@ -58,28 +58,29 @@ z_buf = ceil((z_max - z_min)/ block_size) * block_size - (z_max - z_min);
 zs = z_min - z_buf/2:block_size:z_max+z_buf/2-epsilon;
 
 % create blocks by looping over all x's, y's, and z's
-grid_blocks = [];
+grid_blocks(length(xs)*length(ys)*length(zs)) = struct();
+counter=1;
 for xi=1:length(xs)
    for yi=1:length(ys)
       for zi=1:length(zs)
           x = xs(xi);
           y = ys(yi);
           z = zs(zi);
-          block.x_min = x - epsilon / 2;
-          block.x_max = x + block_size;
-          block.y_min = y - epsilon / 2;
-          block.y_max = y + block_size;
-          block.z_min = z - epsilon / 2;
-          block.z_max = z + block_size;
-          block.nfaces = 0;
-          block.faces = zeros(3, 1);
-          grid_blocks = [grid_blocks block];
+          grid_blocks(counter).x_min = x;
+          grid_blocks(counter).x_max = x + block_size;
+          grid_blocks(counter).y_min = y;
+          grid_blocks(counter).y_max = y + block_size;
+          grid_blocks(counter).z_min = z;
+          grid_blocks(counter).z_max = z + block_size;
+          grid_blocks(counter).nfaces = 0;
+          grid_blocks(counter).faces = [];
+          counter = counter + 1;
       end
    end 
 end
 
 %% assign triangles to grid
-for i=1:length(grid_blocks)
+parfor i=1:length(grid_blocks)
     tmp = grid_blocks(i);
     xmax = tmp.x_max + epsilon;
     ymax = tmp.y_max + epsilon;
@@ -98,17 +99,23 @@ for i=1:length(grid_blocks)
     % check how many faces in block
     counter = int32(CountOccurance(vertices, int32(wall.faces)));
     
-    % initialize faces and fill them after
-    faces = zeros(3, counter);
-    grid_blocks(i).nfaces = counter;
+    % Get faces
     faces = MakeFaces(vertices, int32(wall.faces), counter);
     % store the unique faces, since you could get double from method above
-    grid_blocks(i).faces = unique(faces', 'rows')';
-    grid_blocks(i).nfaces = size(grid_blocks(i).faces,2);
+    if ~isempty(faces) > 0
+        % only store the indices of the faces
+        grid_blocks(i).faces = unique(faces(4,:)', 'rows')';
+        grid_blocks(i).nfaces = size(grid_blocks(i).faces,2);
+    end
 end
 %% finish up new wall
 wall_accelerated.machine = wall.machine;
-wall_accelerated.date = '03-05-21'; %today('datetime');
+try
+    wall_accelerated.date = datestr(today());
+catch
+    fprintf("You need the financial toolbox for automatic date setting\n");
+    wall_accelerated.date = wall.date;
+end
 wall_accelerated.nvertex = wall.nvertex;
 wall_accelerated.nfaces = wall.nfaces;
 wall_accelerated.coords = wall.coords;
@@ -124,11 +131,10 @@ wall_accelerated.zstep = 1;
 wall_accelerated.ystep = length(zs);
 wall_accelerated.xstep = length(ys)*length(zs);
 %% check number of faces
-n_new_faces = sum([wall_accelerated.blocks.nfaces]);
-if n_new_faces ~= wall.nfaces
-   wall_accelerated.nfaces = sum([wall_accelerated.blocks.nfaces]);
+wall_accelerated.nfaces_blocks = sum([wall_accelerated.blocks.nfaces]);
+if wall_accelerated.nfaces_blocks ~= wall.nfaces
    fprintf("More faces created by accelerated wall due to faces being in multiple blocks. Not an issue, just a warning\n");
-   fprintf("Old number of faces: %d\n", wall.nfaces);
-   fprintf("New number of faces: %d\n", wall_accelerated.nfaces);
+   fprintf("New number of faces: %d\n", wall_accelerated.nfaces_blocks);
+   fprintf("Old number of faces: %d\n", wall_accelerated.nfaces);
 end
 end

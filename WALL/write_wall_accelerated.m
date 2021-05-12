@@ -39,6 +39,7 @@ if nargin<2
     disp('ERROR: write_wall_accelerated requires wall structure and filename');
     return
 end
+
 % Open File
 fid=fopen(filename,'w');
 % Write Header
@@ -48,6 +49,8 @@ fprintf(fid,'%i %i\n', 0, 0);
 fprintf(fid,'%i %i\n',data.nvertex,data.nfaces);
 % Write Coords
 fprintf(fid,'%20.10E %20.10E %20.10E\n',data.coords);
+% Write Faces
+fprintf(fid,'%i %i %i\n',data.faces);
 % Write each block with its faces
 fprintf(fid, '%i %i %i %i\n', data.nblocks, data.xstep, data.ystep, data.zstep);
 fprintf(fid, '%20.10E %i %i %i\n', data.block_size, data.nblocks_x, data.nblocks_y, data.nblocks_z);
@@ -55,11 +58,12 @@ for i=1:data.nblocks
     tmp = data.blocks(i);
     fprintf(fid, '%20.10E %20.10E %20.10E %20.10E %20.10E %20.10E\n', tmp.x_min, tmp.x_max, tmp.y_min, tmp.y_max, tmp.z_min, tmp.z_max);
     fprintf(fid, '%i\n', tmp.nfaces);
-    fprintf(fid,'%i %i %i\n',tmp.faces);
+    if tmp.nfaces > 0
+        fprintf(fid,'%i\n',tmp.faces);
+    end
 end
 % Close file
 fclose(fid);
 return;
 
 end
-

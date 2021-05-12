@@ -31,6 +31,7 @@ function [ output_args ] = plot_fieldlines(data,varargin)
 plottype=0;
 phi0=0;
 nphi=1;
+nline=0;
 npoinc = data.npoinc;
 nsteps = data.nsteps;
 nlines = data.nlines;
@@ -45,6 +46,10 @@ if nargin > 1
         switch varargin{i}
             case 'basic'
                 plottype=0;
+            case 'basic_single'
+                plottype=0;
+                i=i+1;
+                nline=varargin{i};
             case '3D'
                 plottype=101;
             case 'camera'
@@ -103,7 +108,6 @@ switch plottype
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
         else
             plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
-            caxis([0 fieldlines_data.rho(end-1)]);
         end
         if isfield(data,'Rhc_lines')
             line_dex = nphi:npoinc:size(data.Rhc_lines,2);
@@ -117,6 +121,13 @@ switch plottype
             hold off
         end
         axis equal
+        if nline > 0
+            hold on
+            x=data.R_lines(nline,line_dex);
+            y=data.Z_lines(nline,line_dex);
+            plot(x,y,'.','Color','r','MarkerSize',0.1);
+            hold off
+        end
     case{101}
         line_dex = nphi:npoinc:nsteps;
         R = data.R_lines(1:skip:nlines,line_dex);
