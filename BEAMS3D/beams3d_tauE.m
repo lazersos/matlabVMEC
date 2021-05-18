@@ -64,7 +64,7 @@ for i=1:beam_data.nphi
     s=beam_data.S_ARR(:,i,:);
     n=beam_data.NE(:,i,:)./beam_data.ZEFF_ARR(:,i,:);
     t=beam_data.TI(:,i,:);
-    smin = min(min(s));
+    %smin = min(min(s));
     %j=find(s==smin);
     j=s<0.01; % rho 10%
     temp(i) = mean(n(j).*t(j));
