@@ -82,8 +82,8 @@ for i=1:nruns
         dex = or(dex,beam_data{i}.Beam'==j);
     end
     for j=1:nrho
-        l = and(beam_data{i}.S_lines(d,dex)>=rhol_out(j),...
-            beam_data{i}.S_lines(d,dex)<rhor_out(j));
+        l = and(sqrt(beam_data{i}.S_lines(d,dex))>=rhol_out(j),...
+            sqrt(beam_data{i}.S_lines(d,dex))<rhor_out(j));
         output.depo(i,j) = sum(beam_data{i}.Weight(l));
     end
     [s,~,Vp] = beams3d_volume(beam_data{i});
