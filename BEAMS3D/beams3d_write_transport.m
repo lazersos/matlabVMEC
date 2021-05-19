@@ -1,4 +1,4 @@
-function beams3d_write_transport(beam_data_in)
+function beams3d_write_transport(beam_data_in,varargin)
 %BEAMS3D_WRITE_TRANSPORT Generate a transport file from BEAMS3D data
 %   The BEAMS3D_WRITE_TRANSPORT routine is used for outputting quantities
 %   for transport analysis.  The code takes either a BEAMS3D data structure
@@ -18,8 +18,26 @@ function beams3d_write_transport(beam_data_in)
 % Version:       1.0
 
 beamdex=[];
-lplot=1;
+lplot=0;
 filename='beams3d_transport';
+
+% Handle varargin
+if ~isempty(varargin)
+    n=1;
+    while n <= length(varargin)
+        switch varargin{n}
+            case 'plots'
+                lplot=1;
+            case 'beamdex'
+                n=n+1;
+                beamdex = varargin{n};
+            case 'filename'
+                n=n+1;
+                filename = varargin{n};
+        end
+        n=n+1;
+    end
+end
 
 % Act like it's a cell array even if it's not
 if ~iscell(beam_data_in)
