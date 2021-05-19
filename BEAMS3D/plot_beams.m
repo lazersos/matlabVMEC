@@ -358,7 +358,8 @@ else
             end
             legend(leg_text); axis equal; title('Initial State');
         case 'flux'
-            x1  = beam_data.U_lines(:,orbit_dex);
+            u   = beams3d_fixUlines(beam_data);
+            x1  = u(:,orbit_dex);
             y1  = beam_data.S_lines(:,orbit_dex);
             ld  = last_dex(orbit_dex);
             x=[]; y=[];
@@ -370,7 +371,8 @@ else
             rlim([0 1.5]);
             title('Orbiting Particles');
         case 'flux_therm'
-            x1  = beam_data.U_lines(:,therm_dex);
+            u   = beams3d_fixUlines(beam_data);
+            x1  = u(:,therm_dex);
             y1  = beam_data.S_lines(:,therm_dex);
             ld  = last_dex(therm_dex);
             x=[]; y=[];
@@ -382,25 +384,29 @@ else
             rlim([0 1.5]);
             title('Thermalized Particles');
         case 'flux_birth'
-            x  = beam_data.U_lines(dex1,born_dex);
+            u   = beams3d_fixUlines(beam_data);
+            x  = u(dex1,born_dex);
             y  = beam_data.S_lines(dex1,born_dex);
             polarplot(x,y,'.k');
             rlim([0 1.5]);
             title('Born Particles');
         case 'flux_initial'
-            x  = beam_data.U_lines(dex1,orbit_dex);
+            u   = beams3d_fixUlines(beam_data);
+            x  = u(dex1,orbit_dex);
             y  = beam_data.S_lines(dex1,orbit_dex);
             polarplot(x,y,'.k');
             rlim([0 1.5]);
             title('Intial Orbiting Particles');
         case 'flux_lost_initial'
-            x  = beam_data.U_lines(dex1,lost_dex);
+            u   = beams3d_fixUlines(beam_data);
+            x  = u(dex1,lost_dex);
             y  = beam_data.S_lines(dex1,lost_dex);
             polarplot(x,y,'.k');
             rlim([0 1.5]);
             title('Intial Lost Particles');
         case 'flux_therm_initial'
-            x  = beam_data.U_lines(dex1,therm_dex);
+            u   = beams3d_fixUlines(beam_data);
+            x  = u(dex1,therm_dex);
             y  = beam_data.S_lines(dex1,therm_dex);
             polarplot(x,y,'.k');
             rlim([0 1.5]);
@@ -982,14 +988,16 @@ else
         case 'orbit_flux'
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             S = beam_data.S_lines(:,beam_dex);
-            U = beam_data.U_lines(:,beam_dex);
+            U = beams3d_fixUlines(beam_data);
+            U = U(:,beam_dex);
             polarplot(U,sqrt(S),'.');
             set(gca,'FontSize',24);
             title('Particle Orbits (rho,u)');
         case 'orbit_flux_lost'
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             S = beam_data.S_lines(:,lost_dex);
-            U = beam_data.U_lines(:,lost_dex);
+            U = beams3d_fixUlines(beam_data);
+            U = U(:,lost_dex);
             polarplot(U,sqrt(S),'.');
             set(gca,'FontSize',24);
             title('Lost Particle Orbits (rho,u)');
