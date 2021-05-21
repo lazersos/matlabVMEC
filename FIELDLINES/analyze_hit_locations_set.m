@@ -1,3 +1,4 @@
+function [results_new] = analyze_hit_locations_set(data_dir)
 % For analyzing the wall hit location after a FIELDLINES run
 % Can be run after doing the "single" variant for many dataset
 % This one takes those results and makes compass plots and such
@@ -5,18 +6,12 @@
 % Run by aiming the script at a folder with your results from
 % analyze_hit_locations_single
 
+% Inputs:
+% - data_dir: directory with all the results of hit_locations_single in it
+
 %   Created by: D.J. Engels (d.j.engels@student.tue.nl)
 %   Version:    1.0
 %   Date:       May 2021
-
-%% initialize
-clear dir; close all;
-main_dir = split(pwd, '/');
-main_dir = strjoin(main_dir(1:end-1), '/');
-addpath(genpath(main_dir));
-
-% aim this at your folder with results
-data_dir = '~/Dropbox/__Internship/Data/05-19 Divertor loads/';
 
 %% load in all datasets
 files = dir(data_dir); files = files(~[files.isdir]);
@@ -49,6 +44,7 @@ results_new.lower_div = mergestructs(r1.lower_div,r2.lower_div);
 results_new.upper_div = mergestructs(r1.upper_div,r2.upper_div);
 
 clear r1 r2 mergestructs
+end
 
 function r = analyze_variable(results, var_name, res_name)
 name_I_opt = sprintf("%s_I_opt", var_name);

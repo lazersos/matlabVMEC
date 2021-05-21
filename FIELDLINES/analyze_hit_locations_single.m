@@ -1,10 +1,18 @@
+function result = analyze_hit_locations_single(filename, l_more_plot, l_save, varargin)
 % For analyzing the wall hit location after a FIELDLINES run
 % For a single dataset
-% Based on the w7x_divertor_op12b_fullres mesh (and accelerated versions)
-% Can check for each divertor wall hits and split them up in radial or
-% toroidal direction
+%
+% WARNING
+% Assumed that you used the w7x_divertor_op12b_fullres mesh (or accelerated versions)
+% Analyzed the hit locations per divertor and checks distance from pumping
+% gap
 
-% Run by setting the filename at the top (aim to h5 file with results)
+% Inputs:
+% - filename: the file to load
+% - l_more_plot: boolean to show more plots or not
+% - l_save: boolean to save result to a save dir or not
+% - varargin: you can put in what you want. If you have l_save enabled, the
+% first other input needs to be the save location, 2nd the save location
 
 % Make sure you have the file in the MATLAB path, this is a requirement of
 % the read_fieldlines script
@@ -14,48 +22,30 @@
 %   Date:       May 2021
 
 %% initialize
-close all;
-main_dir = split(pwd, '/');
-main_dir = strjoin(main_dir(1:end-1), '/');
-addpath(genpath(main_dir));
-
-l_plot_div = 0;  % whether or not you want extra plots
-l_plot_box = 0;
-l_plot_mean = 1;
-
-% quick analysis
-l_quick_save = 0;
-
-% error field without trim coils
-filename = '/home/dion/Internship_local/Data/05-18/14_20/fieldlines_w7x_eim+250_new.h5';
-% no error field
-%filename = '/home/dion/Internship_local/Data/05-17/12_00/fieldlines_w7x_eim+250_new.h5';
-
-if l_quick_save
-    
-    l_plot_div = 0;  % whether or not you want extra plots
-    l_plot_box = 0;
-    
-    phase = 144;
-    amp = 100;
-    
-    % any error field with trim coils
-    filename = sprintf('/home/dion/Dropbox/__Internship/Internship_local/Data/05-18/17_15_%dA/%d/fieldlines_w7x_eim+250_new.h5', amp, phase);
-    
-    % set save information
-    dir_save = '~/Dropbox/__Internship/Data/05-19 Divertor loads/';
-    save_name = sprintf('I%d_phase%d', amp, phase);
+if l_save
+    % Check saving info
+    if length(varargin) < 2
+        error("Too few save arguments given")
+    elseif length(varargin) > 2
+        fprintf("Too many save arguments given. Will ignore everything after the 2nd\n");
+    end
+    dir_save = varargin{1};
+    save_name = varargin{2};
+    clear varargin
 end
 
 data = read_fieldlines(filename);
 %% plot
-plot_fieldlines(data, 'wall_strike');
-xlabel('x (m)');ylabel('y (m)');zlabel('z (m)'); title('Hits per face');
-pause(0.001);
-
-figure;
-plot3(data.X_lines(:,2), data.Y_lines(:,2), data.Z_lines(:,2), 'o');
-xlabel('x (m)');ylabel('y (m)');zlabel('z (m)'); title('Hit locations');
+if l_more_plot
+    figure
+    plot_fieldlines(data, 'wall_strike');
+    xlabel('x (m)');ylabel('y (m)');zlabel('z (m)'); title('Hits per face');
+    pause(0.001);
+    
+    figure;
+    plot3(data.X_lines(:,2), data.Y_lines(:,2), data.Z_lines(:,2), 'o');
+    xlabel('x (m)');ylabel('y (m)');zlabel('z (m)'); title('Hit locations');
+end
 
 %% Check incomplete lines
 if sum(data.X_lines(:,3) == 0) > 0
@@ -77,7 +67,7 @@ result = struct();
 result.particle_load(splits) = struct();
 
 
-if l_plot_div
+if l_more_plot
     figure;
     hold on;
 end
@@ -94,7 +84,7 @@ for i=1:splits
     result.particle_load(i).lower_div = sum(lower_div);
     result.particle_load(i).upper_div = sum(upper_div);
     
-    if l_plot_div
+    if l_more_plot
         title('Wall hits per divertor');
         plot3(data.X_lines(upper_div,2), data.Y_lines(upper_div,2), data.Z_lines(upper_div,2), 'o');
         plot3(data.X_lines(lower_div,2), data.Y_lines(lower_div,2), data.Z_lines(lower_div,2), 'o');
@@ -117,8 +107,7 @@ result.particle_load_summary = tmp;
 
 clear tmp
 %% Plot divertor result
-hold off;
-figure;
+figure;hold off;
 bar([result.particle_load.upper_div]);
 names={'Div 1'; 'Div 2'; 'Div 3'; 'Div 4'; 'Div 5';};
 set(gca,'xticklabel',names)
@@ -152,11 +141,11 @@ res = 100;
 phi_start = phi_start/180*pi;   % in rad
 phi_size = phi_size/180*pi;  % in rad
 
-if l_plot_box
-        figure;
-        plot_fieldlines(data, 'wall_strike');
-        xlabel('x (m)');ylabel('y (m)');zlabel('z (m)'); title('Hits per face');
-%     figure;plot3(data.X_lines(:,2), data.Y_lines(:,2), data.Z_lines(:,2), 'o'); xlabel('x (m)');ylabel('y (m)');zlabel('z (m)')
+if l_more_plot
+    figure;
+    plot_fieldlines(data, 'wall_strike');
+    xlabel('x (m)');ylabel('y (m)');zlabel('z (m)'); title('Hits per face');
+    %     figure;plot3(data.X_lines(:,2), data.Y_lines(:,2), data.Z_lines(:,2), 'o'); xlabel('x (m)');ylabel('y (m)');zlabel('z (m)')
     hold on;
 end
 
@@ -166,7 +155,7 @@ for i=1:5
     phi_min = phi_start + (i-1)*pi/2.5;
     
     % plot box if wanted
-    if l_plot_box
+    if l_more_plot
         phi = linspace(phi_min, phi_min+phi_size, res);
         [x_inner,y_inner] = pol2cart(phi,r_min.*ones(1,res));
         [x_outer,y_outer] = pol2cart(phi,r_max.*ones(1,res));
@@ -192,7 +181,7 @@ for i=1:5
         & dist >= r_min & dist < r_max;
     
     % Plot if wanted
-    if l_plot_box
+    if l_more_plot
         phi = linspace(phi_min, phi_min-phi_size, res);
         [x_inner,y_inner] = pol2cart(phi,r_min.*ones(1,res));
         [x_outer,y_outer] = pol2cart(phi,r_max.*ones(1,res));
@@ -241,7 +230,7 @@ for i=1:5
     tmp.upper(i).binned = histcounts(upper_hits, edge_upper);
     tmp.upper(i).binned_smooth = smooth(tmp.upper(i).binned, n_bins/10);
     
-    lower_hits = upper_div_hits{i};
+    lower_hits = lower_div_hits{i};
     tmp.lower(i).binned = histcounts(lower_hits, edge_lower);
     tmp.lower(i).binned_smooth = smooth(tmp.lower(i).binned, n_bins/10);
 end
@@ -269,7 +258,8 @@ title('Strike positions on lower divertor');
 xlabel('Distance from pumping gap (m)'); ylabel ('Hit Occurance (-)')
 hold off;
 
-clear n_bins max_lower max_upper lower_hits upper_hits
+clear n_bins max_lower max_upper lower_hits upper_hits upper_div_hits lower_div_hits
+clear edge_lower eddge_upper colors
 %% Create summary hit from gap
 tmp2 = struct();
 upper_peaks = zeros(1,5);
@@ -293,8 +283,8 @@ tmp2.lower_resolution = mean(diff(x_lower));
 
 result.hit_from_gap_summary = tmp2;
 
-clear tmp tmp2 x_lower x_upper upper_peaks lower_peaks
+clear tmp tmp2 x_lower x_upper upper_peaks lower_peaks max_ind i
 %% save result
-if l_quick_save
+if l_save
     save(strcat(dir_save, save_name, '.mat'), 'result');
 end

@@ -61,22 +61,22 @@ zs = z_min - z_buf/2:block_size:z_max+z_buf/2-epsilon;
 grid_blocks(length(xs)*length(ys)*length(zs)) = struct();
 counter=1;
 for xi=1:length(xs)
-   for yi=1:length(ys)
-      for zi=1:length(zs)
-          x = xs(xi);
-          y = ys(yi);
-          z = zs(zi);
-          grid_blocks(counter).x_min = x;
-          grid_blocks(counter).x_max = x + block_size;
-          grid_blocks(counter).y_min = y;
-          grid_blocks(counter).y_max = y + block_size;
-          grid_blocks(counter).z_min = z;
-          grid_blocks(counter).z_max = z + block_size;
-          grid_blocks(counter).nfaces = 0;
-          grid_blocks(counter).faces = [];
-          counter = counter + 1;
-      end
-   end 
+    for yi=1:length(ys)
+        for zi=1:length(zs)
+            x = xs(xi);
+            y = ys(yi);
+            z = zs(zi);
+            grid_blocks(counter).x_min = x;
+            grid_blocks(counter).x_max = x + block_size;
+            grid_blocks(counter).y_min = y;
+            grid_blocks(counter).y_max = y + block_size;
+            grid_blocks(counter).z_min = z;
+            grid_blocks(counter).z_max = z + block_size;
+            grid_blocks(counter).nfaces = 0;
+            grid_blocks(counter).faces = [];
+            counter = counter + 1;
+        end
+    end
 end
 
 %% assign triangles to grid
@@ -97,10 +97,18 @@ parfor i=1:length(grid_blocks)
     vertices = vertices(mask);
     
     % check how many faces in block
-    counter = int32(CountOccurance(vertices, int32(wall.faces)));
+    try
+        counter = int32(CountOccurance(vertices, int32(wall.faces)));
+    catch
+        error("Error using mex file. Go to 'c' folder and compile the mex again for your system\n");
+    end
     
     % Get faces
-    faces = MakeFaces(vertices, int32(wall.faces), counter);
+    try
+        faces = MakeFaces(vertices, int32(wall.faces), counter);
+    catch
+        error("Error using mex file. Go to 'c' folder and compile the mex again for your system\n");
+    end
     % store the unique faces, since you could get double from method above
     if ~isempty(faces) > 0
         % only store the indices of the faces
@@ -128,8 +136,8 @@ wall_accelerated.xstep = length(ys)*length(zs);
 %% check number of faces
 wall_accelerated.nfaces_blocks = sum([wall_accelerated.blocks.nfaces]);
 if wall_accelerated.nfaces_blocks ~= wall.nfaces
-   fprintf("More faces created by accelerated wall due to faces being in multiple blocks. Not an issue, just a warning\n");
-   fprintf("New number of faces: %d\n", wall_accelerated.nfaces_blocks);
-   fprintf("Old number of faces: %d\n", wall_accelerated.nfaces);
+    fprintf("More faces created by accelerated wall due to faces being in multiple blocks. Not an issue, just a warning\n");
+    fprintf("New number of faces: %d\n", wall_accelerated.nfaces_blocks);
+    fprintf("Old number of faces: %d\n", wall_accelerated.nfaces);
 end
 end
