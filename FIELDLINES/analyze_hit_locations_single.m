@@ -20,13 +20,14 @@ main_dir = strjoin(main_dir(1:end-1), '/');
 addpath(genpath(main_dir));
 
 l_plot_div = 0;  % whether or not you want extra plots
-l_plot_box = 1;
+l_plot_box = 0;
+l_plot_mean = 1;
 
 % quick analysis
-l_quick_save = 1;
+l_quick_save = 0;
 
 % error field without trim coils
-%filename = '/home/dion/Internship_local/Data/05-18/14_20/fieldlines_w7x_eim+250_new.h5';
+filename = '/home/dion/Internship_local/Data/05-18/14_20/fieldlines_w7x_eim+250_new.h5';
 % no error field
 %filename = '/home/dion/Internship_local/Data/05-17/12_00/fieldlines_w7x_eim+250_new.h5';
 
@@ -35,11 +36,11 @@ if l_quick_save
     l_plot_div = 0;  % whether or not you want extra plots
     l_plot_box = 0;
     
-    phase = 150;
-    amp = 116.75;
+    phase = 144;
+    amp = 100;
     
     % any error field with trim coils
-    filename = sprintf('/home/dion/Dropbox/__Internship/Internship_local/Data/05-19/16_50_%dA/%d/fieldlines_w7x_eim+250_new.h5', amp, phase);
+    filename = sprintf('/home/dion/Dropbox/__Internship/Internship_local/Data/05-18/17_15_%dA/%d/fieldlines_w7x_eim+250_new.h5', amp, phase);
     
     % set save information
     dir_save = '~/Dropbox/__Internship/Data/05-19 Divertor loads/';
@@ -152,10 +153,10 @@ phi_start = phi_start/180*pi;   % in rad
 phi_size = phi_size/180*pi;  % in rad
 
 if l_plot_box
-    %     figure;
-    %     plot_fieldlines(data, 'wall_strike');
-    %     xlabel('x (m)');ylabel('y (m)');zlabel('z (m)'); title('Hits per face');
-    figure;plot3(data.X_lines(:,2), data.Y_lines(:,2), data.Z_lines(:,2), 'o'); xlabel('x (m)');ylabel('y (m)');zlabel('z (m)')
+        figure;
+        plot_fieldlines(data, 'wall_strike');
+        xlabel('x (m)');ylabel('y (m)');zlabel('z (m)'); title('Hits per face');
+%     figure;plot3(data.X_lines(:,2), data.Y_lines(:,2), data.Z_lines(:,2), 'o'); xlabel('x (m)');ylabel('y (m)');zlabel('z (m)')
     hold on;
 end
 
@@ -223,19 +224,76 @@ clear x_bounds x_inner x_left x_outer x_right
 clear y_bounds y_inner y_left y_outer y_right
 clear z_bounds z_move
 clear upper_div lower_div i upper_hits lower_hits
-%% Create summary hit from gap
+%% plot variance in hit from gap
+colors = {[1 0 0], [0, 0, 1], [1, 0, 1], [0, 1, 0], [0, 1, 1]};
+upper_div_hits = {result.hit_from_gap.upper_div};
+lower_div_hits = {result.hit_from_gap.lower_div};
+max_upper = max(cat(1,result.hit_from_gap.upper_div));
+max_lower = max(cat(1,result.hit_from_gap.lower_div));
+n_bins = 150;
+edge_upper = 0:max_upper/n_bins:max_upper;
+edge_lower = 0:max_lower/n_bins:max_lower;
 tmp = struct();
-tmp.upper_mean = mean(cat(1,result.hit_from_gap.upper_div));
-tmp.lower_mean = mean(cat(1,result.hit_from_gap.lower_div));
-tmp.upper_std = std(cat(1,result.hit_from_gap.upper_div));
-tmp.lower_std = std(cat(1,result.hit_from_gap.lower_div));
-tmp.upper_std_rel = tmp.upper_std / tmp.upper_mean;
-tmp.lower_std_rel = tmp.lower_std / tmp.lower_mean;
+tmp.upper = struct();tmp.lower = struct();
+for i=1:5
+    upper_hits = upper_div_hits{i};
+    
+    tmp.upper(i).binned = histcounts(upper_hits, edge_upper);
+    tmp.upper(i).binned_smooth = smooth(tmp.upper(i).binned, n_bins/10);
+    
+    lower_hits = upper_div_hits{i};
+    tmp.lower(i).binned = histcounts(lower_hits, edge_lower);
+    tmp.lower(i).binned_smooth = smooth(tmp.lower(i).binned, n_bins/10);
+end
 
-result.hit_from_gap_summary = tmp;
+x_lower = conv2(edge_lower, [1 1]/2); x_lower = x_lower(2:end-1);
+x_upper = conv2(edge_upper, [1 1]/2); x_upper = x_upper(2:end-1);
 
-clear tmp
+figure;
+title('Each line is different divertor. Binned in 100 bins');
+subplot(2,1,1)
+hold on;
+for i=1:5
+    plot(x_upper, tmp.upper(i).binned, 'Color', colors{i})
+    plot(x_upper, tmp.upper(i).binned_smooth,'--', 'Color', colors{i})
+end
+title('Strike positions on upper divertor');
+xlabel('Distance from pumping gap (m)'); ylabel ('Hit Occurance (-)')
+subplot(2,1,2)
+hold on;
+for i=1:5
+    plot(x_lower, tmp.lower(i).binned, 'Color', colors{i})
+    plot(x_upper, tmp.upper(i).binned_smooth,'--', 'Color', colors{i})
+end
+title('Strike positions on lower divertor');
+xlabel('Distance from pumping gap (m)'); ylabel ('Hit Occurance (-)')
+hold off;
 
+clear n_bins max_lower max_upper lower_hits upper_hits
+%% Create summary hit from gap
+tmp2 = struct();
+upper_peaks = zeros(1,5);
+lower_peaks = zeros(1,5);
+
+for i=1:5
+    [~, max_ind] = max([tmp.upper(i).binned_smooth]);
+    upper_peaks(i) = x_upper(max_ind);
+    [~, max_ind] = max([tmp.upper(i).binned_smooth]);
+    lower_peaks(i) = x_lower(max_ind);
+end
+
+tmp2.upper_mean = mean(upper_peaks);
+tmp2.lower_mean = mean(lower_peaks);
+tmp2.upper_std = std(upper_peaks);
+tmp2.lower_std = std(lower_peaks);
+tmp2.upper_std_rel = tmp2.upper_std / tmp2.upper_mean;
+tmp2.lower_std_rel = tmp2.lower_std / tmp2.lower_mean;
+tmp2.upper_resolution = mean(diff(x_upper));
+tmp2.lower_resolution = mean(diff(x_lower));
+
+result.hit_from_gap_summary = tmp2;
+
+clear tmp tmp2 x_lower x_upper upper_peaks lower_peaks
 %% save result
 if l_quick_save
     save(strcat(dir_save, save_name, '.mat'), 'result');

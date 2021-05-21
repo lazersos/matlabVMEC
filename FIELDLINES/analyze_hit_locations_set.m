@@ -53,23 +53,38 @@ clear r1 r2 mergestructs
 function r = analyze_variable(results, var_name, res_name)
 name_I_opt = sprintf("%s_I_opt", var_name);
 name_I = sprintf("%s_I", var_name);
+name_full = sprintf("%s_full", var_name);
 %% analyze datasets
+options = optimoptions('lsqcurvefit', 'MaxIterations', 1000);
+lb = [-2000 -2000 0 0 0];
+ub = [2000 2000 1 1 1];
 phase = [results.phase];
 I = [results.I];
+I_complex = complex(cosd(phase).*I, sind(phase).*I);
 std_upper = [results.results]; std_upper = [std_upper.(var_name)];
 std_lower = [std_upper.lower_std_rel]; std_upper = [std_upper.upper_std_rel];
 
-grid = [I;phase]';
 
-surfit = @(B,XY)  (XY(:,1) - B(1)).*cosd(XY(:,2) - B(2));
-res = lsqcurvefit(surfit, [50 150], grid, std_lower');
-r.lower_div.(name_I_opt) = res(1:2);
-r.lower_div.(name_I) = complex(cosd(res(2)) * res(1), sind(res(2)) * res(1));
+meshI = 0:1:400; meshPhase = 0:1:360;
+[meshI2, meshPhase2] = meshgrid(meshI,meshPhase);
+meshIcomplex = complex(cosd(meshPhase2).*meshI2, sind(meshPhase2).*meshI2);
 
-res = lsqcurvefit(surfit, [50 150], grid, std_upper');
-r.upper_div.(name_I_opt) = res(1:2);
-r.upper_div.(name_I)  = complex(cosd(res(2)) * res(1), sind(res(2)) * res(1));
+surfit = @(B, I) B(3) * (real(I) - B(1)).^2 + B(4) * (imag(I) - B(2)).^2 + B(5);
+res = lsqcurvefit(surfit, [-80 60 0.01 0.01 0], I_complex', std_lower', lb, ub, options);
+res(2) = -res(2);
+r.lower_div.(name_full) = res;
+r.lower_div.(name_I) = complex(res(1), res(2));
+r.lower_div.(name_I_opt) = [abs(r.lower_div.(name_I)), rad2deg(angle(r.lower_div.(name_I)))];
 
+mesh_res_lower = surfit(res, meshIcomplex);
+
+res = lsqcurvefit(surfit, [-80 60 1 1 0], I_complex', std_upper', lb, ub, options);
+res(2) = -res(2);
+r.upper_div.(name_full) = res;
+r.upper_div.(name_I) = complex(res(1), res(2));
+r.upper_div.(name_I_opt) = [abs(r.upper_div.(name_I)), rad2deg(angle(r.upper_div.(name_I)))];
+
+mesh_res_upper = surfit(res, meshIcomplex);
 clear grid
 %% Plot results
 n_rticks = 4;
@@ -97,23 +112,27 @@ polarscatter(deg2rad(r.lower_div.(name_I_opt)(2)), r.lower_div.(name_I_opt)(1), 
 hold off
 
 %Re/Im figures
-I_complex = complex(cosd(phase).*I, sind(phase).*I);
-
 subplot(2,2,3)
-scatter(real(I_complex), imag(I_complex), 30, std_upper)
+s = pcolor(real(meshIcomplex), imag(meshIcomplex), mesh_res_upper);
+s.EdgeColor = 'none';
 title(sprintf('Upper divertor %s asymmetry', res_name));
 xlabel('Re(I)');ylabel('Im(I)'); h = colorbar; ylabel(h, 'Relative asymmetry');
 xlim([min(real(I_complex))*1.2, max(real(I_complex))*1.2]); ylim([min(imag(I_complex))*1.2, max(imag(I_complex))*1.2])
+caxis([0, 1.5*max(std_upper)])
 hold on
+scatter(real(I_complex), imag(I_complex), 30, std_upper, 'filled', 'MarkerEdgeColor', 'k')
 scatter(real(r.upper_div.(name_I)), imag(r.upper_div.(name_I)), 200, '+', 'k');
 hold off
 
 subplot(2,2,4)
-scatter(real(I_complex), imag(I_complex), 30, std_lower)
+s = pcolor(real(meshIcomplex), imag(meshIcomplex), mesh_res_lower);
+s.EdgeColor = 'none';
 title(sprintf('Lower divertor %s asymmetry', res_name));
 xlabel('Re(I)');ylabel('Im(I)'); h = colorbar; ylabel(h, 'Relative asymmetry');
 xlim([min(real(I_complex))*1.2, max(real(I_complex))*1.2]); ylim([min(imag(I_complex))*1.2, max(imag(I_complex))*1.2])
+caxis([0, 1.5*max(std_lower)])
 hold on
+scatter(real(I_complex), imag(I_complex), 30, std_lower, 'filled', 'MarkerEdgeColor', 'k')
 scatter(real(r.lower_div.(name_I)), imag(r.lower_div.(name_I)), 200, '+', 'k');
 hold off
 end

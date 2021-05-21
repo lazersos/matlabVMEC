@@ -1,5 +1,6 @@
 % Main for making an accelerated wall
 % Run by setting the filename at the top and giving it a block size
+% Basically a helper script for when using wall_acceleration.m
 
 %   Created by: D.J. Engels (d.j.engels@student.tue.nl)
 %   Version:    1.0

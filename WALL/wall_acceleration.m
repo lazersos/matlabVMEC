@@ -110,12 +110,7 @@ parfor i=1:length(grid_blocks)
 end
 %% finish up new wall
 wall_accelerated.machine = wall.machine;
-try
-    wall_accelerated.date = datestr(today());
-catch
-    fprintf("You need the financial toolbox for automatic date setting\n");
-    wall_accelerated.date = wall.date;
-end
+wall_accelerated.date = datestr(now, 'dd-mm-yy');
 wall_accelerated.nvertex = wall.nvertex;
 wall_accelerated.nfaces = wall.nfaces;
 wall_accelerated.coords = wall.coords;

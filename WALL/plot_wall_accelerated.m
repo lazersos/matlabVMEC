@@ -9,28 +9,28 @@ function phandle = plot_wall_accelerated(data,varargin)
 %   Date:           05/21
 
 %% Figure (disabled due to being slow)
-% figure;
-% if nargin>1
-%     phandle = plot_divertor(data,varargin{:});
-% else
-%     phandle = plot_divertor(data);
-% end
-% hold on;
-% % Plot boxes
-% for i=1:data.nblocks
-%     xs = [data.blocks(i).x_min, data.blocks(i).x_min, data.blocks(i).x_max, data.blocks(i).x_max, data.blocks(i).x_min, data.blocks(i).x_min, data.blocks(i).x_min, data.blocks(i).x_min, data.blocks(i).x_min, data.blocks(i).x_max, data.blocks(i).x_max, data.blocks(i).x_max, data.blocks(i).x_max, data.blocks(i).x_max, data.blocks(i).x_max, data.blocks(i).x_min];
-%     ys = [data.blocks(i).y_min, data.blocks(i).y_max, data.blocks(i).y_max, data.blocks(i).y_min, data.blocks(i).y_min, data.blocks(i).y_min, data.blocks(i).y_max, data.blocks(i).y_max, data.blocks(i).y_max, data.blocks(i).y_max, data.blocks(i).y_max, data.blocks(i).y_max, data.blocks(i).y_min, data.blocks(i).y_min, data.blocks(i).y_min, data.blocks(i).y_min];
-%     zs = [data.blocks(i).z_min, data.blocks(i).z_min, data.blocks(i).z_min, data.blocks(i).z_min, data.blocks(i).z_min, data.blocks(i).z_max, data.blocks(i).z_max, data.blocks(i).z_min, data.blocks(i).z_max, data.blocks(i).z_max, data.blocks(i).z_min, data.blocks(i).z_max, data.blocks(i).z_max, data.blocks(i).z_min, data.blocks(i).z_max, data.blocks(i).z_max];
-%     plot3(xs, ys, zs)
-% end
-% title("Mesh split up in uniform grid");
-% hold off;
-% % histogram of how faces are spread over boxes
-% figure;
-% histogram([data.blocks.nfaces], data.nblocks)
-% title("Spread of nfaces over the blocks generated");
-% xlabel("Number of faces in a box");
-% ylabel("Occurance");
+figure;
+if nargin>1
+    phandle = plot_divertor(data,varargin{:});
+else
+    phandle = plot_divertor(data);
+end
+hold on;
+% Plot boxes
+for i=1:data.nblocks
+    xs = [data.blocks(i).x_min, data.blocks(i).x_min, data.blocks(i).x_max, data.blocks(i).x_max, data.blocks(i).x_min, data.blocks(i).x_min, data.blocks(i).x_min, data.blocks(i).x_min, data.blocks(i).x_min, data.blocks(i).x_max, data.blocks(i).x_max, data.blocks(i).x_max, data.blocks(i).x_max, data.blocks(i).x_max, data.blocks(i).x_max, data.blocks(i).x_min];
+    ys = [data.blocks(i).y_min, data.blocks(i).y_max, data.blocks(i).y_max, data.blocks(i).y_min, data.blocks(i).y_min, data.blocks(i).y_min, data.blocks(i).y_max, data.blocks(i).y_max, data.blocks(i).y_max, data.blocks(i).y_max, data.blocks(i).y_max, data.blocks(i).y_max, data.blocks(i).y_min, data.blocks(i).y_min, data.blocks(i).y_min, data.blocks(i).y_min];
+    zs = [data.blocks(i).z_min, data.blocks(i).z_min, data.blocks(i).z_min, data.blocks(i).z_min, data.blocks(i).z_min, data.blocks(i).z_max, data.blocks(i).z_max, data.blocks(i).z_min, data.blocks(i).z_max, data.blocks(i).z_max, data.blocks(i).z_min, data.blocks(i).z_max, data.blocks(i).z_max, data.blocks(i).z_min, data.blocks(i).z_max, data.blocks(i).z_max];
+    plot3(xs, ys, zs)
+end
+title("Mesh split up in uniform grid");
+hold off;
+% histogram of how faces are spread over boxes
+figure;
+histogram([data.blocks.nfaces], data.nblocks)
+title("Spread of nfaces over the blocks generated");
+xlabel("Number of faces in a box");
+ylabel("Occurance");
 
 %% Plot information
 fprintf("----------- Accelerated mesh information -----------\n");
