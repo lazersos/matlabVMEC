@@ -42,7 +42,8 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 ec=1.6021773300E-19; % Charge of an electron (leave alone)
 camera=[];
 % Handle varargin
-plot_type = 'overview';
+%plot_type = 'overview';
+plot_type = {};
 beamdex = -1;
 if nargin > 1
     i = 1;
@@ -67,7 +68,7 @@ if nargin > 1
                     'wall_loss_2d','wall_heat_2d','wall_shine_2d',...
                     'grid','grid_s',...
                     'camview'}
-                plot_type=varargin{i};
+                plot_type{end+1}=varargin{i}; %Make multiple plots possible
             case 'beam'
                 i=i+1;
                 beamdex = varargin{i};
@@ -203,7 +204,8 @@ else
         last_dex(i) = max([find(beam_data.R_lines(:,i)>0,1,'last') beam_data.npoinc+1]);
     end
     % Make plots
-    switch lower(plot_type)
+    for i = 1:size(plot_type,2)
+    switch lower(plot_type{i})
         case 'xyz'
             x1  = beam_data.X_lines(:,orbit_dex);
             y1  = beam_data.Y_lines(:,orbit_dex);
@@ -1160,7 +1162,7 @@ else
              output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',zeros(beam_data.nvertex,3));
              set(output_args{1},'EdgeColor','black','FaceColor','blue','FaceAlpha',0.33);
         case {'wall_loss','wall_shine','wall_heat'}
-            switch lower(plot_type)
+            switch lower(plot_type{i})
                 case 'wall_loss'
                     val=beam_data.wall_strikes;
                 case 'wall_shine'
@@ -1187,7 +1189,7 @@ else
             y = (th(d1)+th(d2)+th(d3))./3;
             factor=1;
             clabel='hits';
-            switch lower(plot_type)
+            switch lower(plot_type{i})
                 case 'wall_heat_2d'
                     val = sum(beam_data.wall_load(beamdex,:))';
                     if max(val) > 1E6
@@ -1523,6 +1525,8 @@ else
             title('Birth Distribution Total')
             axis tight;
             hold off;
+    end
+    hold on;
     end
 end
 return

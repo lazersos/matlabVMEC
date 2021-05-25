@@ -1,4 +1,4 @@
-function [s, ne, te, ti, zeff] = beams3d_profiles(beam_data)
+function [s, ne, te, ti, zeff, er] = beams3d_profiles(beam_data)
 %BEASM3D_PROFILES Extracts profile data from BEAMS3D Data
 %   The BEAMS3D_PROFILES function calculates the radial kinetic profiles
 %   (in flux) from the background grid data.  The returned profiles are on
@@ -23,6 +23,7 @@ te_temp = beam_data.TE(IA);
 ne_temp = beam_data.NE(IA);
 ti_temp = beam_data.TI(IA);
 zeff_temp = beam_data.ZEFF_ARR(IA);
+er_temp = beam_data.POT_ARR(IA);
 
 % Make mirror
 C=[-flipud(C); C];
@@ -30,6 +31,7 @@ ne_temp = [flipud(ne_temp); ne_temp];
 te_temp = [flipud(te_temp); te_temp];
 ti_temp = [flipud(ti_temp); ti_temp];
 zeff_temp = [flipud(zeff_temp); zeff_temp];
+er_temp = [flipud(er_temp); er_temp];
 
 % spline
 [C, IA, ~] = unique(C);
@@ -37,6 +39,7 @@ ne = pchip(C,ne_temp(IA),s);
 te = pchip(C,te_temp(IA),s);
 ti = pchip(C,ti_temp(IA),s);
 zeff = pchip(C,zeff_temp(IA),s);
+er = pchip(C,er_temp(IA),s);
 
 end
 

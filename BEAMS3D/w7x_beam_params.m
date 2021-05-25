@@ -3,14 +3,14 @@ function w7x_beam_params( source ,varargin)
 %   The W7X_BEAM_PARAMS(SOURCE) code generates the beamline geometry for
 %   the W7-X neutral beams.  The SOURCE parameter is the source number
 %   1-4 (NI20 Box) or 5-8 (NI21 Box).  A list of sources may also be
-%   specified.  Note that the code does nothing if 'plots' or
+%   specified, and can also be empty.  Note that the code does nothing if 'plots' or
 %   'write_beams3d' is not specified as an optional argument.
 %   Options:
 %       'H2':               Hydrogen Beams
-%       'D2':               Deterium Beams  
-%       'He':               Helium Beams  
+%       'D2':               Deterium Beams
+%       'He':               Helium Beams
 %       'plots':            Generate Geometry Plots
-%       'ruidx':            Include Rudix Geometry
+%       'rudix':            Include Rudix Geometry
 %       'write_beams3d':    Generate BEAMS3D Input
 %       'grid':             Specify Accelerating Voltage (60 or 100)
 %
@@ -19,7 +19,8 @@ function w7x_beam_params( source ,varargin)
 %           nbeams is the legnth of sources.
 %
 %   Usage:
-%       w7x_beams_params(1:8,'plots','H2','write_beams3d','grid',60);
+%       vmec_data=read_vmec('wout_test.nc');
+%       w7x_beam_params(1:8,vmec_data,'plots','H2','write_beams3d','grid',60);
 %
 %   Created by: S. Lazerson (samuel.lazerson@ipp.mpg.de)
 %   Version:    2.0
@@ -69,10 +70,13 @@ if nargin > 1
                     grid=varargin{i};
                 case {'Rudix','RUDIX','rudix'}
                     lrudix=1;
+                    vmec_data.rmax_surf = 6.5; %Maybe should even be after this section, to avoid WALL OUTSIDE GRID DOMAIN! error
+                    vmec_data.rmin_surf = 4.25;
+                    vmec_data.zmax_surf = 1.0;
                 case 't_end'
                     i=i+1;
                     t_end=varargin{i};
-                % These are just passed to the next routine
+                    % These are just passed to the next routine
                 case {'filename','file','mass','TE','TI','NE','ZEFF',...
                         'POT','nr','nz','nphi','NPOINC',...
                         'NPARTICLES_START','VC_ADAPT_TOL'}
@@ -87,7 +91,8 @@ end
 
 
 
-% Geometry 
+
+% Geometry
 xo_NI20 =  3.68581; yo_NI20 =  5.65498; zo_NI20 = -0.305; %Origin locations
 xo_NI21 =  0.34219; yo_NI21 =  6.74132; zo_NI21 =  0.305;
 xo_RUDI = -3.81740; yo_RUDI = -7.05885; zo_RUDI = -0.70729; %RUDIX
@@ -237,6 +242,9 @@ switch species
         elseif grid==100
             ENERGY=72E3;
             PFRAC=[0.380 0.350 0.270];
+        elseif grid==0
+            PFRAC = 1;
+            ENERGY = 1;
         end
     case{'D2'}
         POWER=[2.48 2.28 2.48 2.28 2.48 2.28 2.48 2.28].*1E6;
@@ -251,35 +259,40 @@ switch species
         disp('Error: Unsupported species!');
         return;
 end
-for i=1:length(source)
-    dex=source(i);
-    r_beam(1,j) = rstart(dex);
-    r_beam(2,j) = rtarget(dex);
-    p_beam(1,j) = pstart(dex);
-    p_beam(2,j) = ptarget(dex);
-    z_beam(1,j) = zstart(dex);
-    z_beam(2,j) = ztarget(dex);
-    power_beam(j) = POWER(dex);
-    energy_beam(j) = ENERGY;
-    div_beam(j)    = div;
-    note{j} = ['Q' num2str(dex)];
-    j=j+1;
+if ~isempty(source)
+    for i=1:length(source)
+        dex=source(i);
+        r_beam(1,j) = rstart(dex);
+        r_beam(2,j) = rtarget(dex);
+        p_beam(1,j) = pstart(dex);
+        p_beam(2,j) = ptarget(dex);
+        z_beam(1,j) = zstart(dex);
+        z_beam(2,j) = ztarget(dex);
+        power_beam(j) = POWER(dex);
+        energy_beam(j) = ENERGY;
+        div_beam(j)    = div;
+        note{j} = ['Q' num2str(dex)];
+        j=j+1;
+    end
 end
 if lrudix
-    E_RUDI = 60E3; %20-60 kV
+    E_RUDI = (50:10:150) * 1000; %20-60 kV
     %PFRAC = [56 22 22];
     P_RUDI = 250E3; %250 kW
-    r_beam(1,j) = sqrt(xo_RUDI.^2+yo_RUDI.^2);
-    r_beam(2,j) = sqrt(xt_RUDI.^2+yt_RUDI.^2);
-    p_beam(1,j) = atan2(yo_RUDI,xo_RUDI);
-    p_beam(2,j) = atan2(yt_RUDI,xt_RUDI);
-    z_beam(1,j) = zo_RUDI;
-    z_beam(2,j) = zt_RUDI;
-    power_beam(j) = P_RUDI;
-    energy_beam(j) = E_RUDI;
-    div_beam(j)    = 0.0125;
-    note{j} = 'RUDIX BEAM';
-    source = [source 9]; % Treat as source 9
+    for i=1:length(E_RUDI)
+        r_beam(1,j) = sqrt(xo_RUDI.^2+yo_RUDI.^2);
+        r_beam(2,j) = sqrt(xt_RUDI.^2+yt_RUDI.^2);
+        p_beam(1,j) = atan2(yo_RUDI,xo_RUDI);
+        p_beam(2,j) = atan2(yt_RUDI,xt_RUDI);
+        z_beam(1,j) = zo_RUDI;
+        z_beam(2,j) = zt_RUDI;
+        power_beam(j) = P_RUDI;
+        energy_beam(j) = E_RUDI(i);
+        div_beam(j)    = 0.0125;
+        note{j} = 'RUDIX BEAM';
+        source = [source j]; % Treat as source 9
+        j = j + 1;
+    end
     if lplots
         hold on;
         plot3([xo_RUDI xt_RUDI],[yo_RUDI yt_RUDI],[zo_RUDI zt_RUDI],'k');
@@ -290,8 +303,8 @@ end
 % Write if requested
 if (lwrite_beams3d)
     next_varargin=[next_varargin species 'pfrac' PFRAC 'beam_dex' source];
-        beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
-            z_beam,div_beam,next_varargin{:},'note',note,'t_end',t_end);
+    beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
+        z_beam,div_beam,next_varargin{:},'note',note,'t_end',t_end);
 end
 return
 

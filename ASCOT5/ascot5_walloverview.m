@@ -106,7 +106,7 @@ F = cross(V0,V1);
 A = 0.5.*sqrt(sum(F.*F));
 
 % Calculate Mean position of each triangle
-xm = mean(x1x2x3);
+xm =mean(x1x2x3);
 ym = mean(y1y2y3);
 zm = mean(z1z2z3);
 pm = atan2(ym,xm);
@@ -116,17 +116,6 @@ r0m   = pchip(axisp,(axisr),mod(pm,pmax));
 z0m   = pchip(axisp,(axisz),mod(pm,pmax));
 tm    = atan2(zm-z0m,rm-r0m);
 
-
-% Count hits
-wall_strikes = zeros(1,length(xm));
-%nhits=[];
-mask = unique(walltile)+1;
-%for i = mask'
-%    if (i==0), continue; end
-%    dex = walltile==i;
-%    nhits = [nhits; sum(dex)];
-%end
-%wall_strikes(mask) = nhits;
 
 %Construct wall_load using accumarray
 walltile(walltile==0) = size(x1x2x3,2) + 1; %set 0's from before to extra value to be able to truncate (accumarray needs positive integers)
@@ -163,23 +152,32 @@ end
 %mdex{3} = and(pm>=3*factor,pm<pi);
 %mdex{4} = and(pm>=-pi,pm<-3*factor);
 %mdex{5} = and(pm>=-3*factor,pm<-factor);
-fig=figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+fig=figure('Position',[1 1 1920 768],'Color','white','InvertHardCopy','off');
+t = tiledlayout(1,5, 'TileSpacing','none');
+t.TileSpacing = 'none';
+t.Padding = 'none';
 for i=1:nfp
-    subplot(1,5,i);
+    nexttile
     x_temp = pm(mdex{i});
     y_temp = tm(mdex{i});
+    %mdex_temp = mdex{i};
     c_temp = wall_load(mdex{i})./1E6;
     dex_save = 1:length(c_temp);
     dex = c_temp > 1E-3;
     dex_save = dex_save(dex);
     temp = ones(1,length(x_temp))+10;
     scatter(x_temp(dex),y_temp(dex),temp(dex),c_temp(dex),'fill');
+    %patch(x_temp(dex),y_temp(dex),c_temp(dex));
     colormap hot;
     caxis([0 1]);
     ylim([-1 1].*pi);
-    title(['Module ' num2str(i,'%i')]);
     xlabel('\phi');
-    ylabel('\theta');
+    if i==1
+        ylabel('\theta');
+    else
+        ylabel('\theta', 'FontSize',.01);
+    end
+    title(['Module ' num2str(i,'%i')],'FontSize',8);
     %outdex=overplot_largest(x_temp(dex),y_temp(dex),c_temp(dex));
 %     if (l3d)
 %         x_3d = x1x2x3(:,mdex{i});
@@ -204,9 +202,13 @@ for i=1:nfp
 %         end
     %end
 end
-ha = colorbar('Location','EastOutside');
+ha = colorbar;
+
 set(ha,'FontSize',24);
 ylabel(ha,'Heat Flux [MW/m^2]');
+
+ha.Layout.Tile = 'east';
+
 
 
 end

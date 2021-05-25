@@ -1,4 +1,4 @@
-function data = read_beams3d(filename)
+function data = read_beams3d(filename, varargin)
 %READ_BEAMS3D Reads the HDF5 file created by BEAMS3D
 % This funciton reads the fieldlines file and returns the data from the
 % file in a structure.
@@ -8,6 +8,18 @@ function data = read_beams3d(filename)
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.0
+
+% Handle varargin
+if ~isempty(varargin)
+    i = 1;
+    while i <= length(varargin)
+        switch varargin{i}
+            case 'beams'
+            
+        end
+        i=i+1;
+    end
+end
 
 if (strcmp(filename(end-1:end),'h5'))
     data = read_hdf5(filename);

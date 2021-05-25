@@ -1739,6 +1739,9 @@ switch handles.cuttype
     case {'zeta2','other'}
         set(handles.graph,'XLim',[handles.xmin handles.xmax]);
         set(handles.graph,'YLim',[handles.zmin handles.zmax]);
+        delete(findall(handles.figure1,'type','annotation'));
+        str = ['Min: ', num2str(handles.graph.CLim(1)), ' Max: ', num2str(handles.graph.CLim(2))];
+        handles.text10 = annotation(handles.figure1, 'textbox', [.4 0 .3 .3], 'String', str ,'FitBoxToText','on'); %handles.output
         zoom on
         colorbar('FontSize',16)
         rotate3d off
@@ -1795,6 +1798,7 @@ switch contents{get(handles.plottype,'Value')}
 end
 % Now Fix theta
 handles.theta=temp_theta;
+
         
         
 function guiupdate(handles)
