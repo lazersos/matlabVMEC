@@ -131,7 +131,7 @@ z1z2z3=[xyz1(3,:); xyz2(3,:); xyz3(3,:)];
 fig=figure;
 p_obj=patch('Xdata',x1x2x3,'YData',y1y2y3,'ZData',z1z2z3,'FaceColor','none');
 wall_out.date=datestr(now,'mm-dd-yyyy');
-wall_out.machine=['Created by reduce_wall' ...
+wall_out.machine=[wall_data.machine, '. Modified by reduce_wall' ...
     ' dr: ' num2str(dr,'%5.2f') ];
 wall_out.coords=p_obj.Vertices';
 wall_out.faces=p_obj.Faces';
