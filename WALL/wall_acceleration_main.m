@@ -7,12 +7,11 @@
 %   Date:       May 2021
 
 %% initialize
-clear all; close all; addpath('c');
+close all; addpath('c');
 
-
-filename = '/home/dion/Dropbox/__Internship/Internship_local/W7X_FILES/w7x_divertor_op12b_fullres.dat';
-%filename = '/home/dion/WALL_TEST/a10_tokamak_wall.dat';
-%filename = '/home/dion/Dropbox/__Internship/STELLOPT/BENCHMARKS/FIELDLINES_TEST/NCSX_wall_trimesh.dat';
+filename = '/home/dion/Dropbox/__Internship/Internship_local/W7X_FILES/w7x_divertor_op12b_fullres_0_025.dat';
+%filename = '/home/dion/WALL_TEST/a10_tokamak_wall_0_25.dat';
+%filename = '/home/dion/Dropbox/__Internship/STELLOPT/BENCHMARKS/FIELDLINES_TEST/NCSX_wall_trimesh_0_01.dat';
 
 block_size = 0.1;
 
