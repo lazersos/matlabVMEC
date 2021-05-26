@@ -50,65 +50,78 @@ function r = analyze_variable(results, var_name, res_name)
 name_I_opt = sprintf("%s_I_opt", var_name);
 name_I = sprintf("%s_I", var_name);
 name_full = sprintf("%s_full", var_name);
+name_input = sprintf("%s_input", var_name);
 %% analyze datasets
-options = optimoptions('lsqcurvefit', 'MaxIterations', 1000);
-lb = [-2000 -2000 0 0 0];
-ub = [2000 2000 1 1 1];
+lb = [-2000 -2000 -200 -200 0];
+ub = [2000 2000 200 200 0.5];
+options = fitoptions('Method', 'NonlinearLeastSquares');
+options = fitoptions(options, 'MaxIter',10000,'MaxFunEvals',1E6,...
+    'DiffMaxChange',1E-3,'DiffMinChange',1E-14, 'Display', 'iter', 'TolFun', 1E-14, 'TolX', 1E-14, ...
+    'StartPoint',[500 500 0 0 0.02], 'Lower',lb,'Upper',ub);
 phase = [results.phase];
 I = [results.I];
 I_complex = complex(cosd(phase).*I, sind(phase).*I);
 std_upper = [results.results]; std_upper = [std_upper.(var_name)];
 std_lower = [std_upper.lower_std_rel]; std_upper = [std_upper.upper_std_rel];
 
-
-meshI = 0:1:400; meshPhase = 0:1:360;
+meshI = 0:1:max(I)*1.8; meshPhase = 0:1:360;
 [meshI2, meshPhase2] = meshgrid(meshI,meshPhase);
 meshIcomplex = complex(cosd(meshPhase2).*meshI2, sind(meshPhase2).*meshI2);
 
-surfit = @(B, I) B(3) * (real(I) - B(1)).^2 + B(4) * (imag(I) - B(2)).^2 + B(5);
-res = lsqcurvefit(surfit, [-80 60 0.01 0.01 0], I_complex', std_lower', lb, ub, options);
-res(2) = -res(2);
+%Fit
+f= @(a,b,c,d,e,x,y) ((x-c)./a).^2 + ((y-d)./b).^2 + e;
+res = fit([real(I_complex)' imag(I_complex)'],std_lower',f, options);
+
+r.lower_div.(sprintf("%s_I", name_input)) = I;
+r.lower_div.(sprintf("%s_phase", name_input)) = phase;
+r.lower_div.(sprintf("%s_std", name_input)) = std_lower;
 r.lower_div.(name_full) = res;
-r.lower_div.(name_I) = complex(res(1), res(2));
+r.lower_div.(name_I) = complex(res.c, res.d);
 r.lower_div.(name_I_opt) = [abs(r.lower_div.(name_I)), rad2deg(angle(r.lower_div.(name_I)))];
 
-mesh_res_lower = surfit(res, meshIcomplex);
+mesh_res_lower = f(res.a, res.b, res.c, res.d, res.e, real(meshIcomplex), imag(meshIcomplex));
 
-res = lsqcurvefit(surfit, [-80 60 1 1 0], I_complex', std_upper', lb, ub, options);
-res(2) = -res(2);
+res = fit([real(I_complex)' imag(I_complex)'],std_upper',f, options);
+
+r.upper_div.(sprintf("%s_I", name_input)) = I;
+r.upper_div.(sprintf("%s_phase", name_input)) = phase;
+r.upper_div.(sprintf("%s_std", name_input)) = std_upper;
 r.upper_div.(name_full) = res;
-r.upper_div.(name_I) = complex(res(1), res(2));
+r.upper_div.(name_I) = complex(res.c, res.d);
 r.upper_div.(name_I_opt) = [abs(r.upper_div.(name_I)), rad2deg(angle(r.upper_div.(name_I)))];
 
-mesh_res_upper = surfit(res, meshIcomplex);
+mesh_res_upper = f(res.a, res.b, res.c, res.d, res.e, real(meshIcomplex), imag(meshIcomplex));
 clear grid
 %% Plot results
 n_rticks = 4;
 
 % polar figures
 figure;
-subplot(2,2,1)
-polarscatter(deg2rad([results.phase]), [results.I], 30, std_upper);
-title(sprintf('Upper divertor %s asymmetry', res_name));
-rticks(max(I)/n_rticks:max(I)/n_rticks:max(I)+max(I)/n_rticks);
-rticklabels({sprintf('%d A', max(I)/4*1), sprintf('%d A', max(I)/4*2), sprintf('%d A', max(I)/4*3), sprintf('%d A', max(I))})
-h = colorbar; ylabel(h, 'Relative asymmetry');
-hold on
-polarscatter(deg2rad(r.upper_div.(name_I_opt)(2)), r.upper_div.(name_I_opt)(1), 200, '+', 'k');
-hold off
-
-subplot(2,2,2)
-polarscatter(deg2rad([results.phase]), [results.I], 30, std_lower);
-title(sprintf('Lower divertor %s asymmetry', res_name));
-rticks(max(I)/n_rticks:max(I)/n_rticks:max(I)+max(I)/n_rticks);
-rticklabels({sprintf('%d A', max(I)/4*1), sprintf('%d A', max(I)/4*2), sprintf('%d A', max(I)/4*3), sprintf('%d A', max(I))})
-h = colorbar; ylabel(h, 'Relative asymmetry');
-hold on
-polarscatter(deg2rad(r.lower_div.(name_I_opt)(2)), r.lower_div.(name_I_opt)(1), 200, '+', 'k');
-hold off
+% subplot(2,2,1)
+% % subplot(1,2,1)
+% polarscatter(deg2rad([results.phase]), [results.I], 30, std_upper);
+% title(sprintf('Upper divertor %s asymmetry', res_name));
+% rticks(max(I)/n_rticks:max(I)/n_rticks:max(I)+max(I)/n_rticks);
+% rticklabels({sprintf('%d A', max(I)/4*1), sprintf('%d A', max(I)/4*2), sprintf('%d A', max(I)/4*3), sprintf('%d A', max(I))})
+% h = colorbar; ylabel(h, 'Relative asymmetry');
+% hold on
+% polarscatter(deg2rad(r.upper_div.(name_I_opt)(2)), r.upper_div.(name_I_opt)(1), 200, '+', 'k');
+% hold off
+% 
+% subplot(2,2,2)
+% % subplot(1,2,2)
+% polarscatter(deg2rad([results.phase]), [results.I], 30, std_lower);
+% title(sprintf('Lower divertor %s asymmetry', res_name));
+% rticks(max(I)/n_rticks:max(I)/n_rticks:max(I)+max(I)/n_rticks);
+% rticklabels({sprintf('%d A', max(I)/4*1), sprintf('%d A', max(I)/4*2), sprintf('%d A', max(I)/4*3), sprintf('%d A', max(I))})
+% h = colorbar; ylabel(h, 'Relative asymmetry');
+% hold on
+% polarscatter(deg2rad(r.lower_div.(name_I_opt)(2)), r.lower_div.(name_I_opt)(1), 200, '+', 'k');
+% hold off
 
 %Re/Im figures
-subplot(2,2,3)
+% subplot(2,2,3)
+subplot(1,2,1)
 s = pcolor(real(meshIcomplex), imag(meshIcomplex), mesh_res_upper);
 s.EdgeColor = 'none';
 title(sprintf('Upper divertor %s asymmetry', res_name));
@@ -120,7 +133,8 @@ scatter(real(I_complex), imag(I_complex), 30, std_upper, 'filled', 'MarkerEdgeCo
 scatter(real(r.upper_div.(name_I)), imag(r.upper_div.(name_I)), 200, '+', 'k');
 hold off
 
-subplot(2,2,4)
+% subplot(2,2,4)
+subplot(1,2,2)
 s = pcolor(real(meshIcomplex), imag(meshIcomplex), mesh_res_lower);
 s.EdgeColor = 'none';
 title(sprintf('Lower divertor %s asymmetry', res_name));

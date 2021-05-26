@@ -35,6 +35,12 @@ if l_save
 end
 
 data = read_fieldlines(filename);
+
+if class(data) ~= 'struct'
+    fprintf("Cannot read data properly, canceling. Check if filename is correct.\n");
+    result = struct();
+    return
+end
 %% plot
 if l_more_plot
     figure
@@ -252,7 +258,7 @@ subplot(2,1,2)
 hold on;
 for i=1:5
     plot(x_lower, tmp.lower(i).binned, 'Color', colors{i})
-    plot(x_upper, tmp.upper(i).binned_smooth,'--', 'Color', colors{i})
+    plot(x_upper, tmp.lower(i).binned_smooth,'--', 'Color', colors{i})
 end
 title('Strike positions on lower divertor');
 xlabel('Distance from pumping gap (m)'); ylabel ('Hit Occurance (-)')

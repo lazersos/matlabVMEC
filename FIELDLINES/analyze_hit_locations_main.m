@@ -17,8 +17,7 @@ addpath(genpath(main_dir));
 clear main_dir
 %% Settings
 
-l_more_plot = 0;  % Want extra plots or not
-l_run_set = 1; % Run set analysis as well or not
+l_more_plot = 1;  % Want extra plots or not
 
 % 0: no error field
 % 1: self-applied error field without trim coils
@@ -26,10 +25,15 @@ l_run_set = 1; % Run set analysis as well or not
 % 3: self-applied error field "optimum" run
 % 4: as-built without trim coils
 % 5: as-built with trim coils
-data_run = 3;
+data_run = 4;
 
-phase = 0;
-amp = 200;
+if data_run == 2 || data_run == 5
+    phase = 22;
+    amp = 38;
+else
+    phase = 0;  % arbitrary, won't be used
+    amp = 0; 
+end
 
 %% Run individual
 for i=1:length(phase)
@@ -43,13 +47,15 @@ for i=1:length(phase)
         case 1
             % self-applied error field without trim coils
             filename = '/home/dion/Internship_local/Data/05-18/14_20/fieldlines_w7x_eim+250_new.h5';
-            dir_save = '';
+            dir_save = '~/Dropbox/__Internship/Data/05-19 Divertor loads self-made error field/';
             save_name = '';
             l_save = 0;  % save results or not
         case 2
             % Any self-applied error field with trim coils
             if amp == 100
                 filename = sprintf('/home/dion/Dropbox/__Internship/Internship_local/Data/05-18/17_15_%dA/%d/fieldlines_w7x_eim+250_new.h5', amp, phase(i));
+            elseif amp ==  150 || amp == 300
+                filename = sprintf('/home/dion/Dropbox/__Internship/Internship_local/Data/05-21/17_00_self_applied_%dA/%d/fieldlines_w7x_eim+250_new.h5', amp, phase(i));
             else
                 filename = sprintf('/home/dion/Dropbox/__Internship/Internship_local/Data/05-19/10_00_%dA/%d/fieldlines_w7x_eim+250_new.h5', amp, phase(i));
             end
@@ -61,10 +67,18 @@ for i=1:length(phase)
             dir_save = '~/Dropbox/__Internship/Data/05-19 Divertor loads self-made error field/';
             save_name = sprintf('I116.75_phase150');
         case 4
-            dir_save = '';
+            filename = '/home/dion/Dropbox/__Internship/Internship_local/Data/05-20/14_00_00A/fieldlines_w7x_eim+250_new.h5';
+            dir_save = '~/Dropbox/__Internship/Data/05-21 Divertor loads as-built/';
             save_name = '';
             l_save = 0;  % save results or not
         case 5
+            if amp == 30 || amp == 35 || amp == 38
+                filename = sprintf('/home/dion/Dropbox/__Internship/Internship_local/Data/05-21/17_00_as_built/%dA_%d/fieldlines_w7x_eim+250_new.h5', amp, phase(i));
+            else
+                filename = sprintf('/home/dion/Dropbox/__Internship/Internship_local/Data/05-20/Scans/14_05_%dA/%d/fieldlines_w7x_eim+250_new.h5', amp, phase(i));
+            end
+            dir_save = '~/Dropbox/__Internship/Data/05-21 Divertor loads as-built/';
+            save_name = sprintf('I%d_phase%d', amp, phase(i));
             l_save = 1;  % save results or not
         case default
             error("Unknown data_run set")
@@ -78,6 +92,16 @@ for i=1:length(phase)
 end
 clear Icoil i I_more_plot I_save filename data_run amp save_name
 %% Analyze set
-if l_run_set
-    result_set = analyze_hit_locations_set(dir_save);
+while 1
+    happy = input("Do you want to also run set analysis. Y/N: ", 's');
+    if happy == "Y"
+        fprintf("Continuing to set analysis.\n");
+        break
+    elseif happy == "N"
+        fprintf("Stopping.\n")
+        return
+    else
+        fprintf("Invalid input given\n");
+    end 
 end
+result_set = analyze_hit_locations_set(dir_save);
