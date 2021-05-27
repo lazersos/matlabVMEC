@@ -83,6 +83,7 @@ if and(size(beam_data.R_lines,1) == 3,lhitonly)
     disp('      dex=1 Before hit');
     disp('      dex=2 Wall hit or last point');
     disp('      dex=3 Point beyond wall');
+    disp(' Try adding override_hitonly if this is not a hitonly run.');
     dex = ones(1,beam_data.nparticles);
     % The in this case index=2 is always the last point even for orbiting
     % particles.
