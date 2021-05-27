@@ -1,4 +1,4 @@
-function ascot5_writemarker_gc(filename,r,phi,z,energy,pitch,zeta,mass,charge,anum,znum,weight,time,idnum)
+function id = ascot5_writemarker_gc(filename,r,phi,z,energy,pitch,zeta,mass,charge,anum,znum,weight,time,idnum)
 %ASCOT5_WRITEMARKER_GC Writes marker_gc data to an HDF5 file for ASCOT5
 %   The ASCOT5_WRITEMARKER_GC routine writes marker_gc data to an HDF5 file
 %   in the style read by the ASCOT5 code.  If the file exists the

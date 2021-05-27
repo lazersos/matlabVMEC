@@ -130,10 +130,10 @@ if (lflux)
         set(gca,'nextplot','replacechildren','XColor',bgcolor,...
             'YColor',bgcolor,'ZColor',bgcolor,'Color',bgcolor,'FontSize',20);
         hold on
-        for j=d1:d2
-            shade = double(j-1)/double(d2);
-            hline=polar(data.U_lines(j,parts),data.S_lines(j,parts),'.');
-            set(hline,'Color',color.*shade,'MarkerSize',18);
+        for j=parts
+            %shade = double(j-1)/double(d2);
+            hline=polar(data.U_lines(d1:d2,j),data.S_lines(d1:d2, j),'-o');
+            %set(hline,'Color',color.*shade,'MarkerSize',18);
         end
         polar(0:2*pi/90:2*pi,ones(1,91).*0.25,'w--')
         polar(0:2*pi/90:2*pi,ones(1,91).*0.5,'w--')
@@ -158,15 +158,24 @@ if (lflux)
         set(gca,'nextplot','replacechildren','XColor',bgcolor,...
             'YColor',bgcolor,'ZColor',bgcolor,'Color',bgcolor,'FontSize',20);
         hold on;
-        for j=d1:d2
-            shade = double(j-d1)/double(ntail);
-            hline=polar(data.U_lines(j,parts),data.S_lines(j,parts),'.');
-            set(hline,'Color',color.*shade,'MarkerSize',18);
+        for j=parts
+            %shade = double(j-1)/double(d2);
+            hline=polar(data.U_lines(d1:d2,j),data.S_lines(d1:d2, j),'-o');
+            %set(hline,'Color',color.*shade,'MarkerSize',18);
         end
         polar(0:2*pi/90:2*pi,ones(1,91).*0.25,'w--')
         polar(0:2*pi/90:2*pi,ones(1,91).*0.5,'w--')
         polar(0:2*pi/90:2*pi,ones(1,91).*0.75,'w--')
         polar(0:2*pi/90:2*pi,ones(1,91),'w')
+%         for j=d1:d2
+%             shade = double(j-d1)/double(ntail);
+%             hline=polar(data.U_lines(j,parts),data.S_lines(j,parts),'-.');
+%             set(hline,'Color',color.*shade,'MarkerSize',18);
+%         end
+%         polar(0:2*pi/90:2*pi,ones(1,91).*0.25,'w--')
+%         polar(0:2*pi/90:2*pi,ones(1,91).*0.5,'w--')
+%         polar(0:2*pi/90:2*pi,ones(1,91).*0.75,'w--')
+%         polar(0:2*pi/90:2*pi,ones(1,91),'w')
         hold off
         xlim([-1 1]);
         ylim([-1 1]);

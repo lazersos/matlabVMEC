@@ -21,7 +21,13 @@ if ~isfile(a5file)
     return;
 end
 
-path = ['/results/run_' num2str(runid,'%10.10i') '/dist5d/'];
+if isempty(runid)
+    runid=h5readatt(a5file,'/results','active');
+    disp(['  Using runid: ' runid]);
+end
+
+
+path = ['/results/run_' num2str(runid,'%10.10i') '/distrho5d/'];
 try
     dist = h5read(a5file,[path '/ordinate']);
 catch
