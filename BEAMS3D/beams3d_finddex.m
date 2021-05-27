@@ -31,6 +31,11 @@ llast = 0;
 etarg = eorbit;
 lhitonly=1;
 
+% Handle finding hitonly runs (put here to allow override)
+if isfield(beam_data,'lhitonly')
+    lhitonly = round(beam_data.lhitonly);
+end
+
 % Handle varargin
 if ~isempty(varargin)
     i = 1;
