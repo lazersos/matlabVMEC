@@ -171,9 +171,13 @@ if isfield(data,'NE_target')
     set(ha,'FontSize',24);
     ylabel(ha,'n_e x10^{19} [m^{-3}]');
     subplot(1,2,1);
-    plot(data.NE_R(end,:),max(tprof(:,2)).*data.NE_target(end,:)./1E19,'ok','MarkerSize',8,'LineWidth',2);
+    scalefact=max(tprof(:,2));
+    if any(data.NE_target(end,:)>1E10)
+        scalefact=1;
+    end
+    plot(data.NE_R(end,:),scalefact.*data.NE_target(end,:)./1E19,'ok','MarkerSize',8,'LineWidth',2);
     hold on;
-    plot(data.NE_R(end,:),max(tprof(:,2)).*data.NE_equil(end,:)./1E19,'+b','MarkerSize',8,'LineWidth',2);
+    plot(data.NE_R(end,:),scalefact.*data.NE_equil(end,:)./1E19,'+b','MarkerSize',8,'LineWidth',2);
     %plot(sqrt(tprof(:,1)),tprof(:,2)./1E19,'b','LineWidth',4);
     %%%%%%%%% Red lines
     if ljac
@@ -188,7 +192,7 @@ if isfield(data,'NE_target')
         end
         s=data.NE_R(end,:);
         [~,dex]=sort(s,'ascend');
-        fill([s(dex) fliplr(s(dex))],max(tprof(:,2)).*[yup(dex) fliplr(ydn(dex))]./1E19,'blue','EdgeColor','none','FaceAlpha',0.33);
+        fill([s(dex) fliplr(s(dex))],scalefact.*[yup(dex) fliplr(ydn(dex))]./1E19,'blue','EdgeColor','none','FaceAlpha',0.33);
     end
     %%%%%%%%%
     axis tight;
@@ -196,7 +200,7 @@ if isfield(data,'NE_target')
     set(gca,'FontSize',24);
     xlabel('R [m]');
     ylabel('n_e 10^{19} [m^{-3}]');
-    ylim([0 1.5.*max(tprof(:,2))/1E19]);
+    %ylim([0 1.5.*scalefact/1E19]);
     %xlim([0 1.2]);
     legend('Exp.','Recon.');
     set(gca,'Position',[0.162 0.237 0.303 0.576]);
@@ -246,6 +250,61 @@ if isfield(data,'NELINE_target')
     annotation('textbox',[0.1 0.85 0.8 0.1],'string','Line Int Density Reconstruction','FontSize',24,'LineStyle','none','HorizontalAlignment','center');
     saveas(fig,['recon_neline_' ext '.fig']);
     saveas(fig,['recon_neline_' ext '.png']);
+    close(fig);
+end
+
+if isfield(data,'VISBREMLINE_target')
+    if isempty(tprof)
+        files = dir('tprof.*.*');
+        tprof=importdata(files(end).name);
+        tprof=tprof.data;
+    end
+    % Calc Visbrem
+    Ry=2.1798723611035D-18;
+    ec=1.60217662E-19;
+    hc=1.98644582E-25;
+    te = tprof(:,3).*ec;
+    ne = tprof(:,2);
+    ze = tprof(:,5);
+    %g2 = ze.*ze.*Ry./(te);
+    utemp = hc./(te);
+    gauntff = 1.35.*(te./ec).^(0.15);
+    visbrem = gauntff.*ne.*ne.*ze.*exp(-utemp)./(sqrt(te));
+    zeta = mean([data.VISBREMLINE_PHI0(1,:) data.VISBREMLINE_PHI1(1,:)]);
+    theta = 0:2*pi./(ntheta-1):2*pi;
+    r = cfunct(theta,zeta,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
+    z = sfunct(theta,zeta,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
+    f = pchip(tprof(:,1),visbrem,vmec_data.phi./vmec_data.phi(end));
+    f = repmat(f',[1 ntheta]);
+    fig = figure('Position',[1 1 1024 768],'Color','white');
+    subplot(1,2,2);
+    torocont(r,z,f,1);
+    hold on;
+    plot([data.VISBREMLINE_R0(1,:); data.VISBREMLINE_R1(1,:)],...
+        [data.VISBREMLINE_Z0(1,:); data.VISBREMLINE_Z1(1,:)],'k','LineWidth',2);
+    hold off;
+    colormap jet;
+    set(gca,'FontSize',24);
+    xlabel('R [m]');
+    ylabel('Z [m]');
+    ha = colorbar;
+    set(ha,'FontSize',24);
+    ylabel(ha,'Vis. Brem.');
+    subplot(1,2,1);
+    plot(1:length(data.VISBREMLINE_target(end,:)),data.VISBREMLINE_target(end,:),'ok','MarkerSize',8,'LineWidth',2);
+    hold on;
+    plot(1:length(data.VISBREMLINE_target(end,:)),data.VISBREMLINE_equil(end,:),'+b','MarkerSize',8,'LineWidth',2);
+    hold off;
+    axis tight;
+    ylim([0 2.0*max(ylim)]);
+    set(gca,'FontSize',24);
+    xlabel('Channel');
+    ylabel('Line Int. Vis. Bremsstrahllung');
+    legend('Exp.','Recon.');
+    set(gca,'Position',[0.162 0.237 0.303 0.576]);
+    annotation('textbox',[0.1 0.85 0.8 0.1],'string','Line Int. Vis. Brem. Reconstruction','FontSize',24,'LineStyle','none','HorizontalAlignment','center');
+    saveas(fig,['recon_visbremline_' ext '.fig']);
+    saveas(fig,['recon_visbremline_' ext '.png']);
     close(fig);
 end
 
