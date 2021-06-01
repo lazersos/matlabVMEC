@@ -276,7 +276,7 @@ if ~isempty(source)
     end
 end
 if lrudix
-    E_RUDI = (50:10:150) * 1000; %20-60 kV
+    E_RUDI = (50:10:250) * 1000; %20-60 kV
     %PFRAC = [56 22 22];
     P_RUDI = 250E3; %250 kW
     for i=1:length(E_RUDI)
