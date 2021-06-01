@@ -59,7 +59,7 @@ end
 handles.chi_types={'ASPECT','BETA','CURTOR','EXTCUR','SEPARATRIX',...
     'PHIEDGE','RBTOR','R0','Z0','B0','VOLUME','WP','KAPPA',...
     'B_PROBES','FARADAY','FLUXLOOPS','SEGROG','MSE',...
-    'NE','NELINE','TE','TELINE','TI','TILINE','ZEFFLINE',...
+    'NE','NELINE','TE','TELINE','TI','TILINE','ZEFFLINE','VISBREMLINE',...
     'XICS','XICS_BRIGHT','XICS_V','XICS_W3','SXR','VPHI','VACIOTA',...
     'IOTA','BALLOON','BOOTSTRAP','DKES','HELICITY','HELICITY_FULL',...
     'KINK','ORBIT','JDOTB','J_STAR','NEO','TXPORT','ECEREFLECT'...
@@ -155,6 +155,9 @@ end
 if isfield(handles.data,'ZEFFLINE_chisq')
     handles.plot_types = [handles.plot_types; 'ZEFFLINE_evolution'];
 end
+if isfield(handles.data,'VISBREMLINE_chisq')
+    handles.plot_types = [handles.plot_types; 'VISBREMLINE_evolution'];
+end
 if isfield(handles.data,'XICS_chisq')
     handles.plot_types = [handles.plot_types; 'XICS_evolution'];
 end
@@ -202,6 +205,7 @@ if ~isempty(filename)
     handles.plot_types = [handles.plot_types; 'CURRENT'];
     handles.plot_types = [handles.plot_types; 'IOTA'];
     handles.plot_types = [handles.plot_types; '<J*B>'];
+    handles.plot_types = [handles.plot_types; '<BETA>'];
     handles.plot_types = [handles.plot_types; 'CURTOR'];
     handles.plot_types = [handles.plot_types; 'PHIEDGE'];
     handles.plot_types = [handles.plot_types; 'EXTCUR'];
@@ -351,7 +355,7 @@ switch stemp
             'BOOTSTRAP_chisq',...
             'HELICITY_FULL_chisq','NELINE_chisq','IOTA_chisq',...
             'TELINE_chisq','TILINE_chisq','ZEFFLINE_chisq',...
-            'SXR_chisq','ECEREFLECT_chisq',...
+            'SXR_chisq','VISBREMLINE_chisq','ECEREFLECT_chisq',...
             'KINK_chisq','XICS_chisq','XICS_BRIGHT_chisq','XICS_V_chisq','XICS_W3_chisq',...
             'S11_chisq','S12_chisq','S21_chisq','S22_chisq','MAGWELL_chisq',...
             'FARADAY_chisq','NE_chisq','TI_chisq','TE_chisq'}
@@ -797,6 +801,19 @@ switch stemp
         xlabel('Channel');
         ylabel('Z_{effective}');
         title('Line Int. Z_{eff} Reconstruction');
+    case{'VISBREMLINE_evolution'}
+        nchan = size(handles.data.VISBREMLINE_target,2);
+        errorbar(1:nchan,handles.data.VISBREMLINE_target(1,:),handles.data.VISBREMLINE_sigma(1,:),'ok');
+        f = handles.data.VISBREMLINE_equil(:,:).*handles.data.VISBREMLINE_CALIB(:,:);
+        hold on;
+        plot(1:nchan,f','xk');
+        plot(1:nchan,f(1,:),['x' cinitial],'LineWidth',2.0);
+        plot(1:nchan,f(end,:),['+' cfinal],'LineWidth',2.0);
+        xlim([0 nchan+1]);
+        hold off;
+        xlabel('Channel');
+        ylabel('Signal');
+        title('Line Int. Vis. Bremsstrahlung Reconstruction');
     case{'XICS_evolution'}
         nchan = size(handles.data.XICS_target,2);
         errorbar(1:nchan,handles.data.XICS_target(1,:),handles.data.XICS_sigma(1,:),'ok');
@@ -1084,6 +1101,25 @@ switch stemp
         set(gca,'XTickLabel',filename);
         zlabel('Vaccum Field Currents');
         view(3);
+    case{'<BETA>'}
+        files = dir('wout*.*.nc');
+        cla;
+        xlim([0 1]);
+        ylim([0 1]);
+        for i=1:length(files)
+            vmec_data=read_vmec(files(i).name);
+            f(i) = vmec_data.betatot;
+        end
+        plot(handles.data.iter,f,'+k','MarkerSize',18,'LineWidth',4.0);
+        if isfield(handles.data,'BETA_target')
+            hold on;
+            plot(xlim,handles.data.BETA_target(1).*[1 1],'r');
+        end
+        hold off;
+        axis tight;
+        title('Volume Average Beta');
+        xlabel('ITERATION');
+        ylabel('</beta>');
     case{'CURTOR'}
         files = dir('wout*.*.nc');
         cla;

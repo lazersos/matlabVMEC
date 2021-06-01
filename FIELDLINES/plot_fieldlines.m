@@ -101,9 +101,9 @@ switch plottype
             s=ones(data.nlines,length(line_dex));
             c=repmat(data.rho,[1 length(line_dex)]);
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
+            caxis([0 fieldlines_data.rho(end-1)]);
         else
             plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
-            caxis([0 fieldlines_data.rho(end-1)]);
         end
         if isfield(data,'Rhc_lines')
             line_dex = nphi:npoinc:size(data.Rhc_lines,2);
