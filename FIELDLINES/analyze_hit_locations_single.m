@@ -108,6 +108,8 @@ tmp.upper_std = std([result.particle_load.upper_div]);
 tmp.lower_std = std([result.particle_load.lower_div]);
 tmp.upper_std_rel = tmp.upper_std / tmp.upper_mean;
 tmp.lower_std_rel = tmp.lower_std / tmp.lower_mean;
+tmp.upper_res = tmp.upper_std_rel;
+tmp.lower_res = tmp.lower_std_rel;
 
 result.particle_load_summary = tmp;
 
@@ -127,7 +129,7 @@ ym.LabelHorizontalAlignment = 'left';
 ym.Color = [1 0 0];
 ym2.LabelHorizontalAlignment = 'left';
 ym2.Color = [1 0 0];
-title('Particle hits per divertor'); xlabel('Divertor Nr.'); ylabel({'Hits (-)';'Positive: upper. Negative: lower divertor'});
+title('FLD hits per divertor'); xlabel('Divertor Nr.'); ylabel({'Hits (-)';'Positive: upper. Negative: lower divertor'});
 pause(0.001);
 
 clear ym ym2 names
@@ -245,8 +247,9 @@ x_lower = conv2(edge_lower, [1 1]/2); x_lower = x_lower(2:end-1);
 x_upper = conv2(edge_upper, [1 1]/2); x_upper = x_upper(2:end-1);
 
 figure;
+ax = tight_subplot(2,1, 0.2, [0.12, 0.08], [0.08, 0.04]);
 title('Each line is different divertor. Binned in 100 bins');
-subplot(2,1,1)
+axes(ax(1));
 hold on;
 for i=1:5
     plot(x_upper, tmp.upper(i).binned, 'Color', colors{i})
@@ -254,7 +257,12 @@ for i=1:5
 end
 title('Strike positions on upper divertor');
 xlabel('Distance from pumping gap (m)'); ylabel ('Hit Occurance (-)')
-subplot(2,1,2)
+xlim([0, 0.35])
+xticks(0:0.05:0.35)
+xticklabels({'0', '0.05', '0.10', '0.15', '0.20', '0.25', '0.30', '0.35'})
+yticks(0:20:200)
+yticklabels({'0', '20', '40', '60', '80', '100', '120', '140', '160', '180', '200'})
+axes(ax(2));
 hold on;
 for i=1:5
     plot(x_lower, tmp.lower(i).binned, 'Color', colors{i})
@@ -262,6 +270,11 @@ for i=1:5
 end
 title('Strike positions on lower divertor');
 xlabel('Distance from pumping gap (m)'); ylabel ('Hit Occurance (-)')
+xlim([0, 0.35])
+xticks(0:0.05:0.35)
+xticklabels({'0', '0.05', '0.10', '0.15', '0.20', '0.25', '0.30', '0.35'})
+yticks(0:20:200)
+yticklabels({'0', '20', '40', '60', '80', '100', '120', '140', '160', '180', '200'})
 hold off;
 
 clear n_bins max_lower max_upper lower_hits upper_hits upper_div_hits lower_div_hits
@@ -284,6 +297,8 @@ tmp2.upper_std = std(upper_peaks);
 tmp2.lower_std = std(lower_peaks);
 tmp2.upper_std_rel = tmp2.upper_std / tmp2.upper_mean;
 tmp2.lower_std_rel = tmp2.lower_std / tmp2.lower_mean;
+tmp2.upper_res = tmp2.upper_std;
+tmp2.lower_res = tmp2.lower_std;
 tmp2.upper_resolution = mean(diff(x_upper));
 tmp2.lower_resolution = mean(diff(x_lower));
 
