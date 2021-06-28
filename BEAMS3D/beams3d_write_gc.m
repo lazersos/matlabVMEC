@@ -31,6 +31,7 @@ function beams3d_write_gc(beam_data,dex,varargin)
 %   Version:       1.00
 
 % Defaults
+lplot=0;
 lbeams3d = 1;
 lascot5  = 0;
 ndiv = 1;
@@ -88,9 +89,13 @@ else
     dex_local = dex;
 end
 
+U_lines=beams3d_fixUlines(beam_data);
+
 % Now process subarrays
 nnew=sum(dex_local>0);
 nold   = nnew;
+rho    = zeros(1,nnew); %temp
+u      = zeros(1,nnew);
 r      = zeros(1,nnew);
 phi    = zeros(1,nnew);
 z      = zeros(1,nnew);
@@ -106,6 +111,8 @@ k=1;
 for i=1:beam_data.nparticles
     if mask(i)
         j = dex_local(i);
+        rho(k) = sqrt(beam_data.S_lines(j,i));
+        u(k) = U_lines(j,i);
         r(k)   = beam_data.R_lines(j,i);
         phi(k) = beam_data.PHI_lines(j,i);
         z(k)   = beam_data.Z_lines(j,i);
@@ -263,7 +270,30 @@ elseif lascot5
     ascot5_writemarker_gc('ascot5_beams3d_gc.h5',r,phi2,z,energy,pitch,...
         zeta,mass2,charge2,anum,znum,weight,tend,id);
     h5writeatt('ascot5_beams3d_gc.h5',['/marker'],'notes',['Created in MATLAB via beams3d_write_gc. ' aux_str],'TextEncoding','system');
+    if lplot
+        figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+        subplot(2,2,1);
+        plot3(r.*cosd(phi2),r.*sind(phi2),z,'.k');
+        axis off;
+        subplot(2,2,2);
+        plot(rho.*cos(u),rho.*sin(u),'.k');
+        hold on;
+        th=0:360;
+        plot(1.5.*cosd(th),1.5.*sind(th),'--k');
+        plot(1.0.*cosd(th),1.0.*sind(th),'--k');
+        plot(0.5.*cosd(th),0.5.*sind(th),'--k');
+        set(gca,'FontSize',24);
+        axis equal;
+        title('\rho vs. \theta^*');
+        subplot(2,2,4);
+        plot(pitch,energy./1E3,'.k');
+        set(gca,'FontSize',24);
+        xlabel('V_{ll}/V_{total}');
+        ylabel(' Energy [keV]');
+    end
 end
+
+    
 
 return;
 end
