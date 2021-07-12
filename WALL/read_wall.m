@@ -52,6 +52,10 @@ if strcmp(filename(n-3:n),'.dat')
     data.machine=strtrim(header_line1(strfind(header_line1,':')+1:numel(header_line1)));
     data.date=strtrim(header_line2(strfind(header_line2,':')+1:numel(header_line2)));
     temp=fscanf(fid,'%d',2);
+    if and(temp(1)==0,temp(2)==0)
+        disp('  Accelerated File Detected');
+        temp=fscanf(fid,'%d',2);
+    end
     data.nvertex = temp(1);
     data.nfaces = temp(2);
     % Read dataset
