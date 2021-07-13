@@ -19,34 +19,67 @@ rho=[]; jrad=[];
 ec = 1.60217662E-19;
 
 % Determine subset of particles for initial distribution
-tdex=1; pdex=true(1,beam_data.nparticles);
+tdex=1;
 if(double(beam_data.lbeam))
     tdex=3;
-    pdex = beam_data.neut_lines(3,:)==0;
 end
 
-% Calc initial distribution
-drho = beam_data.rho(2)-beam_data.rho(1);
-drho2 = drho/2;
-rho_lines = sqrt(beam_data.S_lines(tdex,pdex));
-dist0 = zeros(1,beam_data.ns_prof1);
-for i=1:beam_data.ns_prof1
-    dex = and(rho_lines>=beam_data.rho(i)-drho2,rho_lines<beam_data.rho(i)+drho2);
-    dist0(i) = sum(beam_data.Weight(dex));
+% Get volume
+rho = beam_data.rho;
+[s,V,Vp]=beams3d_volume(beam_data);
+dVdrho=pchip([0 sqrt(s)],[0 Vp.*2.*sqrt(s)],rho);
+Vrho=pchip([0 sqrt(s)],[0 V],rho);
+
+% Calculate thermalized current
+Itherm=zeros(beam_data.nbeams,beam_data.ns_prof1);
+Ilost=zeros(beam_data.nbeams,beam_data.ns_prof1);
+for k = 1: beam_data.nbeams
+    thermdex = find(and(beam_data.end_state==1,beam_data.Beam==k)); % just thermalized particles
+    lostdex = find(and(beam_data.end_state==2,beam_data.Beam==k)); % just thermalized particles
+    rho_edge = 0:1./double(beam_data.ns_prof1):1;
+    for i=thermdex'
+        slines = beam_data.S_lines(:,i)';
+        s1 = slines(tdex);
+        j1 = find(beam_data.R_lines(:,i)>0,1,'last');
+        s2 = slines(j1);
+        j1 = max(sum(rho_edge>s1),1);
+        j2 = min(sum(rho_edge>s2),beam_data.ns_prof1);
+        Itherm(k,j1:j2) = Itherm(k,j1:j2) + (beam_data.Weight(i).*beam_data.charge(i).*sign(j2-j1));
+    end
+    
+    
+    % Calculat the lost current
+    for i=lostdex'
+        slines = beam_data.S_lines(:,i)';
+        s1 = slines(tdex);
+        j1 = max(sum(rho_edge>s1),1);
+        Ilost(k,j1:end) = Ilost(k,j1:end) + (beam_data.Weight(i).*beam_data.charge(i));
+    end
 end
 
-% Put in volume units
-[s,~,Vp]=beams3d_volume(beam_data);
-rho_t = sqrt(s);
-Vp = pchip(rho_t,Vp,beam_data.rho).*0.5.*rho_t;
-dist0=dist0./Vp;
+% Calc Aminor
+Aminor = 0;
+for j = 1:beam_data.nphi
+    S2D = squeeze(beam_data.S_ARR(:,j,:));
+    S2D(S2D>1.2) = 1.2;
+    [i,k]=find(S2D == min(S2D,[],'all'),1);
+    r0 = beam_data.raxis(i);
+    z0 = beam_data.zaxis(k);
+    cc=contourc(beam_data.raxis,beam_data.zaxis,S2D',1.0);
+    cc = cc(:,2:end-1);
+    cc(1,:) = cc(1,:)-r0;
+    cc(2,:) = cc(2,:)-z0;
+    Aminor = Aminor + mean(sqrt(sum(cc.^2,1)));
+end
+Aminor = Aminor./double(beam_data.nphi);
 
-% Radial distribution function
-distf=sum(beam_data.dense_prof,[1]);
+%V = pi*r*r*L;
+%A = 2*pi*r*L;
+%  = 2*V/r
 
-% Calculate outputs.
-rho  = beam_data.rho;
-jrad = ec.*(dist0-distf).*rho;
+% Now calc jrad
+area = repmat(2.*Vrho./(Aminor.*rho),[beam_data.nbeams,1]);
+jrad = (Ilost+Itherm)./area;
 
 
 end
