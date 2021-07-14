@@ -41,7 +41,7 @@ if (strcmp(filename(end-1:end),'h5'))
         disp('Old version be careful with distribution function');
         % Fix non-double values
         for k={'ns_prof1','ns_prof2','ns_prof3','ns_prof4','ns_prof5','Beam',...
-                'end_state','neut_lines','wall_faces'}
+                'end_state','neut_lines','wall_faces','nbeams'}
             if isfield(data,k{1})
                 data.(k{1})=double(data.(k{1}));
             end
@@ -84,15 +84,20 @@ if (strcmp(filename(end-1:end),'h5'))
         data.dist_Waxis=data.partvmax.*(double(1:data.ns_prof5)-0.5)./(data.ns_prof5);
     else
         % Fix non-double values
-        for k={'ndist1','ndist2','ndist3','ndist3','ndist1','Beam',...
-                'end_state','neut_lines','wall_faces','npoinc'}
+        for k={'ns_prof1','ns_prof2','ns_prof3','ns_prof4','ns_prof5','Beam',...
+                'end_state','neut_lines','wall_faces','nbeams'}
             if isfield(data,k{1})
                 data.(k{1})=double(data.(k{1}));
             end
-            if isfield(data,'ns_prof1')
-                data.ns_prof1 = size(data.ipower_prof,2);
-            end
         end
+        % Make the 5D Axis variables
+        data.dist_rhoaxis=(double(1:data.ns_prof1)-0.5)./(data.ns_prof1);
+        data.dist_uaxis=2.*pi.*(double(1:data.ns_prof2)-0.5)./(data.ns_prof2);
+        data.dist_paxis=2.*pi.*(double(1:data.ns_prof3)-0.5)./(data.ns_prof3);
+        d4=data.partvmax.*2./(data.ns_prof4);
+        d5=data.partvmax./data.ns_prof5;
+        data.dist_Vaxis= (-data.partvmax+d4.*0.5):d4:(data.partvmax-d4.*0.5);
+        data.dist_Waxis=data.partvmax.*(double(1:data.ns_prof5)-0.5)./(data.ns_prof5);
     end
 elseif (strcmp(filename(1:12),'beams3d_diag'))
     
