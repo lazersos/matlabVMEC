@@ -1,4 +1,4 @@
-function [rho,jrad] = beams3d_calc_jrad(beam_data)
+function [rho,Aminor, jrad] = beams3d_calc_jrad(beam_data)
 %BEAMS3D_CALC_JRAD Calculates radial fast ion current
 %   The BEAMS3D_CALC_JRAD routine calculates the radial profile of the fast
 %   ion radial current <j_{rad}>.  This is done by differencing the inital 
@@ -9,7 +9,7 @@ function [rho,jrad] = beams3d_calc_jrad(beam_data)
 %
 %   Example:
 %       beam_data=read_beams3d('beams3d_test.h5');
-%       [rho, jrad] = beams3d_calc_jrad(beam_data);
+%       [rho, Aminor, jrad] = beams3d_calc_jrad(beam_data);
 %
 %   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 %   Version:       0.1
