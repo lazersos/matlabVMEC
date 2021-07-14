@@ -69,6 +69,11 @@ if (strcmp(filename(end-1:end),'h5'))
                 data.dense_prof  = data.dense_prof./drho;
             end
         end
+        if isfield(data,'dense_prof')
+            [s,~,Vp] = beams3d_volume(data);
+            dVdrho=pchip(sqrt(s),2.*sqrt(s).*Vp,data.rho);
+            data.dense_prof  = data.dense_prof./repmat(dVdrho,[data.nbeams 1]);
+        end
         % Make the 5D Axis variables
         data.dist_rhoaxis=(double(1:data.ns_prof1)-0.5)./(data.ns_prof1);
         data.dist_uaxis=2.*pi.*(double(1:data.ns_prof2)-0.5)./(data.ns_prof2);
