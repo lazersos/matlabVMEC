@@ -26,8 +26,8 @@ if (strcmp(filename(end-1:end),'h5'))
     data.X_lines=data.R_lines.*cos(data.PHI_lines);
     data.Y_lines=data.R_lines.*sin(data.PHI_lines);
     data.phiend = data.PHI_lines(data.npoinc,:);
-    
-    if ndims(data.X_lines) > 2
+    % Fix for old formats
+    if ndims(data.X_lines) == 3
         data.X_lines=squeeze(data.X_lines(:,1,:));
         data.Y_lines=squeeze(data.Y_lines(:,1,:));
         data.Z_lines=squeeze(data.Z_lines(:,1,:));
@@ -37,6 +37,12 @@ if (strcmp(filename(end-1:end),'h5'))
         data.wall_strikes = double(data.wall_strikes);
         data.lwall=1;
     end
+    % Create the rho helper array
+    if isfield(data,'ns_prof1')
+        data.ns_prof = data.ns_prof1;
+        h = 10./data.ns_prof1;
+        data.rho = h/2.:h:(1-h/2);
+    end
     if and(data.VERSION < 3,isfield(data,'ns_prof1'))
         disp('Old version be careful with distribution function');
         % Fix non-double values
@@ -45,12 +51,6 @@ if (strcmp(filename(end-1:end),'h5'))
             if isfield(data,k{1})
                 data.(k{1})=double(data.(k{1}));
             end
-        end
-        % Catch some old format issues
-        if isfield(data,'ns_prof1')
-            data.ns_prof = data.ns_prof1;
-            h = 1./data.ns_prof1;
-            data.rho = h/2.:h:(1-h/2);
         end
         if isfield(data,'dist_prof') && ~isfield(data,'dist2d_prof')
             % This is a patch for 2018a still used by IPP-HGW because of
