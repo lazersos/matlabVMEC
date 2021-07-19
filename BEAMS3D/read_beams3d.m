@@ -40,7 +40,7 @@ if (strcmp(filename(end-1:end),'h5'))
     % Create the rho helper array
     if isfield(data,'ns_prof1')
         data.ns_prof = double(data.ns_prof1);
-        h = 1.0/data.ns_prof1;
+        h = 1.0/data.ns_prof;
         data.rho = h/2.:h:(1-h/2);
     end
     if and(data.VERSION < 3,isfield(data,'ns_prof1'))
