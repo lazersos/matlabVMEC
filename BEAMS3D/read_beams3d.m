@@ -43,15 +43,15 @@ if (strcmp(filename(end-1:end),'h5'))
         h = 1.0/data.ns_prof;
         data.rho = h/2.:h:(1-h/2);
     end
+    % Fix non-double values
+    for k={'ns_prof1','ns_prof2','ns_prof3','ns_prof4','ns_prof5','Beam',...
+            'end_state','neut_lines','wall_faces','nbeams'}
+        if isfield(data,k{1})
+            data.(k{1})=double(data.(k{1}));
+        end
+    end
     if and(data.VERSION < 3,isfield(data,'ns_prof1'))
         disp('Old version be careful with distribution function');
-        % Fix non-double values
-        for k={'ns_prof1','ns_prof2','ns_prof3','ns_prof4','ns_prof5','Beam',...
-                'end_state','neut_lines','wall_faces','nbeams'}
-            if isfield(data,k{1})
-                data.(k{1})=double(data.(k{1}));
-            end
-        end
         if isfield(data,'dist_prof') && ~isfield(data,'dist2d_prof')
             % This is a patch for 2018a still used by IPP-HGW because of
             % reasons
@@ -100,7 +100,6 @@ if (strcmp(filename(end-1:end),'h5'))
         data.dist_Waxis=data.partvmax.*(double(1:data.ns_prof5)-0.5)./(data.ns_prof5);
     end
 elseif (strcmp(filename(1:12),'beams3d_diag'))
-    
     fid=fopen(filename,'r');
     line=fgetl(fid);
     if (strfind(line,'BEAMLINES'))  % New multi-beam file format
