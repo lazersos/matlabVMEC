@@ -31,7 +31,7 @@ pot_temp = [flipud(pot_temp); pot_temp];
 [C, IA, ~] = unique(C);
 pot = pchip(C,pot_temp(IA),s);
 shalf = 0.5.*(s(1:ns1)+s(2:ns));
-dEds = (pot(2:ns)-pot(1:ns1))./(s(2:ns)-s(1:ns1));
+dEds = -(pot(2:ns)-pot(1:ns1))./(s(2:ns)-s(1:ns1));
 dpotds = [0 pchip(shalf,dEds,s(2:end))];
 
 end

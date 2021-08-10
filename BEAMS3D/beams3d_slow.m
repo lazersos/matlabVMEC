@@ -132,12 +132,15 @@ E_BEAM = (0.5).*MASS.*SPEED.*SPEED;
 NE   = permute(beam_data.NE,[2 1 3]);
 TI   = permute(beam_data.TI,[2 1 3]);
 TE   = permute(beam_data.TE,[2 1 3]);
+ZEFF   = permute(beam_data.ZEFF_ARR,[2 1 3]);
 NE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     NE,R_BEAM,P_BEAM,Z_BEAM);
 TE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     TE,R_BEAM,P_BEAM,Z_BEAM);
 TI_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     TI,R_BEAM,P_BEAM,Z_BEAM);
+ZE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
+    ZEFF,R_BEAM,P_BEAM,Z_BEAM);
 
 % PInj
 if size(W_BEAM,2) == 1, W_BEAM=W_BEAM'; end % Flip W
@@ -146,11 +149,9 @@ Iinj = sum(CHARGE.*W_BEAM);
 
 % Calculate Values
 TE3=TE_BEAM.^3;
-coulomb_log=[];
-dex = TE_BEAM < 10.*myZ.*myZ;
-coulomb_log(dex) = 23 - log(myZ(dex).*sqrt(NE_BEAM(dex).*1E-6./TE3(dex)));
-dex = ~dex;
-coulomb_log(dex) = 24 - log(sqrt(NE_BEAM(dex).*1E-6)./TE_BEAM(dex));
+%coulomb_log=[];
+beta = SPEED./299792458;
+coulomb_log = 35 - log(myZ.*ZE_BEAM.*(MASS+plasma_mass).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*plasma_mass.*beta.*beta.*6.02214076208E+26));
 coulomb_log(coulomb_log <=1) = 1;
 v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./plasma_mass);
 vcrit_cube = v_crit.^3;

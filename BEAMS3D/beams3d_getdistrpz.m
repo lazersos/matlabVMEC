@@ -11,9 +11,9 @@ function dist = beams3d_getdistrpz(data,r,phi,z,vll,vperp)
 % Example usage
 %      % Return an RPZ shaped array
 %      beam_data = read_beams3d('beams3d_test.h5');
-%      raxis   = 4.5:0.1:6.5;
-%      zaxis   = -1.0:0.1:1.0;
-%      paxis   = 0:2*pi/10:2*pi;
+%      raxis   = 4.5:0.05:6.5;
+%      zaxis   = -1.0:0.05:1.0;
+%      paxis   = 0:2*pi/40:2*pi;
 %      vmax    = beam_data.partvmax;
 %      vllaxis = -vmax:2.*vmax./31:vmax;
 %      vperpaxis = 0:vmax./15:vmax;
@@ -29,9 +29,13 @@ function dist = beams3d_getdistrpz(data,r,phi,z,vll,vperp)
 %      dist = reshape(dist,[size(dist,1) nsave]);
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
-% Version:       1.00
+% Version:       1.20
 
-
+% Developer note, as of v2.9 BEAMS3D normalizes dist5D by m^3/s^3, meaning
+% there is no volume normalization.  Now we can get dV for each flux
+% surface easily.  However we have problems when calculating the dV for
+% each voxel.  A trivial (but oversimplified) view is to divide by the
+% number of voxels (nu*nv).  Which is what we do for now.
 
 % Helpers
 vt=vll+data.partvmax;
@@ -54,22 +58,34 @@ rhoval = sqrt(sval);
 
 
 % Calculate indexes
-dexr=floor(double(data.ns_prof1).*rhoval./ds)+1;
-dexu=min(floor(double(data.ns_prof2).*uval./du)+1,double(data.ns_prof2));
-dexp=floor(double(data.ns_prof3).*pval./dp)+1;
-dexv=floor(double(data.ns_prof4).*vt./dv)+1;
-dexw=floor(double(data.ns_prof5).*vperp./dw)+1; %verp defined as zero
+dexr=floor(data.ns_prof1.*rhoval./ds)+1;
+dexu=min(floor(data.ns_prof2.*uval./du)+1,data.ns_prof2);
+dexp=floor(data.ns_prof3.*pval./dp)+1;
+dexv=floor(data.ns_prof4.*vt./dv)+1;
+dexw=floor(data.ns_prof5.*vperp./dw)+1; %verp defined as zero
 
-mask1=and(dexr>0,dexr<data.ns_prof1);
-mask3=and(dexp>0,dexp<data.ns_prof3);
-mask4=and(dexv>0,dexv<data.ns_prof4);
-mask5=and(dexw>0,dexw<data.ns_prof5);
-maskt=(mask1+mask3+mask4+mask5)==4;
+mask1=and(dexr>0,dexr<=data.ns_prof1);
+mask3=and(dexp>0,dexp<=data.ns_prof3);
+mask4=and(dexv>0,dexv<=data.ns_prof4);
+mask5=and(dexw>0,dexw<=data.ns_prof5);
+maskt=(mask1 & mask3 & mask4 & mask5);
+
+% Normalize dist_prof by volume
+dist5d_norm=data.dist_prof;
+edges=0:1./data.ns_prof1:1;
+rho_b3d = 0.5.*(edges(1:end-1)+edges(2:end));
+[s,~,Vp]=beams3d_volume(data);
+deltaV = pchip(sqrt(s),2.*Vp.*sqrt(s),rho_b3d)./data.ns_prof1;
+deltaV = deltaV./(data.ns_prof2.*data.ns_prof3);
+for i=1:data.ns_prof1
+    dist5d_norm(:,i,:,:,:,:) = dist5d_norm(:,i,:,:,:,:)./deltaV(i);
+end
+
 
 dist=zeros(data.nbeams,length(r));
 for i=1:length(maskt)
     if maskt(i)
-        dist(:,i) = data.dist_prof(:,dexr(i),dexu(i),dexp(i),dexv(i),dexw(i));
+        dist(:,i) = dist5d_norm(:,dexr(i),dexu(i),dexp(i),dexv(i),dexw(i));
     end
 end
 
