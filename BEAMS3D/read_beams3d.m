@@ -82,6 +82,8 @@ if (strcmp(filename(end-1:end),'h5'))
         d5=data.partvmax./data.ns_prof5;
         data.dist_Vaxis= (-data.partvmax+d4.*0.5):d4:(data.partvmax-d4.*0.5);
         data.dist_Waxis=data.partvmax.*(double(1:data.ns_prof5)-0.5)./(data.ns_prof5);
+        % Add anything missing
+        data.lfusion=0;
     else
         % Fix non-double values
         for k={'ns_prof1','ns_prof2','ns_prof3','ns_prof4','ns_prof5','Beam',...
