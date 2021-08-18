@@ -79,6 +79,13 @@ if nargin > 1
                     next_varargin = [next_varargin varargin{i}];
                     i = i+1;
                     next_varargin = [next_varargin varargin{i}];
+                % These are just passed to the next routine
+                case {'NI'}
+                    next_varargin = [next_varargin varargin{i}];
+                    i = i+1;
+                    next_varargin = [next_varargin varargin{i}];
+                    i = i+1;
+                    next_varargin = [next_varargin varargin{i}];
             end
         end
         i = i+1;
@@ -222,6 +229,7 @@ if lplots
 end
 
 % Use beamnamelist
+% From 10.1016/j.fusengdes.2013.03.006
 r_beam=[]; p_beam=[]; z_beam=[]; j=1; power_beam=[]; energy_beam=[];
 div_beam=[]; note={};
 switch species

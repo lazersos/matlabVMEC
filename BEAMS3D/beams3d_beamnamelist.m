@@ -31,6 +31,7 @@ ashape=[];
 pfrac=[];
 beam_dex=[];
 note={};
+ni_s=[]; ni_f=[]; ni_m=[]; ni_z=[];
 ne_s=[]; ne_f=[];
 te_s=[]; te_f=[];
 ti_s=[]; ti_f=[];
@@ -92,6 +93,15 @@ if (nargin > 6)
                     temp=varargin{j};
                     ne_s=temp(1,:);
                     ne_f=temp(2,:);
+                case {'NI'}
+                    j=j+1;
+                    temp=varargin{j};
+                    ni_m=temp(1,:);
+                    ni_z=temp(2,:);
+                    j=j+1;
+                    temp=varargin{j};
+                    ni_s=temp(1,:);
+                    ni_f=temp(2:end,:);
                 case {'TI'}
                     j=j+1;
                     temp=varargin{j};
@@ -242,21 +252,30 @@ fprintf(fid, '  FOLLOW_TOL = 1.0E-9\n');
 fprintf(fid,['  VC_ADAPT_TOL = ' num2str(vc_adapt_tol,'%20.10E') '\n']);
 fprintf(fid,['  NPOINC = ' num2str(npoinc,'%d') '\n']);
 fprintf(fid, '!--------PROFILES ----\n');
+if ~isempty(pot_f)
+    fprintf(fid,[ '  POT_AUX_S = ' num2str(pot_s,'%12.6E  ') '\n']);
+    fprintf(fid,[ '  POT_AUX_F = ' num2str(pot_f,'%12.6E  ') '\n']);
+end
 fprintf(fid,[ '  NE_AUX_S = ' num2str(ne_s,'%12.6E  ') '\n']);
 fprintf(fid,[ '  NE_AUX_F = ' num2str(ne_f,'%12.6E  ') '\n']);
+if ~isempty(ni_s)
+    fprintf(fid,[ '  NI_AUX_M = ' num2str(ni_m,'%12.6E  ') '\n']);
+    fprintf(fid,[ '  NI_AUX_Z = ' num2str(ni_z,'%d  ') '\n']);
+    fprintf(fid,[ '  NI_AUX_S = ' num2str(ne_s,'%12.6E  ') '\n']);
+    for i=1:size(ni_f,1)
+        fprintf(fid,[ '  NI_AUX_F(' num2str(i,'%1.1d') ',:) = ' num2str(ni_f(i,:),'%12.6E  ') '\n']);
+    end
+else
+    fprintf(fid,[ '  ZEFF_AUX_S = ' num2str(zeff_s,'%12.6E  ') '\n']);
+    fprintf(fid,[ '  ZEFF_AUX_F = ' num2str(zeff_f,'%12.6E  ') '\n']);
+    fprintf(fid,['  PLASMA_MASS = ' num2str(mass,'%20.10E') '\n']);
+    fprintf(fid,['  PLASMA_ZMEAN = ' num2str(1,'%20.10E') '\n']);
+    fprintf(fid,['  PLASMA_ZAVG  = ' num2str(1,'%20.10E') '\n']);
+end
 fprintf(fid,[ '  TE_AUX_S = ' num2str(te_s,'%12.6E  ') '\n']);
 fprintf(fid,[ '  TE_AUX_F = ' num2str(te_f,'%12.6E  ') '\n']);
 fprintf(fid,[ '  TI_AUX_S = ' num2str(ti_s,'%12.6E  ') '\n']);
 fprintf(fid,[ '  TI_AUX_F = ' num2str(ti_f,'%12.6E  ') '\n']);
-fprintf(fid,[ '  ZEFF_AUX_S = ' num2str(zeff_s,'%12.6E  ') '\n']);
-fprintf(fid,[ '  ZEFF_AUX_F = ' num2str(zeff_f,'%12.6E  ') '\n']);
-if ~isempty(pot_f)
-fprintf(fid,[ '  POT_AUX_S = ' num2str(pot_s,'%12.6E  ') '\n']);
-fprintf(fid,[ '  POT_AUX_F = ' num2str(pot_f,'%12.6E  ') '\n']);
-end
-fprintf(fid,['  PLASMA_MASS = ' num2str(mass,'%20.10E') '\n']);
-fprintf(fid,['  PLASMA_ZMEAN = ' num2str(1,'%20.10E') '\n']);
-fprintf(fid,['  PLASMA_ZAVG  = ' num2str(1,'%20.10E') '\n']);
 fprintf(fid, '!--------Universal Beam Parameters------\n');
 fprintf(fid,['  NPARTICLES_START = ' num2str(nparticles_start,'%d') '\n']);
 fprintf(fid,['  T_END_IN = ' num2str(ntotal,'%d') '*' num2str(t_end,'%-8.2E') '\n']);
