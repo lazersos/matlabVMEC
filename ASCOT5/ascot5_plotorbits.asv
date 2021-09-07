@@ -32,29 +32,8 @@ pspace = 0;
 filename = 'default';
 startframe = 100; %Number of Start-Frame - ntail
 endframe = 20000; %Number of last frame
-skipframes = 100; %How many data points to skip between images
+skipframes = 30; %How many data points to skip between images
 ntail = 20;
-
-fig=[];
-% Check for file
-if ~isfile(a5file)
-    disp(['ERROR: ' a5file ' file not found!']);
-    return;
-end
-
-% Use active run
-if isempty(runid)
-    try
-        runid=h5readatt(a5file,'/results','active');
-        disp(['  Using runid: ' runid]);
-    catch
-        runid=[];
-        return;
-    end
-end
-
-% Set run path
-path = ['/results/run_' num2str(runid,'%10.10i') '/orbit'];
 
 
 % Handle varargin
@@ -62,11 +41,8 @@ if nargin > 2
     i=1;
     while i <= nargin-2
         switch varargin{i}
-            case{'xyz','flux','vll','pll', 'rz'}
+            case{'xyz','flux','vll','pll', 'rz', 'fluxperp'}
                 plottype=varargin{i};
-            case{'fluxperp'}
-                plottype=varargin{i};
-                pspace = 1;
             case 'parts'
                 i = i+1;
                 parts=varargin{i};
@@ -87,15 +63,11 @@ if nargin > 2
     end
 end
 
-[time, r, phi, z, br, bphi, bz, pr, pphi, pz, rho, theta ] = get_properties_time_trace(a5file, path, parts, 'r', 'phi', 'z', 'br', 'bphi', 'bz', 'pr', 'pphi', 'pz', 'rho', 'theta');
+
+
+[time, r, phi, z, ] = get_properties_time_trace(a5file, path, parts, 'r', 'phi', 'z');
   x = r.*cos(phi);
 y = r.*sin(phi);
-
-% get pll
-b=sqrt(br.*br+bphi.*bphi+bz.*bz);
-pll = (pr.*br+pphi.*bphi+pz.*bz)./b;
-p2  = pr.*pr+pphi.*pphi+pz.*pz;
-pperp = sqrt(p2-pll.*pll);
 
 % % Get IDS and time for sorting
 % ids = double(h5read(a5file,[path '/ids']));
