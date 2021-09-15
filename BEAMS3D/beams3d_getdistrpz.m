@@ -72,14 +72,16 @@ maskt=(mask1 & mask3 & mask4 & mask5);
 
 % Normalize dist_prof by volume
 dist5d_norm=data.dist_prof;
-edges=0:1./data.ns_prof1:1;
-rho_b3d = 0.5.*(edges(1:end-1)+edges(2:end));
-[s,~,Vp]=beams3d_volume(data);
-deltaV = pchip(sqrt(s),2.*Vp.*sqrt(s),rho_b3d)./data.ns_prof1;
-deltaV = deltaV./(data.ns_prof2.*data.ns_prof3);
-for i=1:data.ns_prof1
-    dist5d_norm(:,i,:,:,:,:) = dist5d_norm(:,i,:,:,:,:)./deltaV(i);
-end
+%edges=0:1./data.ns_prof1:1;
+%rho_b3d = 0.5.*(edges(1:end-1)+edges(2:end));
+%[s,~,Vp]=beams3d_volume(data);
+%deltaV = pchip(sqrt(s),2.*Vp.*sqrt(s),rho_b3d)./data.ns_prof1;
+%deltaV = deltaV./(data.ns_prof2.*data.ns_prof3);
+%for i=1:data.ns_prof1
+%    dist5d_norm(:,i,:,:,:,:) = dist5d_norm(:,i,:,:,:,:)./deltaV(i);
+%end
+% Alternatively we can modify dist_prof to have proper volume units
+% using GMNC from VMEC
 
 
 dist=zeros(data.nbeams,length(r));
