@@ -40,6 +40,7 @@ pertdeg=0;
 ec = 1.60217662E-19;
 amu = 1.66053906660E-27;
 aux_str='';
+filename = 'beams3d_gc.txt';
 
 % Handle varargin
 if ~isempty(varargin)
@@ -61,6 +62,11 @@ if ~isempty(varargin)
                 n=n+1;
                 ndiv = varargin{n};
                 aux_str=[aux_str ' ndiv: ',num2str(pertcent,'%5i') ';'];
+            case 'filename'
+                n=n+1;
+                filename = varargin{n};
+            case {'plot','plots'}
+                lplot=1;
         end
         n=n+1;
     end
@@ -192,7 +198,7 @@ end
 
 % Now output
 if lbeams3d
-    fid = fopen('beams3d_namelist.txt','w');
+    fid = fopen(filename,'w');
     fprintf(fid,'&BEAMS3D_INPUT\n');
     fprintf(fid,['! Created by beams3d_write_gc. ' aux_str]);
     fprintf(fid,['!   DATE: ' disp(datestr(now,'mm-dd-yyyy HH:MM:SS'))]);
@@ -255,6 +261,8 @@ if lbeams3d
     fprintf(fid,'/\n');
     fclose(fid);
 elseif lascot5
+    filename=strrep(filename,'beams3d','ascot5');
+    filename=strrep(filename,'.txt','.h5');
     disp('WRITING ASCOT5 HDF GC File!');
     phi2   = rad2deg(phi);
     vperp2 = 2.*mu.*b./mass;
@@ -267,9 +275,9 @@ elseif lascot5
     znum    = round(charge./ec);
     mass2   = mass./amu;
     id      = 1:nnew;
-    ascot5_writemarker_gc('ascot5_beams3d_gc.h5',r,phi2,z,energy,pitch,...
+    ascot5_writemarker_gc(filename,r,phi2,z,energy,pitch,...
         zeta,mass2,charge2,anum,znum,weight,tend,id);
-    h5writeatt('ascot5_beams3d_gc.h5',['/marker'],'notes',['Created in MATLAB via beams3d_write_gc. ' aux_str],'TextEncoding','system');
+    h5writeatt(filename,['/marker'],'notes',['Created in MATLAB via beams3d_write_gc. ' aux_str],'TextEncoding','system');
     if lplot
         figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
         subplot(2,2,1);
@@ -279,7 +287,7 @@ elseif lascot5
         plot(rho.*cos(u),rho.*sin(u),'.k');
         hold on;
         th=0:360;
-        plot(1.5.*cosd(th),1.5.*sind(th),'--k');
+        plot(1.5.*cosd(th),1.25.*sind(th),'--k');
         plot(1.0.*cosd(th),1.0.*sind(th),'--k');
         plot(0.5.*cosd(th),0.5.*sind(th),'--k');
         set(gca,'FontSize',24);
