@@ -114,6 +114,7 @@ if ~isempty(runid)
     
     % Filter
     if nfilter > 0
+        wall_strikes = ascot5_calcwallload(a5file,wallid,runid,'hits');
         dex = wall_strikes <= nfilter;
         wall_load(dex) = 0;
     end
@@ -167,11 +168,7 @@ if isempty(wall_load) && isempty(wall_strikes)
     hp=patch('XData',x1x2x3,'YData',y1y2y3,'ZData',z1z2z3,'EdgeColor','none','FaceColor',[1 1 1].*0.25);
 %set(hp,'AmbientStrength',1.0,'SpecularStrength',0.75,'DiffuseStrength',0.9,'SpecularColorReflectance',0.5);
 else
-    if lhits
-        hp=patch(x1x2x3,y1y2y3,z1z2z3,wall_strikes,'EdgeColor','none');
-    else
         hp=patch(x1x2x3,y1y2y3,z1z2z3,wall_load,'EdgeColor','none');
-    end
     %set(hp,'AmbientStrength',1.0,'SpecularStrength',0.75,'DiffuseStrength',1);
     %set(hp,'AmbientStrength',1.0,'SpecularStrength',0.75,'DiffuseStrength',0.9,'SpecularColorReflectance',0);
 end

@@ -22,6 +22,7 @@ function wall_load = ascot5_calcwallload(a5file,wallid,runid,varargin)
 amu = 1.66053906660E-27;
 wall_load = [];
 pts_mask=[];
+area_mask = 0.0;
 lhits = 0;
 lcx=0;
 
@@ -40,6 +41,9 @@ if nargin > 3
             case{'mask_points'}
                 i=i+1;
                 pts_mask=varargin{i};
+            case{'area_mask'}
+                i=i+1;
+                area_mask=varargin{i};
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -99,10 +103,10 @@ walltile(dex) = 0;
 nhits=[];
 mask = unique(walltile);
 mask_final = mask(mask>0);
+weight = h5read(a5file,[path_run '/weight']);
 if ~lhits
     y1y2y3 = h5read(a5file,[path_wall '/y1y2y3']);
     z1z2z3 = h5read(a5file,[path_wall '/z1z2z3']);
-    weight = h5read(a5file,[path_run '/weight']);
     mass = h5read(a5file,[path_run '/mass']).*amu; %in amu
     try
         vr = h5read(a5file,[path_run '/vr']);
@@ -140,11 +144,12 @@ if ~lhits
     end
     wall_load(mask_final)=qflux;
     wall_load = wall_load./A;
+    wall_load(A<=area_mask) = 0;
 else
     for i = mask'
         if (i==0), continue; end
         dex = walltile==i;
-        nhits = [nhits; sum(dex)];
+        nhits = [nhits; sum(weight(dex))];
     end
     wall_load(mask_final) = nhits;
 end
