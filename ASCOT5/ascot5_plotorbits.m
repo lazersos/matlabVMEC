@@ -25,37 +25,35 @@ function fig = ascot5_plotorbits(a5file,runid,varargin)
 
 % Defaults
 amu = 1.66053906660E-27;
+ec = 1.60217662E-19;
 plottype='xyz';
 parts = [];
 lmovie = 0;
 pspace = 0;
+mirspace = 0;
+lgc = 0;
 filename = 'default';
-startframe = 100; %Number of Start-Frame - ntail
-endframe = 20000; %Number of last frame
-skipframes = 100; %How many data points to skip between images
+startframe = 1; %Number of Start-Frame - ntail
+endframe = []; %Number of last frame
 ntail = 20;
 
 fig=[];
-% Check for file
-if ~isfile(a5file)
-    disp(['ERROR: ' a5file ' file not found!']);
-    return;
+
+%Deal with multiple input files (have to have same marker ids)
+if ~iscell(a5file)
+    files = {a5file};
+else
+    files = a5file;
 end
 
-% Use active run
-if isempty(runid)
-    try
-        runid=h5readatt(a5file,'/results','active');
-        disp(['  Using runid: ' runid]);
-    catch
-        runid=[];
+% Check for file(s)
+for i = 1:size(files,2)
+    a5file = files{i};
+    if ~isfile(a5file)
+        disp(['ERROR: ' a5file ' file not found!']);
         return;
     end
 end
-
-% Set run path
-path = ['/results/run_' num2str(runid,'%10.10i') '/orbit'];
-
 
 % Handle varargin
 if nargin > 2
@@ -65,6 +63,11 @@ if nargin > 2
             case{'xyz','flux','vll','pll', 'rz'}
                 plottype=varargin{i};
             case{'fluxperp'}
+                plottype=varargin{i};
+                if ~mirspace
+                    pspace = 1;
+                end
+            case{'cartesian'}
                 plottype=varargin{i};
                 pspace = 1;
             case 'parts'
@@ -79,6 +82,18 @@ if nargin > 2
                 ntail = varargin{i};
             case {'pspace', 'vspace'}
                 pspace = 1;
+            case {'bref', 'b_ref', 'bmir', 'b_mir'}
+                mirspace =1;
+                if pspace
+                    pspace = 0;
+                end
+            case 'startframe'
+                i = i+1;
+                startframe = varargin{i};
+            case 'endframe'
+                i = i+1;
+                endframe = varargin{i};
+                
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -87,112 +102,64 @@ if nargin > 2
     end
 end
 
-[time, r, phi, z, br, bphi, bz, pr, pphi, pz, rho, theta ] = get_properties_time_trace(a5file, path, parts, 'r', 'phi', 'z', 'br', 'bphi', 'bz', 'pr', 'pphi', 'pz', 'rho', 'theta');
-  x = r.*cos(phi);
-y = r.*sin(phi);
 
-% get pll
-b=sqrt(br.*br+bphi.*bphi+bz.*bz);
-pll = (pr.*br+pphi.*bphi+pz.*bz)./b;
-p2  = pr.*pr+pphi.*pphi+pz.*pz;
-pperp = sqrt(p2-pll.*pll);
-
-% % Get IDS and time for sorting
-% ids = double(h5read(a5file,[path '/ids']));
-% time = double(h5read(a5file,[path '/mileage']));
-% if isempty(parts)
-%     parts = unique(ids);
-% end
-% 
-% 
-% % get array sizes
-% [C,ia,ic] = unique(ids);
-% a_counts = accumarray(ic,1);
-% value_counts = [C, a_counts];
-% nsteps = max(value_counts(:,2)); %should have same count for each marker
-% %nsteps = round(length(ids)./max(ids));
-% endframe = nsteps;
-% dex = ismember(ids,parts);
-% ids = ids(dex);
-% time = time(dex);
-% 
-% npart = length(unique(parts));
-% 
-% timecell = mat2cell(time, value_counts(:,2),1);
-% padfun = @(x) [x; NaN(nsteps-size(x,1),1)];
-% timecell = cellfun(padfun, timecell, 'UniformOutput', false); 
-% time = cell2mat(timecell); %deal with differently sized time-traces
-% time = reshape(time,[nsteps npart]);
-% 
-% % create particle sorting array
-% [time,idex] = sort(time);
-%   
-% %Calculate Orbits
-% % Extract position
-% rho = h5read(a5file,[path '/rho']);
-% theta = h5read(a5file,[path '/theta']);
-% phi = h5read(a5file,[path '/phi']);
-% 
-% r = h5read(a5file,[path '/r']);
-% z = h5read(a5file,[path '/z']);
-% x = r.*cos(phi);
-% y = r.*sin(phi);
-% 
-% pr = h5read(a5file,[path '/pr']);
-% pz = h5read(a5file,[path '/pz']);
-% pphi = h5read(a5file,[path '/pphi']);
-% 
-% br = h5read(a5file,[path '/br']);
-% bz = h5read(a5file,[path '/bz']);
-% bphi = h5read(a5file,[path '/bphi']);
-% 
-% % get pll
-% b=sqrt(br.*br+bphi.*bphi+bz.*bz);
-% pll = (pr.*br+pphi.*bphi+pz.*bz)./b;
-% p2  = pr.*pr+pphi.*pphi+pz.*pz;
-% pperp = sqrt(p2-pll.*pll);
-% 
-% b = b(dex);
-% r = r(dex);
-% 
-% x = x(dex);
-% y = y(dex);
-% z = z(dex);
-% rho = rho(dex);
-% theta = theta(dex);
-% phi = phi(dex);
-% pll = pll(dex);
-% pperp = pperp(dex);
-% 
-% 
-% % Reshape by particle index
-% b = reshape(b,[nsteps npart]);
-% r = reshape(r,[nsteps npart]);
-% x = reshape(x,[nsteps npart]);
-% y = reshape(y,[nsteps npart]);
-% z = reshape(z,[nsteps npart]);
-% rho = reshape(rho,[nsteps npart]);
-% theta = reshape(theta,[nsteps npart]);
-% phi = reshape(phi,[nsteps npart]);
-% pll = reshape(pll,[nsteps npart]);
-% pperp = reshape(pperp,[nsteps npart]);
-% 
-% % Reorder in time
-% for i=1:npart
-%     b(:,i) = b(idex(:,i),i);
-%     r(:,i) = r(idex(:,i),i);
-%     x(:,i) = x(idex(:,i),i);
-%     y(:,i) = y(idex(:,i),i);
-%     z(:,i) = z(idex(:,i),i);
-%     rho(:,i) = rho(idex(:,i),i);
-%     theta(:,i) = theta(idex(:,i),i);
-%     phi(:,i) = phi(idex(:,i),i);
-%     pll(:,i) = pll(idex(:,i),i);
-%     pperp(:,i) = pperp(idex(:,i),i);
-% end
-
-
-
+for f = 1:size(files,2)
+    
+    % Use active run
+    if isempty(runid)
+        try
+            runid=h5readatt(files{f},'/results','active');
+            disp(['  Using runid: ' runid]);
+        catch
+            runid=[];
+            return;
+        end
+    end
+    % Set run path
+    path = ['/results/run_' num2str(runid,'%10.10i') '/orbit'];
+    %Check if gyro-center
+    optionsid = h5readatt(files{f},'/options', 'active');
+    path_simmode = ['/options/opt_' num2str(optionsid,'%10.10i')];
+    simmode = h5read(files{f}, [path_simmode '/SIM_MODE']);
+    
+    if simmode == 2
+        [time{f}, r{f}, phi{f}, z{f}, br{f}, bphi{f}, bz{f}, pll{f}, mu{f}, rho{f}, theta{f} ] = ascot5_get_properties_time_trace(files{f}, path, parts, 'r', 'phi', 'z', 'br', 'bphi', 'bz', 'ppar', 'mu', 'rho', 'theta');
+    else
+        [time{f}, r{f}, phi{f}, z{f}, br{f}, bphi{f}, bz{f}, pr{f}, pphi{f}, pz{f}, rho{f}, theta{f} ] = ascot5_get_properties_time_trace(files{f}, path, parts, 'r', 'phi', 'z', 'br', 'bphi', 'bz', 'pr', 'pphi', 'pz', 'rho', 'theta');
+        
+    end
+    
+    x{f} = r{f}.*cosd(phi{f}); %Phi is in degrees
+    y{f} = r{f}.*sind(phi{f});
+    
+    xyz_mat = [x{f}, y{f}, z{f}];
+    writematrix(xyz_mat, 'xyz_particle.txt', 'Delimiter', ';');
+    
+    rhocostheta{f} = rho{f}.*cosd(theta{f});
+    rhosintheta{f} = rho{f}.*sind(theta{f});
+    
+    % get pll
+    b{f}=sqrt(br{f}.*br{f}+bphi{f}.*bphi{f}+bz{f}.*bz{f});
+    diffb{f} = [diff(b{f}); 0];
+    if simmode ~= 2
+        pll{f} = (pr{f}.*br{f}+pphi{f}.*bphi{f}+pz{f}.*bz{f})./b{f};
+        p2{f}  = pr{f}.*pr{f}+pphi{f}.*pphi{f}+pz{f}.*pz{f};
+        pperp{f} = sqrt(p2{f}-pll{f}.*pll{f});
+        vperp{f} = pperp{f}./amu;
+    else
+        vperp{f} = sqrt( b{f} .* 2 .* mu{f} ./ amu * ec);
+    end
+    
+    vll{f} = pll{f}./amu; %ONLY CORRECT FOR HYDROGEN!!!
+    bmir{f} = b{f}.* (vll{f}.^2 + vperp{f} .^2) ./ vperp{f}.^2;
+    
+    
+    skipframes = ceil((1E-3./24./60)./(time{f}(4,1) - time{f}(3,1)));  %How many data points to skip between images, here 1ms/video minute, assuming 24fps
+    if isempty(endframe) || (size(time{f},1)<endframe)
+        endframe = size(time{f},1);
+    end
+    
+end
 %----------Calculate Orbits
 
 %Prepare Figure
@@ -204,25 +171,41 @@ if pspace
     ax2 = axes('Position', [.75 0.18 0.2*2/3.0 0.2]);
     ax3 = axes('Position', [.68 0.58 0.3 0.4]);
 end
+if mirspace
+    delete(gca);
+    ax1 = axes('Position', [0.07 0.18 0.55 0.75]);
+    ax2 = axes('Position', [.75 0.18 0.2 0.2]);
+    ax3 = axes('Position', [.68 0.58 0.3 0.4]);
+    for f = 1:size(files,2)
+        timediff{f}= repmat(time{f}(1,1), size(time{f},2), 1) - time{f}(1,:)';
+        time{f} = time{f} + repmat(timediff{f}, 1, size(time{f},1))';
+    end
+end
 %linecolors = num2cell(lines(size(x,2)),2);
-linecolors = lines(size(x,2));
+for f = 1:size(files,2)
+    linecolors{f} = lines(size(x{f},2));
+end
 v = VideoWriter([filename '.mp4'], 'MPEG-4');
 open(v);
 
 switch plottype
     case 'xyz'
-        modphi = mod(phi,360);
-        edges = linspace(0,360,360);
-        discphi = discretize(modphi,edges);
+        for f = 1:size(files,2)
+            modphi = mod(phi,360);
+            edges = linspace(0,360,360);
+            discphi = discretize(modphi,edges);
+        end
+        
         colors = parula(360);
         % Make plot
         %plot3(ax1,x,y,z);
         hold on;
         if lmovie
             for i=startframe+ntail:skipframes:endframe
-                
-                %s1 = scatter3(ax1,x(i-ntail:i,:),y(i-ntail:i,:),z(i-ntail:i,:));
-                s2 = plot3(ax1,x(i-ntail:i,:),y(i-ntail:i,:),z(i-ntail:i,:),'Color', colors(discphi(i),:));
+                for f = 1:size(files,2)
+                    %s1 = scatter3(ax1,x(i-ntail:i,:),y(i-ntail:i,:),z(i-ntail:i,:));
+                    s2 = plot3(ax1,x(i-ntail:i,:),y(i-ntail:i,:),z(i-ntail:i,:),'Color', colors(discphi(i),:));
+                end
                 campos([95.6559   -2.0102   32.5105]);
                 camtarget([-1.0351   -0.2400    0.1142]);
                 camup([0 0 1]);
@@ -233,8 +216,8 @@ switch plottype
                 axis equal
                 caxis(ax1,[0 360]);
                 zlim(ax1,[-1.25 1.25]);
-                ylim(ax1,[-6 6]);
-                xlim(ax1,[-6 6]);
+                ylim(ax1,[-6.9 6.9]);
+                xlim(ax1,[-6.9 6.9]);
                 
                 title('Particle Orbits');
                 
@@ -244,7 +227,9 @@ switch plottype
                 delete(s2);
             end
         else
-            scatter3(ax1,x,y,z,0.1,time);
+            for f = 1:size(files,2)
+                scatter3(ax1,x,y,z,0.1,time);
+            end
             set(gca,'FontSize',24);
             xlabel('X [m]');
             ylabel('Y [m]');
@@ -257,14 +242,18 @@ switch plottype
         % Make plot
         delete(ax1);
         ax1 = polaraxes;
-        modphi = mod(phi,180);
-        edges = linspace(0,180,360);
-        discphi = discretize(modphi,edges);
+        for f = 1:size(files,2)
+            modphi = mod(phi,180);
+            edges = linspace(0,180,360);
+            discphi = discretize(modphi,edges);
+        end
         colors = parula(360);
         
         if lmovie
             for i=startframe+ntail:skipframes:endframe
-                polarplot(ax1,deg2rad(theta(i-ntail:i,:)),rho(i-ntail:i,:), 'Color', colors(discphi(i),:));
+                for f = 1:size(files,2)
+                    polarplot(ax1,deg2rad(theta(i-ntail:i,:)),rho(i-ntail:i,:), 'Color', colors(discphi(i),:));
+                end
                 ax1.RLim = [0 1.5];
                 
                 %scatter(ax1, deg2rad(theta(i,:),rho(i,:));
@@ -274,33 +263,34 @@ switch plottype
                 writeVideo(v,frame);
             end
         else
-            polarplot(ax1,deg2rad(theta),rho);
+            for f = 1:size(files,2)
+                polarplot(ax1,deg2rad(theta),rho);
+            end
             set(gca,'FontSize',24);
             title('Particle Orbits');
         end
     case 'fluxperp'
-        
-        % Make plot 
-        %modphi = mod(phi,180);
-        %edges = linspace(0,180,360);
-        %discquant= discretize(modphi,edges);
-        %colors = parula(360);
-        edges = linspace(min(b, [], 'all'), max(b, [], 'all'), 360);
-        
-        colors = parula(360);
-        discquant = discretize(b,edges);
         poloidalextent = 360.0;
         toroidalextent = 72.0;
-        polrevolutions = floor(theta./ poloidalextent); %How many full revolutions have the particles completed
-        torrevolutions = floor(phi ./ toroidalextent);
+        colors = parula(360);
+        for f = 1:size(files,2)
+            edges = linspace(min(b, [], 'all'), max(b, [], 'all'), 360);
+            discquant = discretize(b,edges);
+            polrevolutions = floor(theta./ poloidalextent); %How many full revolutions have the particles completed
+            torrevolutions = floor(phi ./ toroidalextent);
+            
+        end
+        
         %phi = phi - torrevolutions(1,:).*toroidalextent; %Reset rotations
         %theta = theta - polrevolutions(1,:).*poloidalextent;
         
         if lmovie
+            endframe = size(b,1);
             tail = ntail;
         else
+            endframe = size(b,1);
             tail = endframe - startframe;
-            startframe = endframe-ntail;
+            startframe = startframe+ntail;
         end
         
         hold(ax1,'on');
@@ -348,76 +338,153 @@ switch plottype
                         end
                     end
                     
+                    if mirspace
+                        plot(ax2, time(:,j), bmir(:,j), 'Color', linecolors(j,:));
+                        plot(ax2, time(i-tail:i,j), bmir(i-tail:i,j));
+                        plot(ax2, time(i,j), bmir(i,j), 'r.', 'MarkerSize', 36);
+                        for m = plot_torrevolutions(j,1):plot_torrevolutions(j,1) %Frames for toroidal crossings
+                            ploty = phi(i-tail:i,j)-toroidalextent*m;
+                            ploty = ploty(dex);
+                            %ploty = mod(ploty(dex),toroidalextent); %Mod should be removed by previous calculations
+                            plot(ax3, plotx, ploty, 'Color', linecolors(j,:));
+                        end
+                    end
+                    
                     %scatter(ax1,plotx(:,j)-poloidalextent*plotrevolutions(j), ploty(:,j), 5, reshape(plotcolors, [size(plotcolors,1) 3]));
                 end
             end
             
-            %end
-            %scatter(ax1,reshape(plotx, [numel(plotx) 1]), reshape(ploty, [numel(ploty) 1]), 5, reshape(plotcolors, [size(plotcolors,1) 3]));
-            %                 radii = .001 + mod(phi(i,:),360)/20000;
-            %                 d = 2 .* radii;
-            %                 da = daspect(ax1);
-            %                 px = mean(plotx(end-10:end,:),1) - radii.*da(1)/2;
-            %                 py = mean(ploty(end-10:end,:),1) - radii.*da(2);
-            %
-            %                 for k = 1:size(plotx,2)
-            %                 r(k) = rectangle(ax1,'Position',[px(k) py(k) d(k)*da(1)/2 d(k)*da(2)],'Curvature',[1,1]);
-            %                 end
-            if pspace
-                %h3 = plot(ax2,pll(i-tail:i,:)./amu,pperp(i-tail:i,:)./amu, 'LineWidth', 5);
-                %set(h3, {'color'}, linecolors);
-                ax2.XLim = [-3E6 3E6];
-                ax2.YLim = [0 4E6];
-                xlabel(ax2,'Parallel Mom. [u*m/s]');
-                ylabel(ax2,'Perp. Mom. [u*m/s]')
-                %title(ax2,'Phase space');
-                set(ax2,'FontSize',20);
-                %h5 = plot(ax3, plotx(:,:), mod(phi(i-tail:i,:),toroidalextent));
-                ax3.XLim = [0 poloidalextent];
-                ax3.YLim = [0 toroidalextent];
-                xlabel(ax3, 'Poloidal angle \theta [deg]');
-                ylabel(ax3, 'Toroidal angle \phi [deg]');
-                set(ax3,'FontSize',20);
-                %set(h5, {'color'}, linecolors);
-            end
-            ax1.YLim = [0 1.5];
-            ax1.XLim = [0 poloidalextent];
-            ax1.CLim = [min(b, [], 'all'), max(b, [], 'all')];
-            c = colorbar(ax1,'south');
-            c.Label.String = 'B Field [T]';
-            %scatter(ax1, deg2rad(theta(i,:),rho(i,:));
-            set(ax1,'FontSize',24);
-            
-            xlabel(ax1, 'Poloidal angle \theta [deg]');
-            ylabel(ax1, 'Flux label \rho [a.u.]');
-            %title(ax1,'Particle Orbits');
-            frame = getframe(fig); %for writing
-            writeVideo(v,frame);
-            if lmovie
+        end
+        if pspace
+            %h3 = plot(ax2,pll(i-tail:i,:)./amu,pperp(i-tail:i,:)./amu, 'LineWidth', 5);
+            %set(h3, {'color'}, linecolors);
+            ax2.XLim = [-3E6 3E6];
+            ax2.YLim = [0 4E6];
+            xlabel(ax2,'Parallel Mom. [u*m/s]');
+            ylabel(ax2,'Perp. Mom. [u*m/s]')
+            %title(ax2,'Phase space');
+            set(ax2,'FontSize',20);
+            %h5 = plot(ax3, plotx(:,:), mod(phi(i-tail:i,:),toroidalextent));
+            ax3.XLim = [0 poloidalextent];
+            ax3.YLim = [0 toroidalextent];
+            xlabel(ax3, 'Poloidal angle \theta [deg]');
+            ylabel(ax3, 'Toroidal angle \phi [deg]');
+            set(ax3,'FontSize',20);
+            %set(h5, {'color'}, linecolors);
+        end
+        if mirspace
+            %ax2.XLim = [-3E6 3E6];
+            %ax2.YLim = [0 4E6];
+            xlabel(ax2,'Time [s]');
+            ylabel(ax2,'B_{mir} = E/\mu [T]')
+            %title(ax2,'Phase space');
+            set(ax2,'FontSize',20);
+            %h5 = plot(ax3, plotx(:,:), mod(phi(i-tail:i,:),toroidalextent));
+            ax3.XLim = [0 poloidalextent];
+            ax3.YLim = [0 toroidalextent];
+            xlabel(ax3, 'Poloidal angle \theta [deg]');
+            ylabel(ax3, 'Toroidal angle \phi [deg]');
+            set(ax3,'FontSize',20);
+        end
+        
+        ax1.YLim = [0 1.5];
+        ax1.XLim = [0 poloidalextent];
+        ax1.CLim = [min(b, [], 'all'), max(b, [], 'all')];
+        c = colorbar(ax1,'south');
+        c.Label.String = 'B Field [T]';
+        %scatter(ax1, deg2rad(theta(i,:),rho(i,:));
+        set(ax1,'FontSize',24);
+        
+        xlabel(ax1, 'Poloidal angle \theta [deg]');
+        ylabel(ax1, 'Flux label \rho [a.u.]');
+        %title(ax1,'Particle Orbits');
+        frame = getframe(fig); %for writing
+        writeVideo(v,frame);
+        if lmovie
             cla(ax1)
-            if pspace
+            if pspace || mirspace
                 cla(ax2)
                 cla(ax3)
             end
-            end
+        end
+        
+    case 'cartesian'
+        colors = parula(360);
+        
+        edges = linspace(min(b{1}, [], 'all'), max(b{1}, [], 'all'), 360);
+        for f = 1:size(files,2)
+            discquant{f} = discretize(b{f},edges);
+        end
+        if lmovie
+            %endframe = size(b,1);
+            tail = ntail;
+        else
+            %endframe = size(b,1);
+            startframe = endframe-ntail;
+            tail = endframe - 1;
             
         end
-        %         else
-        %             plot(ax1,theta,rho);
-        %             set(gca,'FontSize',24);
-        %             title('Particle Orbits');
-        %             ax1.YLim = [0 1.5];
-        %             ax1.XLim = [0 poloidalextent];
-        %             ax1.CLim = [min(b, [], 'all'), max(b, [], 'all')];
-        %             c = colorbar(ax1,'south');
-        %             c.Label.String = 'B Field [T]';
-        %             %scatter(ax1, deg2rad(theta(i,:),rho(i,:));
-        %             set(ax1,'FontSize',24);
-        %
-        %             xlabel(ax1, 'Poloidal angle \theta [deg]');
-        %             ylabel(ax1, 'Flux label \rho [a.u.]');
-        %             title(ax1,'Particle Orbits');
-        %         end
+        
+        hold(ax1,'on');
+        hold(ax2,'on');
+        hold(ax3,'on');
+        for i=startframe+ntail:skipframes:endframe
+            for f = 1:size(files,2)
+                plotcolors{f} = colors(discquant{f}((i-tail):i,:),:);
+            end
+            for f = 1:size(files,2)
+                for j = 1:numel(parts) %Plot all frames where particle goes over plot area boundary
+                    plotx = y{f}(i-tail:i,j);
+                    ploty =  x{f}(i-tail:i,j);
+                    scattercolors = plotcolors{f}((j-1)*size(plotx,1)+1:(j*size(plotx,1)),:);
+                    plot(ax1,plotx,ploty, 'Color', linecolors{f}(j,:));
+                    scatter(ax1,plotx,ploty, 5, scattercolors);
+                    
+                    plot(ax2, time{f}(:,j), bmir{f}(:,j), 'Color', linecolors{f}(j,:));
+                    plot(ax2, time{f}(i-tail:i,j), bmir{f}(i-tail:i,j));
+                    plot(ax2, time{f}(i,j), bmir{f}(i,j), 'r.', 'MarkerSize', 36);
+                    
+                    %plot(ax3, r(i-tail:i,j), z(i-tail:i,j), 'Color', linecolors(j,:));
+                    plot(ax3, rhosintheta{f}(i-tail:i,j), rhocostheta{f}(i-tail:i,j), 'Color', linecolors{f}(j,:));
+                end
+            end
+            
+            ax1.YLim = [-8 8];
+            ax1.XLim = [-8 7];
+            axis equal;
+            ax1.CLim = [min(b{1}, [], 'all'), max(b{1}, [], 'all')];
+            c = colorbar(ax1,'south');
+            c.Label.String = 'B Field [T]';
+            set(ax1,'FontSize',24);
+            xlabel(ax1, 'X axis [m]');
+            ylabel(ax1, 'Y axis [m]');
+            
+            xlabel(ax2,'Time [s]');
+            ylabel(ax2,'B_{mir} = E/\mu [T]')
+            set(ax2,'FontSize',20);
+            
+            %             ax3.XLim = [4.8 6.5];
+            %             ax3.YLim = [-1.3 1.3];
+            %             xlabel(ax3, 'R axis [m]');
+            %             ylabel(ax3, 'Z Axis [m]');
+            xlabel(ax3, '\rho*cos(\theta)');
+            ylabel(ax3, '\rho*sin(\theta)');
+            set(ax3,'FontSize',20);
+            ax3.XLim = [-2 2];
+            ax3.YLim = [-2 2];
+            
+            
+            frame = getframe(fig); %for writing
+            writeVideo(v,frame);
+            if lmovie
+                cla(ax1)
+                if pspace || mirspace
+                    cla(ax2)
+                    cla(ax3)
+                end
+            end
+        end
+        
     case {'vll','pll'}
         
         % Make plot
@@ -436,53 +503,6 @@ switch plottype
         title('R-Z Overview');
         
 end
-end
-
-function [time, varargout] = get_properties_time_trace(a5file, path, parts, varargin)
-
-% Get IDS and time for sorting
-ids = double(h5read(a5file,[path '/ids']));
-time = double(h5read(a5file,[path '/mileage']));
-if isempty(parts)
-    parts = unique(ids);
-end
 
 
-dex = ismember(ids,parts);
-ids = ids(dex);
-time = time(dex);
-
-npart = length(unique(parts));
-
-% get array sizes
-[C,~,ic] = unique(ids);
-a_counts = accumarray(ic,1);
-value_counts = [C, a_counts];
-nsteps = max(value_counts(:,2));
-padfun = @(x) [x; NaN(nsteps-size(x,1),1)];
-
-timecell = mat2cell(time, value_counts(:,2),1);
-timecell = cellfun(padfun, timecell, 'UniformOutput', false); 
-time = cell2mat(timecell); %deal with differently sized time-traces
-time = reshape(time,[nsteps npart]);
-
-% create particle sorting array
-[time,idex] = sort(time);
-
-
-% Handle varargin
-    i=1;
-    while i <= size(varargin,2)
-        temp = h5read(a5file,[path '/' varargin{i}]);
-        temp = temp(dex);
-        tempcell = mat2cell(temp, value_counts(:,2),1);
-        tempcell = cellfun(padfun, tempcell, 'UniformOutput', false); 
-        temp = cell2mat(tempcell); %deal with differently sized time-traces
-        temp = reshape(temp,[nsteps npart]);
-        for j=1:npart
-            temp(:,j) = temp(idex(:,j),j); %sort in time
-        end
-        varargout{i} = temp;
-        i = i + 1;
-    end
 end

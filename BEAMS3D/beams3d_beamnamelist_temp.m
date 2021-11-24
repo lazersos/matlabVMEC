@@ -1,4 +1,4 @@
-function beams3d_beamnamelist(vmec_data,energy,power,r_beam,phi_beam,z_beam,div_beam,varargin)
+function beams3d_beamnamelist_temp(vmec_data,energy,power,r_beam,phi_beam,z_beam,div_beam,varargin)
 %BEAMS3D_BEAMNAMELIST Creates an beam input namelist from VMEC run
 %   The BEASM3DINPUTNAMELIST function outputs to screen an BEASM3D input
 %   namelist based on beam information and a VMEC run.  It takes as
@@ -296,11 +296,21 @@ if lplots
     n1 = (n2-n1)./2; 
     azi=rad2deg(n1);
     zeta = (0.55:1./63:1.0).*temp+n1;%(-1.03:1./63:-0.2).*temp+n1;
+    zeta2= (1.75:1./63:3.26).*temp+n1;
+    zeta_axis = (0:1./63:5.0).*temp+n1;
     rv = cfunct(thv,zeta,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
     zv = sfunct(thv,zeta,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
+    rv2 = cfunct(thv,zeta2,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
+    zv2 = sfunct(thv,zeta2,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
+    rv_axis = cfunct(thv,zeta_axis,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
+    zv_axis = sfunct(thv,zeta_axis,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
     if vmec_data.iasym==1
         rv = rv+sfunct(thv,zeta,vmec_data.rmns,vmec_data.xm,vmec_data.xn);
         zv = zv+cfunct(thv,zeta,vmec_data.zmnc,vmec_data.xm,vmec_data.xn);
+        rv2 = rv+sfunct(thv,zeta2,vmec_data.rmns,vmec_data.xm,vmec_data.xn);
+        zv2 = zv+cfunct(thv,zeta2,vmec_data.zmnc,vmec_data.xm,vmec_data.xn);
+        rv_axis = cfunct(thv,zeta_axis,vmec_data.rmns,vmec_data.xm,vmec_data.xn);
+        zv_axis = sfunct(thv,zeta_axis,vmec_data.zmnc,vmec_data.xm,vmec_data.xn);
     end
     x_beam = r_beam.*cos(phi_beam);
     y_beam = r_beam.*sin(phi_beam);
@@ -310,8 +320,13 @@ if lplots
 %     zv(:,:,end+1) = zv(:,:,1);   
 %     phi = (-.5:1./63:4.5).*temp+n1; %0:2*pi/(size(rv,3)-1):2*pi;
     ha=isotoro(rv,zv,zeta,vmec_data.ns);
-    set(ha,'FaceAlpha',0.33); hold on;
-    plot3(squeeze(rv(1,1,:)).*cos(zeta)',squeeze(rv(1,1,:)).*sin(zeta)',squeeze(zv(1,1,:)),'k');
+    hold on
+    ha2=isotoro(rv2,zv2,zeta2,vmec_data.ns);
+    set(ha,'FaceAlpha',0.33);
+    set(ha2,'FaceAlpha',0.33); 
+    gcf.GraphicsSmoothing = 'on';
+    %plot3(squeeze(rv(1,1,:)).*cos(zeta)',squeeze(rv(1,1,:)).*sin(zeta)',squeeze(zv(1,1,:)),'k');
+    plot3(squeeze(rv_axis(1,1,:)).*cos(zeta_axis)',squeeze(rv_axis(1,1,:)).*sin(zeta_axis)',squeeze(zv_axis(1,1,:)),'k');
     plot3(x_beam,y_beam,z_beam);
     nx=diff(x_beam);
     ny=diff(y_beam);

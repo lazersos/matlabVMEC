@@ -185,7 +185,8 @@ if ns==1
         vertex2(:,2) = vertex(:,2)-y0;
         vertex2(:,3) = vertex(:,3)-z0;
         %scale = 0.1350;
-        stlwrite2('isotoro.stl',faces(:,[2 1 3]),vertex2*scale);
+        TR = triangulation(faces(:,[2 1 3]),vertex2*scale);
+        stlwrite(TR, 'isotoro.stl');
     end
     
     

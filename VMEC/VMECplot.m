@@ -1306,7 +1306,7 @@ switch contents{get(handles.plottype,'Value')}
             f(:,:,end+1) = f(:,:,1);
             phi = 0:2*pi/(size(r,3)-1):2*pi;
             if (handles.rval > 1)
-                isotoro(r,z,phi,handles.rval,f);
+                isotoro(r,z,phi,handles.rval,f, 'STL');
                 try %Only when app is present
                     evalin('base', 'app');
                     assignin('base','ColorData',f);
@@ -1376,7 +1376,7 @@ switch contents{get(handles.plottype,'Value')}
             axis equal
         elseif strcmp(handles.cuttype,'3D')
             set(handles.rtext,'String','Flux');
-            isotoro(handles.r,handles.z,handles.zeta,handles.rval);
+            isotoro(handles.r,handles.z,handles.zeta,handles.rval, 'STL');
             title(strcat('Flux Surface (ns=',num2str(handles.rval),')'));
             xlabel('X [m]');
             ylabel('Y [m]');
@@ -1459,7 +1459,7 @@ switch contents{get(handles.plottype,'Value')}
             z(:,:,end+1) = z(:,:,1);
             phi = 0:2*pi/(size(r,3)-1):2*pi;
             if (handles.rval > 1)
-                isotoro(r,z,phi,handles.rval);
+                isotoro(r,z,phi,handles.rval, 'STL');
                 title(strcat('Flux Surface (ns=',num2str(handles.rval),')'));
             else
                 plot3(squeeze(r(1,1,:)).*cos(phi'),...

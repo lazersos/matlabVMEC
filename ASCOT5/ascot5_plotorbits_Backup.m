@@ -30,7 +30,7 @@ parts = [];
 lmovie = 0;
 pspace = 0;
 filename = 'default';
-startframe = 100; %Number of Start-Frame - ntail
+startframe = 1; %Number of Start-Frame - ntail
 endframe = 20000; %Number of last frame
 skipframes = 15; %How many data points to skip between images
 ntail = 20;
@@ -115,6 +115,7 @@ if pspace
 end
 v = VideoWriter([filename '.mp4'], 'MPEG-4');
 open(v);
+endframe = 
 
 switch plottype
     case 'xyz'
@@ -129,6 +130,7 @@ switch plottype
         %plot3(ax1,x,y,z);
         hold on;
         if lmovie
+            
             for i=startframe+ntail:skipframes:endframe
                 
                 %s1 = scatter3(ax1,x(i-ntail:i,:),y(i-ntail:i,:),z(i-ntail:i,:));

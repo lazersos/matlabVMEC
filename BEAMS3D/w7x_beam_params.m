@@ -303,7 +303,7 @@ end
 % Write if requested
 if (lwrite_beams3d)
     next_varargin=[next_varargin species 'pfrac' PFRAC 'beam_dex' source];
-    beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
+    beams3d_beamnamelist_temp(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
         z_beam,div_beam,next_varargin{:},'note',note,'t_end',t_end);
 end
 return
