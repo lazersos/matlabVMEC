@@ -2200,88 +2200,50 @@ if length(f.Dmerc) ~= f.ns
     f.Dgeod(f.ns)=2 * f.Dgeod(f.ns-1) - f.Dgeod(f.ns-2);
 end
 end
-% Now do the matrix values
-% First Index (note indexing on vectors is 2:ns when VMEC outputs)
-f.lmns(:,1)=     1.5 *     f.lmns(:,2) - 0.5 *     f.lmns(:,3);
-f.bsupumnc(:,1)= 1.5 * f.bsupumnc(:,2) - 0.5 * f.bsupumnc(:,3);
-f.bsupvmnc(:,1)= 1.5 * f.bsupvmnc(:,2) - 0.5 * f.bsupvmnc(:,3);
-f.bsubsmns(:,1)= 1.5 * f.bsubsmns(:,2) - 0.5 * f.bsubsmns(:,3);
-f.bsubumnc(:,1)= 1.5 * f.bsubumnc(:,2) - 0.5 * f.bsubumnc(:,3);
-f.bsubvmnc(:,1)= 1.5 * f.bsubvmnc(:,2) - 0.5 * f.bsubvmnc(:,3);
-f.gmnc(:,1)=     1.5 *     f.gmnc(:,2) - 0.5 *     f.gmnc(:,3);
-f.bmnc(:,1)=     1.5 *     f.bmnc(:,2) - 0.5 *     f.bmnc(:,3);
-% Average
-for i=2:f.ns-1
-    f.lmns(:,i)=     0.5 * (     f.lmns(:,i) +     f.lmns(:,i+1) );
-    f.bsupumnc(:,i)= 0.5 * ( f.bsupumnc(:,i) + f.bsupumnc(:,i+1) );
-    f.bsupvmnc(:,i)= 0.5 * ( f.bsupvmnc(:,i) + f.bsupvmnc(:,i+1) );
-    f.bsubsmns(:,i)= 0.5 * ( f.bsubsmns(:,i) + f.bsubsmns(:,i+1) );
-    f.bsubumnc(:,i)= 0.5 * ( f.bsubumnc(:,i) + f.bsubumnc(:,i+1) );
-    f.bsubvmnc(:,i)= 0.5 * ( f.bsubvmnc(:,i) + f.bsubvmnc(:,i+1) );
-    f.gmnc(:,i)    = 0.5 * (     f.gmnc(:,i) +     f.gmnc(:,i+1) );
-    f.bmnc(:,i)    = 0.5 * (     f.bmnc(:,i) +     f.bmnc(:,i+1) );
-end
-% Last Index (note indexing on vectors is 2:ns when VMEC outputs)
-f.lmns(:,f.ns)=     2.0 *     f.lmns(:,f.ns-1) -     f.lmns(:,f.ns-2);
-f.bsupumnc(:,f.ns)= 2.0 * f.bsupumnc(:,f.ns-1) - f.bsupumnc(:,f.ns-2);
-f.bsupvmnc(:,f.ns)= 2.0 * f.bsupvmnc(:,f.ns-1) - f.bsupvmnc(:,f.ns-2);
-f.bsubsmns(:,f.ns)= 2.0 * f.bsubsmns(:,f.ns-1) - f.bsubsmns(:,f.ns-2);
-f.bsubumnc(:,f.ns)= 2.0 * f.bsubumnc(:,f.ns-1) - f.bsubumnc(:,f.ns-2);
-f.bsubvmnc(:,f.ns)= 2.0 * f.bsubvmnc(:,f.ns-1) - f.bsubvmnc(:,f.ns-2);
-f.gmnc(:,f.ns)=     2.0 *     f.gmnc(:,f.ns-1) -     f.gmnc(:,f.ns-2);
-f.bmnc(:,f.ns)=     2.0 *     f.bmnc(:,f.ns-1) -     f.bmnc(:,f.ns-2);
-% Handle ANI/FLOW Values
-if isfield(f,'prprmnc')
-    f.prprmnc(:,1) =     1.5 *     f.prprmnc(:,2) - 0.5 *     f.prprmnc(:,3);
-    for i=2:f.ns-1
-        f.prprmnc(:,i) =     0.5 * (     f.prprmnc(:,i) +     f.prprmnc(:,i+1) );
-    end
-    f.prprmnc(:,f.ns)=     2.0 *     f.prprmnc(:,f.ns-1) -     f.prprmnc(:,f.ns-2);
-end
-if isfield(f,'protmnc')
-    f.protmnc(:,1) =     1.5 *     f.protmnc(:,2) - 0.5 *     f.protmnc(:,3);
-    for i=2:f.ns-1
-        f.protmnc(:,i) =     0.5 * (     f.protmnc(:,i) +     f.protmnc(:,i+1) );
-    end
-    f.protmnc(:,f.ns)=     2.0 *     f.protmnc(:,f.ns-1) -     f.protmnc(:,f.ns-2);
-end
-if isfield(f,'protrsqmnc')
-    f.protrsqmnc(:,1) =     1.5 *     f.protrsqmnc(:,2) - 0.5 *     f.protrsqmnc(:,3);
-    for i=2:f.ns-1
-        f.protrsqmnc(:,i) =     0.5 * (     f.protrsqmnc(:,i) +     f.protrsqmnc(:,i+1) );
-    end
-    f.protrsqmnc(:,f.ns)=     2.0 *     f.protrsqmnc(:,f.ns-1) -     f.protrsqmnc(:,f.ns-2);
-end
 if ~isfield(f,'iasym'), f.iasym=0; end
-if f.iasym >0 % Handle existance of lmnc on half mesh
-    f.lmnc(:,1)=     1.5 *     f.lmnc(:,2) - 0.5 *     f.lmnc(:,3);
-    f.bsupumns(:,1)= 1.5 * f.bsupumns(:,2) - 0.5 * f.bsupumns(:,3);
-    f.bsupvmns(:,1)= 1.5 * f.bsupvmns(:,2) - 0.5 * f.bsupvmns(:,3);
-    f.bsubsmnc(:,1)= 1.5 * f.bsubsmnc(:,2) - 0.5 * f.bsubsmnc(:,3);
-    f.bsubumns(:,1)= 1.5 * f.bsubumns(:,2) - 0.5 * f.bsubumns(:,3);
-    f.bsubvmns(:,1)= 1.5 * f.bsubvmns(:,2) - 0.5 * f.bsubvmns(:,3);
-    f.gmns(:,1)=     1.5 *     f.gmns(:,2) - 0.5 *     f.gmns(:,3);
-    f.bmns(:,1)=     1.5 *     f.bmns(:,2) - 0.5 *     f.bmns(:,3);
-    for i=2:f.ns-1
-        f.lmnc(:,i)=     0.5 * (     f.lmnc(:,i) +     f.lmnc(:,i+1) );
-        f.bsupumns(:,i)= 0.5 * ( f.bsupumns(:,i) + f.bsupumns(:,i+1) );
-        f.bsupvmns(:,i)= 0.5 * ( f.bsupvmns(:,i) + f.bsupvmns(:,i+1) );
-        f.bsubsmnc(:,i)= 0.5 * ( f.bsubsmnc(:,i) + f.bsubsmnc(:,i+1) );
-        f.bsubumns(:,i)= 0.5 * ( f.bsubumns(:,i) + f.bsubumns(:,i+1) );
-        f.bsubvmns(:,i)= 0.5 * ( f.bsubvmns(:,i) + f.bsubvmns(:,i+1) );
-        f.gmns(:,i)    = 0.5 * (     f.gmns(:,i) +     f.gmns(:,i+1) );
-        f.bmns(:,i)    = 0.5 * (     f.bmns(:,i) +     f.bmns(:,i+1) );
-    end
-    f.lmnc(:,f.ns)=     2.0 *     f.lmnc(:,f.ns-1) -     f.lmnc(:,f.ns-2);
-    f.bsupumns(:,f.ns)= 2.0 * f.bsupumns(:,f.ns-1) - f.bsupumns(:,f.ns-2);
-    f.bsupvmns(:,f.ns)= 2.0 * f.bsupvmns(:,f.ns-1) - f.bsupvmns(:,f.ns-2);
-    f.bsubsmnc(:,f.ns)= 2.0 * f.bsubsmnc(:,f.ns-1) - f.bsubsmnc(:,f.ns-2);
-    f.bsubumns(:,f.ns)= 2.0 * f.bsubumns(:,f.ns-1) - f.bsubumns(:,f.ns-2);
-    f.bsubvmns(:,f.ns)= 2.0 * f.bsubvmns(:,f.ns-1) - f.bsubvmns(:,f.ns-2);
-    f.gmns(:,f.ns)=     2.0 *     f.gmns(:,f.ns-1) -     f.gmns(:,f.ns-2);
-    f.bmns(:,f.ns)=     2.0 *     f.bmns(:,f.ns-1) -     f.bmns(:,f.ns-2);
+% Now do the 2D array values
+% Need to handle odd/even differently
+ns1 = f.ns-1;
+stemp = 0:1./ns1:1;
+shalf = zeros(1,f.ns);
+shalf(2:end) = 0.5.*(stemp(1:end-1) + stemp(2:end));
+i1h = max(min(1:f.ns,ns1),2);
+i2h = i1h + 1;
+x = stemp - shalf(i1h);
+x1 = (1-x);
+x2 = x;
+f1 = x1.*sqrt(stemp./shalf(i1h));
+f2 = x2.*sqrt(stemp./shalf(i2h));
+% First lmns on mnmax grid
+dexe = mod(f.xm,2)==0;
+dexo = ~dexe;
+f.lmns(dexe,1:f.ns) = f.lmns(dexe,i1h).*x1+f.lmns(dexe,i2h).*x2;
+f.lmns(dexo,1:f.ns) = f.lmns(dexo,i1h).*f2+f.lmns(dexo,i2h).*f2;
+if f.iasym>0
+    f.lmnc(dexe,1:f.ns) = f.lmnc(dexe,i1h).*x1+f.lmnc(dexe,i2h).*x2;
+    f.lmnc(dexo,1:f.ns) = f.lmnc(dexo,i1h).*f2+f.lmnc(dexo,i2h).*f2;
 end
-return
+% Now mnmax_nyq sized arrays
+dexe = mod(f.xm_nyq,2)==0;
+dexo = ~dexe;
+fields = {'bsupumnc','bsupvmnc','bsubsmns','bsubumnc','bsubvmnc',...
+        'gmnc','bmnc'};
+if isfield(f,'prprmnc'), fields=[fields 'prprmnc']; end
+if isfield(f,'protmnc'), fields=[fields 'protmnc']; end
+if isfield(f,'protrsqmnc'), fields=[fields 'protrsqmnc']; end
+if f.iasym>0
+    fields = [fields 'bsupumns','bsupvmns','bsubsmnc','bsubumns','bsubvmns',...
+        'gmns','bmns'];
+    if isfield(f,'prprmns'), fields=[fields 'prprmns']; end
+    if isfield(f,'protmns'), fields=[fields 'protmns']; end
+    if isfield(f,'protrsqmns'), fields=[fields 'protrsqmns']; end
+end
+for temp=fields
+    fieldname=temp{1};
+    f.(fieldname)(dexe,1:f.ns)=f.(fieldname)(dexe,i1h).*x1+f.(fieldname)(dexe,i2h).*x2;
+    f.(fieldname)(dexo,1:f.ns)=f.(fieldname)(dexo,i1h).*f1+f.(fieldname)(dexo,i2h).*f2;
+end
+return;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function f = h2f(var,ns)
