@@ -11,7 +11,7 @@ function f=read_vmec(filename)
 %      data=read_vmec('wout.test');     % Reads VMEC wout file
 %      mdata=read_vmec('mercier.test'); % Reads VMEC mercier file
 %
-% Maintained by: Samuel Lazerson (sameul.lazerson@ipp.mpg.de)
+% Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.96
 
 % NOTES:
