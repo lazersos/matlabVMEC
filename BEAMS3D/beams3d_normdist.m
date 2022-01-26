@@ -42,18 +42,19 @@ rhov = sqrt(sv);
 
 % Create Interpolating functions (odd modes in rho)
 i1 = floor(sb./dsv)+1;
-i1 = min(i1,vmec_data.ns-1);
+i1 = max(min(i1,vmec_data.ns-1),2);
 i2 = i1+1;
 gmnc = zeros(vmec_data.mnmax_nyq,beam_data.ns_prof1);
+x = (sb-(i1-1)*dsv)./dsv;
 for mn = 1:vmec_data.mnmax_nyq
-    x = (sb-(i1-1)*dsv)./dsv;
     f1 = vmec_data.gmnc(mn,i1);
     f2 = vmec_data.gmnc(mn,i2);
     if ~(mod(vmec_data.xm_nyq(mn),2)==0) % odd
         f1 = f1.*rhob./rhov(i1);
-        f2 = f2.*rhob./rhov(i1);
+        f2 = f2.*rhob./rhov(i2);
     end
-    gmnc(mn,:) = f1.*(1-x)+f2.*x;
+    %plot([f1;f2]'); pause(1);
+    gmnc(mn,:) = f1.*(1.0-x)+f2.*x;
 end
 if vmec_data.iasym
     gmns = zeros(vmec_data.mnmax_nyq,beam_data.ns_prof1);
@@ -77,8 +78,8 @@ end
 
 % Adjust from dV/ds to dV/drho dV/drho = dV/ds * ds/drho = 2*rho*dVds
 sqrtg =2.*sqrtg.*repmat(rhob',[1 beam_data.ns_prof2 beam_data.ns_prof3]);
-%pi.*pi*4.*sum(sqrtg,'all')./(beam_data.ns_prof1.*beam_data.ns_prof2.*beam_data.ns_prof3)
 
+% Adjust shape
 sqrtg = repmat(sqrtg,[1 1 1 beam_data.ns_prof4 beam_data.ns_prof5 beam_data.nbeams]);
 sqrtg = permute(sqrtg,[6 1 2 3 4 5]);
 
