@@ -133,7 +133,7 @@ for f = 1:size(files,2)
     y{f} = r{f}.*sind(phi{f});
     
     xyz_mat = [x{f}, y{f}, z{f}];
-    writematrix(xyz_mat, 'xyz_particle.txt', 'Delimiter', ';');
+    writematrix(xyz_mat, 'xyz_particle_NBI_19.txt', 'Delimiter', ';');
     
     rhocostheta{f} = rho{f}.*cosd(theta{f});
     rhosintheta{f} = rho{f}.*sind(theta{f});
@@ -185,9 +185,10 @@ end
 for f = 1:size(files,2)
     linecolors{f} = lines(size(x{f},2));
 end
+if lmovie
 v = VideoWriter([filename '.mp4'], 'MPEG-4');
 open(v);
-
+end
 switch plottype
     case 'xyz'
         for f = 1:size(files,2)
@@ -243,16 +244,16 @@ switch plottype
         delete(ax1);
         ax1 = polaraxes;
         for f = 1:size(files,2)
-            modphi = mod(phi,180);
-            edges = linspace(0,180,360);
-            discphi = discretize(modphi,edges);
+            modphi = mod(phi{f},180);
+            edges{f} = linspace(0,180,360);
+            discphi{f} = discretize(modphi,edges{f});
         end
         colors = parula(360);
         
         if lmovie
             for i=startframe+ntail:skipframes:endframe
                 for f = 1:size(files,2)
-                    polarplot(ax1,deg2rad(theta(i-ntail:i,:)),rho(i-ntail:i,:), 'Color', colors(discphi(i),:));
+                    polarplot(ax1,deg2rad(theta{f}(i-ntail:i,:)),rho{f}(i-ntail:i,:), 'Color', colors(discphi{f}(i),:));
                 end
                 ax1.RLim = [0 1.5];
                 
@@ -264,7 +265,7 @@ switch plottype
             end
         else
             for f = 1:size(files,2)
-                polarplot(ax1,deg2rad(theta),rho);
+                polarplot(ax1,deg2rad(theta{f}),rho{f});
             end
             set(gca,'FontSize',24);
             title('Particle Orbits');
@@ -274,31 +275,30 @@ switch plottype
         toroidalextent = 72.0;
         colors = parula(360);
         for f = 1:size(files,2)
-            edges = linspace(min(b, [], 'all'), max(b, [], 'all'), 360);
-            discquant = discretize(b,edges);
-            polrevolutions = floor(theta./ poloidalextent); %How many full revolutions have the particles completed
-            torrevolutions = floor(phi ./ toroidalextent);
-            
+            edges = linspace(min(b{f}, [], 'all'), max(b{f}, [], 'all'), 360);
+            discquant = discretize(b{f},edges);
+            polrevolutions = floor(theta{f}./ poloidalextent); %How many full revolutions have the particles completed
+            torrevolutions = floor(phi{f}./ toroidalextent);       
         end
         
         %phi = phi - torrevolutions(1,:).*toroidalextent; %Reset rotations
         %theta = theta - polrevolutions(1,:).*poloidalextent;
-        
-        if lmovie
-            endframe = size(b,1);
+        endframe = size(b{f},1);
+        if lmovie   
             tail = ntail;
         else
-            endframe = size(b,1);
-            tail = endframe - startframe;
-            startframe = startframe+ntail;
+            tail = endframe - 1;
+            startframe = 1;
+%             tail = endframe - startframe;
+%             startframe = startframe+ntail;
         end
         
         hold(ax1,'on');
         hold(ax2,'on');
         hold(ax3,'on');
-        for i=startframe+ntail:skipframes:endframe
-            plottheta = theta(i-tail:i,:);
-            plotrho = rho(i-tail:i,:);
+        for i=startframe+tail:skipframes:endframe
+            plottheta = theta{f}(i-tail:i,:);
+            plotrho = rho{f}(i-tail:i,:);
             plotcolors = colors(discquant(i-tail:i,:),:);
             plot_polrevolutions = [polrevolutions(i-tail,:)' polrevolutions(i,:)']; %How many times does the orbit wrap around in current plot for each particle
             plot_torrevolutions = [torrevolutions(i-tail,:)' torrevolutions(i,:)'];
@@ -325,28 +325,28 @@ switch plottype
                     %set(h2(j), {'color'}, linecolors);
                     %scatter(ax1,reshape(plotx, [numel(plotx) 1])-poloidalextent*k, reshape(ploty, [numel(ploty) 1]), 5, reshape(plotcolors, [size(plotcolors,1) 3]));
                     
-                    plot(ax1,plotx,ploty, 'Color', linecolors(j,:));
+                    plot(ax1,plotx,ploty, 'Color', linecolors{f}(j,:));
                     scatter(ax1,plotx,ploty, 5, scattercolors);
                     
                     if pspace
-                        plot(ax2,pll(i-tail:i,j)./amu,pperp(i-tail:i,j)./amu, 'LineWidth', 5, 'Color', linecolors(j,:));
+                        plot(ax2,pll(i-tail:i,j)./amu,pperp(i-tail:i,j)./amu, 'LineWidth', 5, 'Color', linecolors{f}(j,:));
                         for m = plot_torrevolutions(j,1):plot_torrevolutions(j,1) %Frames for toroidal crossings
                             ploty = phi(i-tail:i,j)-toroidalextent*m;
                             ploty = ploty(dex);
                             %ploty = mod(ploty(dex),toroidalextent); %Mod should be removed by previous calculations
-                            plot(ax3, plotx, ploty, 'Color', linecolors(j,:));
+                            plot(ax3, plotx, ploty, 'Color', linecolors{f}(j,:));
                         end
                     end
                     
                     if mirspace
-                        plot(ax2, time(:,j), bmir(:,j), 'Color', linecolors(j,:));
-                        plot(ax2, time(i-tail:i,j), bmir(i-tail:i,j));
-                        plot(ax2, time(i,j), bmir(i,j), 'r.', 'MarkerSize', 36);
+                        plot(ax2, time{f}(:,j), bmir{f}(:,j), 'Color', linecolors{f}(j,:));
+                        plot(ax2, time{f}(i-tail:i,j), bmir{f}(i-tail:i,j));
+                        plot(ax2, time{f}(i,j), bmir{f}(i,j), 'r.', 'MarkerSize', 36);
                         for m = plot_torrevolutions(j,1):plot_torrevolutions(j,1) %Frames for toroidal crossings
-                            ploty = phi(i-tail:i,j)-toroidalextent*m;
+                            ploty = phi{f}(i-tail:i,j)-toroidalextent*m;
                             ploty = ploty(dex);
                             %ploty = mod(ploty(dex),toroidalextent); %Mod should be removed by previous calculations
-                            plot(ax3, plotx, ploty, 'Color', linecolors(j,:));
+                            plot(ax3, plotx, ploty, 'Color', linecolors{f}(j,:));
                         end
                     end
                     
@@ -389,7 +389,7 @@ switch plottype
         
         ax1.YLim = [0 1.5];
         ax1.XLim = [0 poloidalextent];
-        ax1.CLim = [min(b, [], 'all'), max(b, [], 'all')];
+        ax1.CLim = [min(b{f}, [], 'all'), max(b{f}, [], 'all')];
         c = colorbar(ax1,'south');
         c.Label.String = 'B Field [T]';
         %scatter(ax1, deg2rad(theta(i,:),rho(i,:));
@@ -398,6 +398,7 @@ switch plottype
         xlabel(ax1, 'Poloidal angle \theta [deg]');
         ylabel(ax1, 'Flux label \rho [a.u.]');
         %title(ax1,'Particle Orbits');
+        
         frame = getframe(fig); %for writing
         writeVideo(v,frame);
         if lmovie
@@ -474,9 +475,10 @@ switch plottype
             ax3.YLim = [-2 2];
             
             
-            frame = getframe(fig); %for writing
-            writeVideo(v,frame);
+
             if lmovie
+                frame = getframe(fig); %for writing
+                 writeVideo(v,frame);
                 cla(ax1)
                 if pspace || mirspace
                     cla(ax2)
