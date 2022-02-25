@@ -23,20 +23,31 @@ function wall_load = ascot5_calcwallload(a5file,wallid,runid,varargin)
 amu = 1.66053906660E-27;
 wall_load = [];
 pts_mask=[];
+area_mask = 0.0;
 lhits = 0;
 lpow = 0;
+lcx=0;
+
 % Handle varargin
 if nargin > 3
     i=1;
-    while i <= nargin-3
+    if iscell(varargin{1})
+        varargin=varargin{1};
+    end
+    while i <= numel(varargin)
         switch varargin{i}
             case{'hits','nhits'}
                 lhits = 1;
             case 'power'
                 lpow = 1;
+            case{'cx','cxsim'}
+                lcx = 1;
             case{'mask_points'}
                 i=i+1;
                 pts_mask=varargin{i};
+            case{'area_mask'}
+                i=i+1;
+                area_mask=varargin{i};
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -93,12 +104,15 @@ end
 % Correct walltile
 dex = endcond ~= 8; % endcond=8 is wall hit
 walltile(dex) = 0;
-
+% Count hits
+nhits=[];
+mask = unique(walltile);
+mask_final = mask(mask>0);
+weight = h5read(a5file,[path_run '/weight']);
 if ~lhits
     y1y2y3 = h5read(a5file,[path_wall '/y1y2y3']);
     z1z2z3 = h5read(a5file,[path_wall '/z1z2z3']);
-    weight = h5read(a5file,[path_run '/weight']);
-        mass = h5read(a5file,[path_run '/mass']).*amu; %in amu
+    mass = h5read(a5file,[path_run '/mass']).*amu; %in amu
     try
         vr = h5read(a5file,[path_run '/vr']);
         vphi = h5read(a5file,[path_run '/vphi']);
@@ -112,6 +126,14 @@ if ~lhits
         vz = pz./mass;
     end
     v2 = vr.*vr+vphi.*vphi+vz.*vz;
+    if lcx
+        time = h5read(a5file,[path_run '/time']);
+        v=sqrt(v2);
+        sig=1E-15./(100*100); %cm^2 => m^2 1m/100cm
+        n0 = 5E15; % Density m^-3
+        fact=exp(-n0.*sig.*v.*time);
+        weight = weight.*fact;
+    end
     q  = 0.5.*mass.*v2.*weight;
     if ~lpow
         V0=[x1x2x3(2,:)-x1x2x3(1,:);y1y2y3(2,:)-y1y2y3(1,:);z1z2z3(2,:)-z1z2z3(1,:)];

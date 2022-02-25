@@ -83,6 +83,13 @@ if nargin > 1
                     next_varargin = [next_varargin varargin{i}];
                     i = i+1;
                     next_varargin = [next_varargin varargin{i}];
+                % These are just passed to the next routine
+                case {'NI'}
+                    next_varargin = [next_varargin varargin{i}];
+                    i = i+1;
+                    next_varargin = [next_varargin varargin{i}];
+                    i = i+1;
+                    next_varargin = [next_varargin varargin{i}];
             end
         end
         i = i+1;
@@ -227,6 +234,7 @@ if lplots
 end
 
 % Use beamnamelist
+% From 10.1016/j.fusengdes.2013.03.006
 r_beam=[]; p_beam=[]; z_beam=[]; j=1; power_beam=[]; energy_beam=[];
 div_beam=[]; note={};
 switch species
@@ -235,10 +243,12 @@ switch species
         PFRAC=[1 0 0];
         ENERGY = 40E3;
     case{'H2'}
-        POWER=[1.78 1.64 1.78 1.64 1.78 1.64 1.78 1.64].*1E6;
+        %POWER=[1.78 1.64 1.78 1.64 1.78 1.64 1.78 1.64].*1E6;
+        POWER=[1.80 1.80 1.80 1.80 1.80 1.80 1.80 1.80].*1E6; % Nominal
         if grid==60
             ENERGY=55E3;
-            PFRAC=[0.546 0.309 0.145];
+            %PFRAC=[0.546 0.309 0.145];
+            PFRAC=[0.510 0.300 0.190]; % ASDEX? From Ringbuch
         elseif grid==100
             ENERGY=72E3;
             PFRAC=[0.380 0.350 0.270];
@@ -247,10 +257,11 @@ switch species
             ENERGY = 1;
         end
     case{'D2'}
-        POWER=[2.48 2.28 2.48 2.28 2.48 2.28 2.48 2.28].*1E6;
+        POWER=[2.50 2.50 2.50 2.50 2.50 2.50 2.50 2.50].*1E6;
         if grid==60
             ENERGY=60E3;
-            PFRAC=[0.742 0.208 0.050];
+            %PFRAC=[0.742 0.208 0.050];
+            PFRAC=[0.650 0.250 0.100]; % ASDEX Values From Ringbuch
         elseif grid==100
             ENERGY=100E3;
             PFRAC=[0.6207 0.2808 0.0985];

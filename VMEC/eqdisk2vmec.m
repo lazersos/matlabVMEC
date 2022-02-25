@@ -1,6 +1,9 @@
-function data = eqdisk2vmec( varargin )
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+function data = eqdisk2vmec( filename )
+%EQDSK2VMEC Converts EQDSK files to VMEC INDATA namelists
+%   The EQDSK2VMEC routine takes an EQDSK file and computes a VMEC INDATA
+%   namelist.  Plots showing the fitting routines used are also made.  
+%   This is a work in progress
+
 if (nargin == 1)
     if isstr(varargin{1})
         filename = varargin{1};
@@ -28,8 +31,8 @@ vmec_input.delt = 1.0;
 vmec_input.niter = 20000;
 vmec_input.tcon0 = 1.0;
 vmec_input.ns_array = [16 32 64 128];
-vmec_input.ftol_array = [1e-6  1e-8  1e-10  1e-12];
-vmec_input.niter_array = [2000  4000  8000  20000];
+vmec_input.ftol_array = [1e-30  1e-30  1e-30  1e-12];
+vmec_input.niter_array = [1000  2000  4000  20000];
 vmec_input.lasym = 1;
 vmec_input.nfp =1;
 vmec_input.mpol = max(size(data.refou));
@@ -140,7 +143,7 @@ end
 %    sin(mu+nv) = sin(mu)cos(nv)+cos(mu)sin(nv)
 fnuv=zeros(1,mpol+1);
 fnuv(1)=1./(nu*nv);
-for i=2:mpol+1;
+for i=2:mpol+1
     fnuv(i)=2*fnuv(1);
 end
 for m1=1:mpol+1
@@ -171,12 +174,13 @@ jdotb=data.spp+data.sffp;
 press=data.sp;
 qprof=data.qpsi;
 iotaf=1./qprof;
+% dphi = q * dpsi
 q_spl=pchip(pflux',qprof);
 fun = @(x) ppval(q_spl,x);
 for i=1:length(pflux)
     tflux(i) = integral(fun,pflux(1),pflux(i));
 end
-phiedge = tflux(length(pflux))*2*pi;
+phiedge = tflux(end).*2.*pi.*sign(data.btor);
 tflux = tflux./tflux(length(tflux));
 s = 0:1/99:1;
 am_aux_s = s;

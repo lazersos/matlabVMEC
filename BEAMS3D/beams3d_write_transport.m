@@ -14,6 +14,9 @@ function beams3d_write_transport(beam_data_in,varargin)
 %      beam_data{2}=read_beams3d('beams3d_run1.h5');
 %      beams3d_write_transport(beam_data);
 %
+% See also:
+%   BEAMS3D_TRASPORT_PLOTS
+%
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.0
 

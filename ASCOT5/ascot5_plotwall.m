@@ -25,6 +25,7 @@ lhits=0;
 llog=0;
 lpts=0;
 lmap_nfp=0;
+lcx=0;
 pts_mask=[];
 amu = 1.66053906660E-27;
 ec = 1.60217662E-19;
@@ -44,6 +45,8 @@ if nargin > 3
                 nfilter=varargin{i};
             case{'points'}
                 lpts=1;
+            case{'cxsim'}
+                lcx=1;
             case{'mask_points'}
                 i=i+1;
                 pts_mask=varargin{i};
@@ -88,21 +91,43 @@ z1z2z3 = h5read(a5file,[path '/z1z2z3']);
 wall_load = [];
 wall_strikes = [];
 
+wall_load_vararg={};
+
 if ~isempty(runid)
-    if (lhits)
-        wall_strikes = ascot5_calcwallload(a5file,wallid,runid,'hits');
-    else
-        if isempty(pts_mask)
-            wall_load = ascot5_calcwallload(a5file,wallid,runid);
-        else
-            wall_load = ascot5_calcwallload(a5file,wallid,runid,'mask_points',pts_mask);
-        end
-        if nfilter > 0
-            wall_strikes = ascot5_calcwallload(a5file,wallid,runid,'hits');
-            dex = wall_strikes <= nfilter;
-            wall_load(dex) = 0;
-        end
+    if lhits
+        wall_load_vararg=[wall_load_vararg 'hits'];
     end
+    if lcx
+        wall_load_vararg=[wall_load_vararg 'cxsim'];
+    end
+    if ~isempty(pts_mask)
+        wall_load_vararg=[wall_load_vararg 'mask_points' pts_mask];
+    end
+    
+    % Calcl Load
+    wall_load = ascot5_calcwallload(a5file,wallid,runid,wall_load_vararg);
+    
+    % Filter
+    if nfilter > 0
+        wall_strikes = ascot5_calcwallload(a5file,wallid,runid,'hits');
+        dex = wall_strikes <= nfilter;
+        wall_load(dex) = 0;
+    end
+    
+%     if (lhits)
+%         wall_strikes = ascot5_calcwallload(a5file,wallid,runid,'hits');
+%     else
+%         if isempty(pts_mask)
+%             wall_load = ascot5_calcwallload(a5file,wallid,runid);
+%         else
+%             wall_load = ascot5_calcwallload(a5file,wallid,runid,'mask_points',pts_mask);
+%         end
+%         if nfilter > 0
+%             wall_strikes = ascot5_calcwallload(a5file,wallid,runid,'hits');
+%             dex = wall_strikes <= nfilter;
+%             wall_load(dex) = 0;
+%         end
+%     end
     if lpts
         path = ['/results/run_' num2str(runid,'%10.10i') '/endstate'];
         r_pts = h5read(a5file,[path '/rprt']);
@@ -137,12 +162,9 @@ fig=figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
 if isempty(wall_load) && isempty(wall_strikes)
     hp=patch(x1x2x3,y1y2y3,z1z2z3,zeros(1,size(x1x2x3,2)),'EdgeColor','none');
 else
-    if lhits
-        hp=patch(x1x2x3,y1y2y3,z1z2z3,wall_strikes,'EdgeColor','none');
-    else
         hp=patch(x1x2x3,y1y2y3,z1z2z3,wall_load,'EdgeColor','none');
-    end
-    
+    %set(hp,'AmbientStrength',1.0,'SpecularStrength',0.75,'DiffuseStrength',1);
+    %set(hp,'AmbientStrength',1.0,'SpecularStrength',0.75,'DiffuseStrength',0.9,'SpecularColorReflectance',0);
 end
 set(hp,'AmbientStrength',1.0,'SpecularStrength',0,'DiffuseStrength',1);
 if lpts

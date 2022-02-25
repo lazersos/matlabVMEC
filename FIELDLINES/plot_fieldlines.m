@@ -98,10 +98,10 @@ switch plottype
         x=data.R_lines(1:skip:nlines,line_dex);
         y=data.Z_lines(1:skip:nlines,line_dex);
         if isfield(data,'rho')
-            s=ones(data.nlines,length(line_dex));
-            c=repmat(data.rho,[1 length(line_dex)]);
+            s=ones(size(x,1),size(x,2));
+            c=repmat(data.rho(1:skip:nlines),[1 size(x,2)]);
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
-            caxis([0 fieldlines_data.rho(end-1)]);
+            caxis([0 data.rho(end-1)]);
         else
             plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
         end
