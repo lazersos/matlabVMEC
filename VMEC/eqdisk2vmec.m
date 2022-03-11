@@ -1,4 +1,4 @@
-function data = eqdisk2vmec( filename )
+function data = eqdisk2vmec( varargin )
 %EQDSK2VMEC Converts EQDSK files to VMEC INDATA namelists
 %   The EQDSK2VMEC routine takes an EQDSK file and computes a VMEC INDATA
 %   namelist.  Plots showing the fitting routines used are also made.  
