@@ -225,7 +225,7 @@ data2.ac_aux_s = ac_aux_s;
 data2.ac_aux_f = ac_aux_f;
 data2.ai = ai;
 data2.ai_aux_s = ai_aux_s;
-data2.ai_aux_f = -ai_aux_f;
+data2.ai_aux_f = ai_aux_f;
 % Check the data
 mn = 1;
 for m1 = 1: mpol + 1
@@ -240,8 +240,8 @@ for m1 = 1: mpol + 1
     end
 end
 % Check the jacobian
-jac = sum(zmns(:,1).*xm);
-if jac>1
+jac = sum(zmns(:,1).*xm(:));
+if jac>0
     data2.curtor = -data2.curtor;
     data2.ai_aux_f = -data2.ai_aux_f;
     data2.ai = -data2.ai;
