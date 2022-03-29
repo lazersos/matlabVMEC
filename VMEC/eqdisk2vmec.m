@@ -1,8 +1,16 @@
 function data = eqdisk2vmec( varargin )
 %EQDSK2VMEC Converts EQDSK files to VMEC INDATA namelists
 %   The EQDSK2VMEC routine takes an EQDSK file and computes a VMEC INDATA
-%   namelist.  Plots showing the fitting routines used are also made.  
-%   This is a work in progress
+%   namelist.  Plots showing the fitting routines used are also made.
+%   Please note that an attempt is made to properly set CURTOR and AI
+%   according to the Jacobian.
+%
+%   Example:
+%       eqdisk2vmec('g164723.03059');
+%
+%   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
+%   Version:       1.0
+%   
 
 if (nargin == 1)
     if isstr(varargin{1})
@@ -56,6 +64,7 @@ vmec_input.am_aux_s = data.am_aux_s;
 vmec_input.am_aux_f = data.am_aux_f;
 vmec_input.pcurr_type = 'akima_spline_ip';
 vmec_input.curtor = data.curtor;
+vmec_input.ncurr = 1;
 vmec_input.ac = data.ac;
 vmec_input.ac_aux_s = data.ac_aux_s;
 vmec_input.ac_aux_f = data.ac_aux_f;
@@ -230,6 +239,14 @@ for m1 = 1: mpol + 1
         mn = mn + 1;
     end
 end
+% Check the jacobian
+jac = sum(zmns(:,1).*xm(:));
+if jac>0
+    data2.curtor = -data2.curtor;
+    data2.ai_aux_f = -data2.ai_aux_f;
+    data2.ai = -data2.ai;
+end
+% Plot
 ntheta=360;
 theta=0:2*pi/(ntheta-1):2*pi;
 zeta = 0;

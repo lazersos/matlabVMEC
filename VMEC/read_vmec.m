@@ -54,7 +54,7 @@ end
 % Handle File type
 nfilename=size(filename,2);
 if strcmp(filename(nfilename-2:nfilename),'.nc') && ...
-        ~isempty(strfind(filename,'wout'))
+        contains(filename,'wout')
     netcdffile=1; % This is a netCDF file
 elseif strcmp(filename(1:7),'mercier')
     disp('mercier file')
@@ -70,7 +70,7 @@ else
     line=fgetl(fid);
     index=find(line == '=')+1;
     length=size(line,2);
-    version=str2num(strtrim(line(index:length)));
+    version=str2double(strtrim(line(index:length)));
     % Handle unknown versions
     if (version < 0) || (version > 8.52)
         disp('Unknown file type or version.');
@@ -81,7 +81,7 @@ else
     % handle them we dynamically create the format specifier for fscanf.
     start=ftell(fid);  % Get the current poisition to rewind to
     line=fgetl(fid);  % Get the next line
-    if isempty(strfind(line,','))
+    if ~contains(line,',')
         fmt='%g';
     else
         fmt='%g,';
@@ -124,6 +124,16 @@ if (f.ierr_vmec && (f.ierr_vmec ~= 4))
 end
 if (~isfield(f,'lrfplogical'))
     f.lrfplogical=0;
+end
+% Handle missing NYQ Values
+if ~isfield(f,'xm_nyq')
+    f.xm_nyq = f.xm;
+end
+if ~isfield(f,'xn_nyq')
+    f.xn_nyq = f.xn;
+end
+if ~isfield(f,'mnmax_nyq')
+    f.mnmax_nyq = f.mnmax;
 end
 % Need to convert various quantities to full mesh
 f=half2fullmesh(f);
@@ -187,26 +197,15 @@ f.zss(:,:,f.ns)=2.*f.zbs(:,:,f.ns)-f.zbs(:,:,f.ns-1);
 f.rsmnc(:,f.ns)=2.*f.rsmnc(:,f.ns)-f.rsmnc(:,f.ns-1);
 f.zsmns(:,f.ns)=2.*f.zsmns(:,f.ns)-f.zsmns(:,f.ns-1);
 % Handle Vector values seperately to deal with nyqyist
-if isfield(f,'xm_nyq')
-    msize=max(f.xm_nyq);
-    nsize=max(f.xn_nyq/f.nfp)-min(f.xn_nyq/f.nfp)+1;
-    mnmax=f.mnmax_nyq;
-    offset=min(f.xn_nyq./f.nfp)-1;
-    f.xn_nyq=-f.xn_nyq;
-    xn=f.xn_nyq;
-    xm=f.xm_nyq;
-    f.mpol=max(f.xm_nyq);  % Do this for VMECplot
-    f.ntor=max(f.xn_nyq/f.nfp);  % Do this for VMECplot
-else
-    msize=max(f.xm);
-    nsize=max(f.xn/f.nfp)-min(f.xn/f.nfp)+1;
-    mnmax=f.mnmax;
-    offset=min(f.xn./f.nfp)-1;
-    xn=f.xn;
-    xm=f.xm;
-    f.xm_nyq=f.xm;
-    f.xn_nyq=f.xn;
-end
+msize=max(f.xm_nyq);
+nsize=max(f.xn_nyq/f.nfp)-min(f.xn_nyq/f.nfp)+1;
+mnmax=f.mnmax_nyq;
+offset=min(f.xn_nyq./f.nfp)-1;
+f.xn_nyq=-f.xn_nyq;
+xn=f.xn_nyq;
+xm=f.xm_nyq;
+f.mpol=max(f.xm_nyq);  % Do this for VMECplot
+f.ntor=max(f.xn_nyq/f.nfp);  % Do this for VMECplot
 f.bc=zeros(msize+1,nsize,f.ns);
 f.gc=zeros(msize+1,nsize,f.ns);
 f.b_ss=zeros(msize+1,nsize,f.ns);
@@ -233,8 +232,8 @@ for i=1:f.ns
         end
     end
 end
-% Note derivative terms not implemented for non-axisymmetric runs
-% Handle non-axisymmetric runs
+% Note derivative terms not implemented for non-stellarator symmetric runs
+% Handle non-stellarator symmetric runs
 if f.iasym==1
     msize=max(f.xm);
     nsize=max(f.xn/f.nfp)-min(f.xn/f.nfp)+1;
@@ -293,21 +292,12 @@ if f.iasym==1
     f.rsmns(:,f.ns)=2.*f.rsmns(:,f.ns)-f.rsmns(:,f.ns-1);
     f.zsmnc(:,f.ns)=2.*f.zsmnc(:,f.ns)-f.zsmnc(:,f.ns-1);
     % Handle Vector values seperately to deal with nyqyist
-    if isfield(f,'xm_nyq')
-        msize=max(f.xm_nyq);
-        nsize=max(f.xn_nyq/f.nfp)-min(f.xn_nyq/f.nfp)+1;
-        mnmax=f.mnmax_nyq;
-        offset=min(f.xn_nyq./f.nfp)-1;
-        xn=f.xn_nyq;
-        xm=f.xm_nyq;
-    else
-        msize=max(f.xm);
-        nsize=max(f.xn/f.nfp)-min(f.xn/f.nfp)+1;
-        mnmax=f.mnmax;
-        offset=min(f.xn./f.nfp)-1;
-        xn=f.xn;
-        xm=f.xm;
-    end
+    msize=max(f.xm_nyq);
+    nsize=max(f.xn_nyq/f.nfp)-min(f.xn_nyq/f.nfp)+1;
+    mnmax=f.mnmax_nyq;
+    offset=min(f.xn_nyq./f.nfp)-1;
+    xn=f.xn_nyq;
+    xm=f.xm_nyq;
     f.bs=zeros(msize+1,nsize,f.ns);
     f.gs=zeros(msize+1,nsize,f.ns);
     f.b_sc=zeros(msize+1,nsize,f.ns);
