@@ -1,4 +1,4 @@
-function beams3d_beamnamelist(vmec_data,energy,power,r_beam,phi_beam,z_beam,div_beam,varargin)
+function beams3d_beamnamelist_temp(vmec_data,energy,power,r_beam,phi_beam,z_beam,div_beam,varargin)
 %BEAMS3D_BEAMNAMELIST Creates an beam input namelist from VMEC run
 %   The BEASM3DINPUTNAMELIST function outputs to screen an BEASM3D input
 %   namelist based on beam information and a VMEC run.  It takes as
@@ -31,7 +31,6 @@ ashape=[];
 pfrac=[];
 beam_dex=[];
 note={};
-ni_s=[]; ni_f=[]; ni_m=[]; ni_z=[];
 ne_s=[]; ne_f=[];
 te_s=[]; te_f=[];
 ti_s=[]; ti_f=[];
@@ -93,15 +92,6 @@ if (nargin > 6)
                     temp=varargin{j};
                     ne_s=temp(1,:);
                     ne_f=temp(2,:);
-                case {'NI'}
-                    j=j+1;
-                    temp=varargin{j};
-                    ni_m=temp(1,:);
-                    ni_z=temp(2,:);
-                    j=j+1;
-                    temp=varargin{j};
-                    ni_s=temp(1,:);
-                    ni_f=temp(2:end,:);
                 case {'TI'}
                     j=j+1;
                     temp=varargin{j};
@@ -252,30 +242,21 @@ fprintf(fid, '  FOLLOW_TOL = 1.0E-9\n');
 fprintf(fid,['  VC_ADAPT_TOL = ' num2str(vc_adapt_tol,'%20.10E') '\n']);
 fprintf(fid,['  NPOINC = ' num2str(npoinc,'%d') '\n']);
 fprintf(fid, '!--------PROFILES ----\n');
-if ~isempty(pot_f)
-    fprintf(fid,[ '  POT_AUX_S = ' num2str(pot_s,'%12.6E  ') '\n']);
-    fprintf(fid,[ '  POT_AUX_F = ' num2str(pot_f,'%12.6E  ') '\n']);
-end
 fprintf(fid,[ '  NE_AUX_S = ' num2str(ne_s,'%12.6E  ') '\n']);
 fprintf(fid,[ '  NE_AUX_F = ' num2str(ne_f,'%12.6E  ') '\n']);
-if ~isempty(ni_s)
-    fprintf(fid,[ '  NI_AUX_M = ' num2str(ni_m,'%12.6E  ') '\n']);
-    fprintf(fid,[ '  NI_AUX_Z = ' num2str(ni_z,'%d  ') '\n']);
-    fprintf(fid,[ '  NI_AUX_S = ' num2str(ne_s,'%12.6E  ') '\n']);
-    for i=1:size(ni_f,1)
-        fprintf(fid,[ '  NI_AUX_F(' num2str(i,'%1.1d') ',:) = ' num2str(ni_f(i,:),'%12.6E  ') '\n']);
-    end
-else
-    fprintf(fid,[ '  ZEFF_AUX_S = ' num2str(zeff_s,'%12.6E  ') '\n']);
-    fprintf(fid,[ '  ZEFF_AUX_F = ' num2str(zeff_f,'%12.6E  ') '\n']);
-    fprintf(fid,['  PLASMA_MASS = ' num2str(mass,'%20.10E') '\n']);
-    fprintf(fid,['  PLASMA_ZMEAN = ' num2str(1,'%20.10E') '\n']);
-    fprintf(fid,['  PLASMA_ZAVG  = ' num2str(1,'%20.10E') '\n']);
-end
 fprintf(fid,[ '  TE_AUX_S = ' num2str(te_s,'%12.6E  ') '\n']);
 fprintf(fid,[ '  TE_AUX_F = ' num2str(te_f,'%12.6E  ') '\n']);
 fprintf(fid,[ '  TI_AUX_S = ' num2str(ti_s,'%12.6E  ') '\n']);
 fprintf(fid,[ '  TI_AUX_F = ' num2str(ti_f,'%12.6E  ') '\n']);
+fprintf(fid,[ '  ZEFF_AUX_S = ' num2str(zeff_s,'%12.6E  ') '\n']);
+fprintf(fid,[ '  ZEFF_AUX_F = ' num2str(zeff_f,'%12.6E  ') '\n']);
+if ~isempty(pot_f)
+fprintf(fid,[ '  POT_AUX_S = ' num2str(pot_s,'%12.6E  ') '\n']);
+fprintf(fid,[ '  POT_AUX_F = ' num2str(pot_f,'%12.6E  ') '\n']);
+end
+fprintf(fid,['  PLASMA_MASS = ' num2str(mass,'%20.10E') '\n']);
+fprintf(fid,['  PLASMA_ZMEAN = ' num2str(1,'%20.10E') '\n']);
+fprintf(fid,['  PLASMA_ZAVG  = ' num2str(1,'%20.10E') '\n']);
 fprintf(fid, '!--------Universal Beam Parameters------\n');
 fprintf(fid,['  NPARTICLES_START = ' num2str(nparticles_start,'%d') '\n']);
 fprintf(fid,['  T_END_IN = ' num2str(ntotal,'%d') '*' num2str(t_end,'%-8.2E') '\n']);
@@ -306,27 +287,30 @@ end
 fprintf(fid,'/\n');
 
 if lplots
-    try
-        app =  evalin('base', 'app');
-    axe = app.UIAxes;
-    hold(axe,'on');
-    catch
     fig=figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
-    axe = gca;
-    end
-    
-    thv=0:2*pi/63:2*pi;
+    thv=0:2*pi./63:2*pi;
     dphi=2*pi./vmec_data.nfp;
     n1=min(min(phi_beam));
     n2=max(max(phi_beam));
     temp=max(min(ceil(0.01+(n2-n1)/dphi)*dphi,2*pi),dphi);
-    n1 = (n2-n1)./2; azi=rad2deg(n1);
-    zeta = (-2.5:1/63:2).*temp+n1; %Rudix:(-1.03:1/63:-0.2).*temp+n1;%(-2.5:1./63:2).*temp+n1; %
+    n1 = (n2-n1)./2; 
+    azi=rad2deg(n1);
+    zeta = (0.55:1./63:1.0).*temp+n1;%(-1.03:1./63:-0.2).*temp+n1;
+    zeta2= (1.75:1./63:3.26).*temp+n1;
+    zeta_axis = (0:1./63:5.0).*temp+n1;
     rv = cfunct(thv,zeta,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
     zv = sfunct(thv,zeta,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
+    rv2 = cfunct(thv,zeta2,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
+    zv2 = sfunct(thv,zeta2,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
+    rv_axis = cfunct(thv,zeta_axis,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
+    zv_axis = sfunct(thv,zeta_axis,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
     if vmec_data.iasym==1
         rv = rv+sfunct(thv,zeta,vmec_data.rmns,vmec_data.xm,vmec_data.xn);
         zv = zv+cfunct(thv,zeta,vmec_data.zmnc,vmec_data.xm,vmec_data.xn);
+        rv2 = rv+sfunct(thv,zeta2,vmec_data.rmns,vmec_data.xm,vmec_data.xn);
+        zv2 = zv+cfunct(thv,zeta2,vmec_data.zmnc,vmec_data.xm,vmec_data.xn);
+        rv_axis = cfunct(thv,zeta_axis,vmec_data.rmns,vmec_data.xm,vmec_data.xn);
+        zv_axis = sfunct(thv,zeta_axis,vmec_data.zmnc,vmec_data.xm,vmec_data.xn);
     end
     x_beam = r_beam.*cos(phi_beam);
     y_beam = r_beam.*sin(phi_beam);
@@ -335,16 +319,15 @@ if lplots
 %     rv(:,:,end+1) = rv(:,:,1);
 %     zv(:,:,end+1) = zv(:,:,1);   
 %     phi = (-.5:1./63:4.5).*temp+n1; %0:2*pi/(size(rv,3)-1):2*pi;
-
-    try 
-        modb = evalin('base', 'ColorData');
-        ha=isotoro(rv,zv,zeta,vmec_data.ns,modb);
-    catch
-        ha=isotoro(rv,zv,zeta,vmec_data.ns);
-    end
-    set(ha,'FaceAlpha',0.33); hold on;
-    plot3(axe,squeeze(rv(1,1,:)).*cos(zeta)',squeeze(rv(1,1,:)).*sin(zeta)',squeeze(zv(1,1,:)),'k');
-    plot3(axe,x_beam,y_beam,z_beam);
+    ha=isotoro(rv,zv,zeta,vmec_data.ns);
+    hold on
+    ha2=isotoro(rv2,zv2,zeta2,vmec_data.ns);
+    set(ha,'FaceAlpha',0.33);
+    set(ha2,'FaceAlpha',0.33); 
+    gcf.GraphicsSmoothing = 'on';
+    %plot3(squeeze(rv(1,1,:)).*cos(zeta)',squeeze(rv(1,1,:)).*sin(zeta)',squeeze(zv(1,1,:)),'k');
+    plot3(squeeze(rv_axis(1,1,:)).*cos(zeta_axis)',squeeze(rv_axis(1,1,:)).*sin(zeta_axis)',squeeze(zv_axis(1,1,:)),'k');
+    plot3(x_beam,y_beam,z_beam);
     nx=diff(x_beam);
     ny=diff(y_beam);
     nz=diff(z_beam);
@@ -364,7 +347,7 @@ if lplots
         appx=(ax(i).*cos(0:2*pi./64:2*pi)+bx(i).*sin(0:2*pi./64:2*pi)).*asize(i)+nx(i).*adist(i)+x_beam(1,i);
         appy=(ay(i).*cos(0:2*pi./64:2*pi)+by(i).*sin(0:2*pi./64:2*pi)).*asize(i)+ny(i).*adist(i)+y_beam(1,i);
         appz=(az(i).*cos(0:2*pi./64:2*pi)+bz(i).*sin(0:2*pi./64:2*pi)).*asize(i)+nz(i).*adist(i)+z_beam(1,i);
-        plot3(axe,appx,appy,appz,'k');
+        plot3(appx,appy,appz,'k');
     end
     % Add cone (resue app variable)
     for i=1:nbeams
@@ -378,7 +361,7 @@ if lplots
             y1y2y3(:,j)=[y_beam(1,i) appy(j) appy(j+1)];
             z1z2z3(:,j)=[z_beam(1,i) appz(j) appz(j+1)];
         end
-        ha=patch(axe,'XData',x1x2x3,'YData',y1y2y3,'ZData',z1z2z3);
+        ha=patch('XData',x1x2x3,'YData',y1y2y3,'ZData',z1z2z3);
         set(ha,'FaceColor','blue','FaceAlpha',0.33,'LineStyle','none');
     end
     title('');

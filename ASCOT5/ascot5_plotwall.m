@@ -163,8 +163,8 @@ if isempty(wall_load) && isempty(wall_strikes)
     hp=patch(x1x2x3,y1y2y3,z1z2z3,zeros(1,size(x1x2x3,2)),'EdgeColor','none');
 else
         hp=patch(x1x2x3,y1y2y3,z1z2z3,wall_load,'EdgeColor','none');
-    end
-
+    %set(hp,'AmbientStrength',1.0,'SpecularStrength',0.75,'DiffuseStrength',1);
+    %set(hp,'AmbientStrength',1.0,'SpecularStrength',0.75,'DiffuseStrength',0.9,'SpecularColorReflectance',0);
 end
 set(hp,'AmbientStrength',1.0,'SpecularStrength',0,'DiffuseStrength',1);
 if lpts

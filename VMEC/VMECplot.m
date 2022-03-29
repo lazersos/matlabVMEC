@@ -1292,7 +1292,8 @@ switch contents{get(handles.plottype,'Value')}
                 num2str(handles.theta(handles.thetaval))]);
             axis tight
         elseif strcmp(handles.cuttype,'zeta2')
-            torocont(handles.r,handles.z,f,handles.zetaval)
+            torocont(handles.r,handles.z,f,handles.zetaval);
+            hold off;
             xlabel('Radius (R) [m]');
             ylabel('Elevation (Z) [m]');
             title([name ' at \phi=',num2str(handles.zeta(handles.zetaval))]);
@@ -1306,7 +1307,7 @@ switch contents{get(handles.plottype,'Value')}
             f(:,:,end+1) = f(:,:,1);
             phi = 0:2*pi/(size(r,3)-1):2*pi;
             if (handles.rval > 1)
-                isotoro(r,z,phi,handles.rval,f);
+                isotoro(r,z,phi,handles.rval,f, 'STL');
                 try %Only when app is present
                     evalin('base', 'app');
                     assignin('base','ColorData',f);
@@ -1369,6 +1370,7 @@ switch contents{get(handles.plottype,'Value')}
             set(hp,'FaceColor','none','EdgeColor','black');
             hold on
             plot(handles.r(1,1,handles.zetaval),handles.z(1,1,handles.zetaval),'o');
+            
             hold off
             xlabel('Radius (R) [m]');
             ylabel('Elevation (Z) [m]');
@@ -1376,7 +1378,7 @@ switch contents{get(handles.plottype,'Value')}
             axis equal
         elseif strcmp(handles.cuttype,'3D')
             set(handles.rtext,'String','Flux');
-            isotoro(handles.r,handles.z,handles.zeta,handles.rval);
+            isotoro(handles.r,handles.z,handles.zeta,handles.rval, 'STL');
             title(strcat('Flux Surface (ns=',num2str(handles.rval),')'));
             xlabel('X [m]');
             ylabel('Y [m]');
@@ -1459,7 +1461,7 @@ switch contents{get(handles.plottype,'Value')}
             z(:,:,end+1) = z(:,:,1);
             phi = 0:2*pi/(size(r,3)-1):2*pi;
             if (handles.rval > 1)
-                isotoro(r,z,phi,handles.rval);
+                isotoro(r,z,phi,handles.rval, 'STL');
                 title(strcat('Flux Surface (ns=',num2str(handles.rval),')'));
             else
                 plot3(squeeze(r(1,1,:)).*cos(phi'),...
@@ -1739,6 +1741,9 @@ switch handles.cuttype
     case {'zeta2','other'}
         set(handles.graph,'XLim',[handles.xmin handles.xmax]);
         set(handles.graph,'YLim',[handles.zmin handles.zmax]);
+        delete(findall(handles.figure1,'type','annotation'));
+        str = ['Min: ', num2str(handles.graph.CLim(1)), ' Max: ', num2str(handles.graph.CLim(2))];
+        handles.text10 = annotation(handles.figure1, 'textbox', [.4 0 .3 .3], 'String', str ,'FitBoxToText','on'); %handles.output
         zoom on
         colorbar('FontSize',16)
         rotate3d off
@@ -1795,6 +1800,7 @@ switch contents{get(handles.plottype,'Value')}
 end
 % Now Fix theta
 handles.theta=temp_theta;
+
         
         
 function guiupdate(handles)

@@ -23,6 +23,12 @@ if ~isfile(a5file)
     return;
 end
 
+if isempty(runid)
+    runid=h5readatt(a5file,'/results','active');
+    disp(['  Using runid: ' runid]);
+end
+
+
 % from error.h
 file_errs={'mccc_wiener.c','mccc_push.c','mccc_coefs.c','mccc.c','step_fo_vpa.c',...
     'step_gc_cashkarp.c','step_gc_rk4.c','N0_3D.c','N0_ST.c','B_3DS.c',...
@@ -119,21 +125,58 @@ if any(errormsg~=0)
     yaxis = raxis.*sin(phi);
     plot3(xaxis,yaxis,zaxis,'r');
     
-    
+    f = subplot(2,2,1);
+    g = subplot(2,2,3);
+    h = subplot(2,2,[2 4]);
     % from error.c
     for i = error_range
         if i==0, continue;end % Change to i~=0 to only plot good particles
         err_dex = errormsg == i;
         num_part = sum(err_dex);
-        subplot(2,2,1);
-        plot3(xstart(err_dex),ystart(err_dex),zstart(err_dex),'o'); hold on;
-        plot3(xend(err_dex),yend(err_dex),zend(err_dex),'+');
-        subplot(2,2,3);
-        plot(rhostart.*cos(thstart),rhostart.*sin(thstart),'o'); hold on;
-        plot(rhoend.*cos(thend),rhoend.*sin(thend),'+');
-        subplot(2,2,[2 4]);
-        plot(vllstart(err_dex),vpestart(err_dex),'o'); hold on;
-        plot(vllend(err_dex),vpeend(err_dex),'+'); hold on;
+        
+        
+        if (i==1)
+            err_str='Input evaluation failed (marker could be outside input data grid).';
+        elseif (i==2)
+            err_str='Input was not recognized (offload or target data could uninitalized).';
+        elseif (i==3)
+            err_str='Input evaluation yeilds unphysical results (something could be wrong with the input).';
+        elseif (i==4)
+            err_str='One or more markers fields are unphysical or inconsistent (marker input could be corrupted).';
+        elseif (i==5)
+            err_str='Time step is zero, NaN, or smaller than MIN_ALLOWED_TIME_STEP';
+        elseif (i==6)
+            err_str='Wiener array is full of rejected steps or limits could be too conservative or initial step too large.';
+        else
+            err_str=[' Unknown error value: ' num2str(i,'%i')];
+        end
+        disp(['    '  sprintf('(%i)',i) ' Detected ' num2str(num_part,'%i') ' particles with error condition: ' err_str]);
+        mod_range = unique(errormod(err_dex))';
+        for k = mod_range
+            mod_dex = and(err_dex,errormod == k);
+            num_part = sum(mod_dex);
+            line_range = unique(errorline(mod_dex))';
+            for j = line_range
+                num_part = sum(and(mod_dex,errorline == j));
+                disp(['          ' num2str(num_part,'%i') ' from line ' num2str(j,'%i') ...
+                    ' in ' file_errs{k}]);
+            end
+        end
+        
+        f.ColorOrderIndex = i;
+        plot3(f, xstart(err_dex),ystart(err_dex),zstart(err_dex),'o', 'DisplayName', ['Errmsg: ' num2str(i) ' start'] ); hold on;
+        f.ColorOrderIndex = i;
+        plot3(f,xend(err_dex),yend(err_dex),zend(err_dex),'+', 'DisplayName', ['Errmsg: ' num2str(i) ' end']);
+        
+        g.ColorOrderIndex = i;
+        plot(g, rhostart.*cos(thstart),rhostart.*sin(thstart),'o', 'DisplayName', ['Errmsg: ' num2str(i) ' start']); hold on;
+        g.ColorOrderIndex = i;
+        plot(g, rhoend.*cos(thend),rhoend.*sin(thend),'+', 'DisplayName', ['Errmsg: ' num2str(i) ' end']);
+        
+        h.ColorOrderIndex = i;
+        plot(h,vllstart(err_dex),vpestart(err_dex),'o', 'DisplayName', ['Errmsg: ' num2str(i) ' start']); hold on;
+        h.ColorOrderIndex = i;
+        plot(h, vllend(err_dex),vpeend(err_dex),'+', 'DisplayName', ['Errmsg: ' num2str(i) ' end']); hold on;
         
     end
     subplot(2,2,1); axis equal; axis off;

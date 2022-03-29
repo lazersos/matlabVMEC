@@ -11,11 +11,28 @@ function ascot5_errorprint(a5file,runid)
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.0
 
+    % Use active run
+    if isempty(runid)
+        try
+            runid=h5readatt(a5file,'/results','active');
+            disp(['  Using runid: ' runid]);
+        catch
+            runid=[];
+            return;
+        end
+    end
+
 % Check for file
 if ~isfile(a5file)
     disp(['ERROR: ' a5file ' file not found!']);
     return;
 end
+
+if isempty(runid)
+    runid=h5readatt(a5file,'/results','active');
+    disp(['  Using runid: ' runid]);
+end
+
 
 % from error.h
 file_errs={'mccc_wiener.c','mccc_push.c','mccc_coefs.c','mccc.c','step_fo_vpa.c',...
