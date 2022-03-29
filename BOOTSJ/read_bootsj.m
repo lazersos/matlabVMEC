@@ -55,7 +55,7 @@ if strfind(filename,'answers_plot.')
     data.ni = temp(17,:);
     data.beta = temp(18,:);
     data.jB = temp(19,:);
-    data.I = cumsum(data.dIds);
+    data.I = 1E6.*cumsum(data.dIds)./(length(data.dIds));
     data.ne = data.ne.*1E20;
     data.ni = data.ni.*1E20;
     data.curtor = data.I(end);

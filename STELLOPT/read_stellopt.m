@@ -940,6 +940,20 @@ while ~feof(fid);
                 data.([tstr '_R1'])(niter,:) = temp(:,7);
                 data.([tstr '_PHI1'])(niter,:) = temp(:,8);
                 data.([tstr '_Z1'])(niter,:) = temp(:,9);
+            % VISUAL BREMSSTRAHLUNG
+            case {'VISBREMLINE'}
+                data.([tstr '_target'])(niter,:) = temp(:,1);
+                data.([tstr '_sigma'])(niter,:) = temp(:,2);
+                data.([tstr '_equil'])(niter,:) = temp(:,3);
+                data.([tstr '_LAMBDA'])(niter,:) = temp(:,4);
+                data.([tstr '_CALIB'])(niter,:) = temp(:,5);
+                data.([tstr '_chisq'])(niter,:) = ((temp(:,1)-temp(:,3).*temp(:,5))./(temp(:,2))).^2;
+                data.([tstr '_R0'])(niter,:) = temp(:,6);
+                data.([tstr '_PHI0'])(niter,:) = temp(:,7);
+                data.([tstr '_Z0'])(niter,:) = temp(:,8);
+                data.([tstr '_R1'])(niter,:) = temp(:,9);
+                data.([tstr '_PHI1'])(niter,:) = temp(:,10);
+                data.([tstr '_Z1'])(niter,:) = temp(:,11);
             % MSE
             case {'MSE'}
                 data.([tstr '_R'])(niter,:) = temp(:,1);

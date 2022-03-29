@@ -29,6 +29,12 @@ dex=[];
 eorbit=0; etherm=1; ewall=2; eshine=3; eport=4;
 llast = 0;
 etarg = eorbit;
+lhitonly=1;
+
+% Handle finding hitonly runs (put here to allow override)
+if isfield(beam_data,'lhitonly')
+    lhitonly = round(beam_data.lhitonly);
+end
 
 % Handle varargin
 if ~isempty(varargin)
@@ -65,6 +71,8 @@ if ~isempty(varargin)
             case 'port_hit'
                 etarg=eport;
                 llast=1;
+            case 'override_hitonly'
+                lhitonly=0;
         end
         i=i+1;
     end
@@ -75,11 +83,12 @@ end_state=double(beam_data.end_state');
 mask=~(end_state==etarg);
 
 % Handle a hitonly run
-if size(beam_data.R_lines,1) == 3
+if and(size(beam_data.R_lines,1) == 3,lhitonly)
     disp('WARNING:  Possible hit_only run!');
     disp('      dex=1 Before hit');
     disp('      dex=2 Wall hit or last point');
     disp('      dex=3 Point beyond wall');
+    disp(' Try adding override_hitonly if this is not a hitonly run.');
     dex = ones(1,beam_data.nparticles);
     % The in this case index=2 is always the last point even for orbiting
     % particles.

@@ -47,7 +47,7 @@ rv = sfunct(theta,zeta,rvmns,data.xm,data.xn);
 zv = cfunct(theta,zeta,zvmnc,data.xm,data.xn);
 lu = cfunct(theta,zeta,lumnc,data.xm,data.xn);
 lv = cfunct(theta,zeta,lvmnc,data.xm,data.xn);
-g  = cfunct(theta,zeta,data.gmnc,data.xm,data.xn);
+g  = cfunct(theta,zeta,data.gmnc,data.xm_nyq,data.xn_nyq);
 if data.iasym
     r  =  r + sfunct(theta,zeta,data.rmns,data.xm,data.xn);
     ru = ru + cfunct(theta,zeta,rumnc,data.xm,data.xn);
@@ -56,7 +56,7 @@ if data.iasym
     zv = zv + sfunct(theta,zeta,zvmns,data.xm,data.xn);
     lu = lu + sfunct(theta,zeta,lumns,data.xm,data.xn);
     lv = lv + sfunct(theta,zeta,lvmns,data.xm,data.xn);
-     g =  g + sfunct(theta,zeta,data.gmns,data.xm,data.xn);
+     g =  g + sfunct(theta,zeta,data.gmns,data.xm_nyq,data.xn_nyq);
 end
 
 % CALC S11

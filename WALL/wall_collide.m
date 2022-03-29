@@ -13,9 +13,9 @@ function [XW, YW, ZW, ik] = wall_collide(wall,x0,y0,z0,x1,y1,z1)
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.00
 
-XW=[];
-YW=[];
-ZW=[];
+XW=0;
+YW=0;
+ZW=0;
 ik=-1;
 if ~isfield(wall,'FN')
     wall = wall_collide_prep(wall);
@@ -29,8 +29,8 @@ r0(3,:) = z0;
 dr(1,:) = x1-x0;
 dr(2,:) = y1-y0;
 dr(3,:) = z1-z0;
-alpha = dot(wall.FN,dr);
-beta  = dot(wall.FN,r0);
+alpha = dot(wall.FN,dr,1);
+beta  = dot(wall.FN,r0,1);
 t     = (wall.d - beta)./alpha;
 t(alpha ==0)=500;
 t(t<=0) = 500;
@@ -38,8 +38,8 @@ t(t>1) = 500;
 if all(and(t>1,t<=0)), return; end
 t2 = repmat(t,[3 1]);
 V2 = r0 + t2.*dr-wall.A;
-DOT02 = dot(wall.V0,V2);
-DOT12 = dot(wall.V1,V2);
+DOT02 = dot(wall.V0,V2,1);
+DOT12 = dot(wall.V1,V2,1);
 alpha = ((wall.DOT11.*DOT02)-(wall.DOT01.*DOT12)).*wall.invDenom;
 beta = ((wall.DOT00.*DOT12)-(wall.DOT01.*DOT02)).*wall.invDenom;
 dex1 = alpha<0;
@@ -72,12 +72,12 @@ dex3 = face(3,:);
 wall_out.A  = vertex(:,dex1);
 wall_out.V0 = vertex(:,dex3)-vertex(:,dex1);
 wall_out.V1 = vertex(:,dex2)-vertex(:,dex1);
-wall_out.FN = cross(wall_out.V1,wall_out.V0);
-wall_out.DOT00=dot(wall_out.V0,wall_out.V0);
-wall_out.DOT01=dot(wall_out.V0,wall_out.V1);
-wall_out.DOT11=dot(wall_out.V1,wall_out.V1);
+wall_out.FN = cross(wall_out.V1,wall_out.V0,1);
+wall_out.DOT00=dot(wall_out.V0,wall_out.V0,1);
+wall_out.DOT01=dot(wall_out.V0,wall_out.V1,1);
+wall_out.DOT11=dot(wall_out.V1,wall_out.V1,1);
 wall_out.invDenom = 1.0./(wall_out.DOT00.*wall_out.DOT11-wall_out.DOT01.*wall_out.DOT01);
-wall_out.d = dot(wall_out.FN,wall_out.A);
+wall_out.d = dot(wall_out.FN,wall_out.A,1);
 return;
 end
 

@@ -65,8 +65,9 @@ if nargin > 1
                     'injection','birth_image',...
                     'wall','wall_loss','wall_heat','wall_shine','benchmarks',...
                     'wall_loss_2d','wall_heat_2d','wall_shine_2d',...
+                    'wall_loss_log10','wall_heat_log10','wall_shine_log10',...
                     'grid','grid_s',...
-                    'camview'}
+                    'camview','bmir'}
                 plot_type=varargin{i};
             case 'beam'
                 i=i+1;
@@ -357,7 +358,8 @@ else
             end
             legend(leg_text); axis equal; title('Initial State');
         case 'flux'
-            x1  = beam_data.U_lines(:,orbit_dex);
+            u   = beams3d_fixUlines(beam_data);
+            x1  = u(:,orbit_dex);
             y1  = beam_data.S_lines(:,orbit_dex);
             ld  = last_dex(orbit_dex);
             x=[]; y=[];
@@ -369,7 +371,8 @@ else
             rlim([0 1.5]);
             title('Orbiting Particles');
         case 'flux_therm'
-            x1  = beam_data.U_lines(:,therm_dex);
+            u   = beams3d_fixUlines(beam_data);
+            x1  = u(:,therm_dex);
             y1  = beam_data.S_lines(:,therm_dex);
             ld  = last_dex(therm_dex);
             x=[]; y=[];
@@ -381,25 +384,29 @@ else
             rlim([0 1.5]);
             title('Thermalized Particles');
         case 'flux_birth'
-            x  = beam_data.U_lines(dex1,born_dex);
+            u   = beams3d_fixUlines(beam_data);
+            x  = u(dex1,born_dex);
             y  = beam_data.S_lines(dex1,born_dex);
             polarplot(x,y,'.k');
             rlim([0 1.5]);
             title('Born Particles');
         case 'flux_initial'
-            x  = beam_data.U_lines(dex1,orbit_dex);
+            u   = beams3d_fixUlines(beam_data);
+            x  = u(dex1,orbit_dex);
             y  = beam_data.S_lines(dex1,orbit_dex);
             polarplot(x,y,'.k');
             rlim([0 1.5]);
             title('Intial Orbiting Particles');
         case 'flux_lost_initial'
-            x  = beam_data.U_lines(dex1,lost_dex);
+            u   = beams3d_fixUlines(beam_data);
+            x  = u(dex1,lost_dex);
             y  = beam_data.S_lines(dex1,lost_dex);
             polarplot(x,y,'.k');
             rlim([0 1.5]);
             title('Intial Lost Particles');
         case 'flux_therm_initial'
-            x  = beam_data.U_lines(dex1,therm_dex);
+            u   = beams3d_fixUlines(beam_data);
+            x  = u(dex1,therm_dex);
             y  = beam_data.S_lines(dex1,therm_dex);
             polarplot(x,y,'.k');
             rlim([0 1.5]);
@@ -975,14 +982,16 @@ else
         case 'orbit_flux'
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             S = beam_data.S_lines(:,beam_dex);
-            U = beam_data.U_lines(:,beam_dex);
+            U = beams3d_fixUlines(beam_data);
+            U = U(:,beam_dex);
             polarplot(U,sqrt(S),'.');
             set(gca,'FontSize',24);
             title('Particle Orbits (rho,u)');
         case 'orbit_flux_lost'
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             S = beam_data.S_lines(:,lost_dex);
-            U = beam_data.U_lines(:,lost_dex);
+            U = beams3d_fixUlines(beam_data);
+            U = U(:,lost_dex);
             polarplot(U,sqrt(S),'.');
             set(gca,'FontSize',24);
             title('Lost Particle Orbits (rho,u)');
@@ -1169,7 +1178,24 @@ else
                     val=sum(beam_data.wall_load(beamdex,:))';
             end
             output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',val,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
-            colormap hot;
+
+            cmap = colormap('hot');
+            cmap(1,:) = [0.2 0.2 0.2]; % grey
+            colormap(cmap);
+        case {'wall_loss_log10','wall_shine_log10','wall_heat_log10'}
+            switch lower(plot_type)
+                case 'wall_loss_log10'
+                    val=beam_data.wall_strikes;
+                case 'wall_shine_log10'
+                    val=sum(beam_data.wall_shine(beamdex,:),1)';
+                case 'wall_heat_log10'
+                    val=sum(beam_data.wall_load(beamdex,:),1)';
+            end
+            val = log10(val);
+            output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',val,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
+            cmap = colormap('hot');
+            cmap(1,:) = [0.2 0.2 0.2]; % grey
+            colormap(cmap);
         case {'wall_heat_2d','wall_shine_2d','wall_loss_2d'}
             verts = beam_data.wall_vertex;
             faces = beam_data.wall_faces;
@@ -1326,6 +1352,34 @@ else
             title('Thermalized Fraction Evolution');
             ylim([0 min(1.2*max(ylim),100)]);
             set(gca,'FontSize',24);            
+        case 'bmir'
+            vperp = beams3d_calc_vperp(beam_data);
+            B_mir = beam_data.B_lines.*(vperp.^2+beam_data.vll_lines.^2)./(vperp.^2);
+            B    = sqrt(beam_data.B_R.^2+beam_data.B_PHI.^2+beam_data.B_Z.^2);
+            mask = beam_data.S_ARR(:,1,:)<1;
+            temp = B(:,1,:);
+            B0_min = min(temp(mask),[],'all');
+            B0_max = max(temp(mask),[],'all');
+            n=round(beam_data.nphi/2);
+            mask = beam_data.S_ARR(:,n,:)<1;
+            temp = B(:,n,:);
+            B1_min = min(temp(mask),[],'all');
+            B1_max = max(temp(mask),[],'all');
+            edges=min([B0_min B1_min]):0.01:max(B_mir(dex1,beam_dex));
+            [N,edges] = histcounts(B_mir(dex1,born_dex),edges);
+            fig=figure('Position',[1 1 1024 768],'Color','white','InvertHardcopy','off');
+            centers = 0.5.*(edges(1:end-1)+edges(2:end));
+            plot(centers,N,'k','LineWidth',4);
+            axis tight;
+            hold on;
+            y=ylim;
+            fill([B0_min B0_max B0_max B0_min],[y(1) y(1) y(2) y(2)],'red','LineStyle','none','FaceAlpha','0.3')
+            fill([B1_min B1_max B1_max B1_min],[y(1) y(1) y(2) y(2)],'blue','LineStyle','none','FaceAlpha','0.3')
+            set(gca,'FontSize',24);
+            xlabel('B [T]');
+            ylabel('Marker Count');
+            title('Mirror Magnetic Field')
+            legend('B_{mirror}=E/\mu','|B| \phi=0','|B| \phi=\phi_{max}/2');
         case 'camview'
             if isempty(camera), camera=[1024 768]; end
             x_cam = campos;

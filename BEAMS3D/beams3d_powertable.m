@@ -5,7 +5,7 @@ function P = beams3d_powertable(beam_data,varargin)
 %
 % Example usage
 %      beam_data=read_beams3d('beams3d_test.h5');  % Reads BEAMS3D HDF5 file
-%       beams3d_powertable(beam_data,vmec_data);
+%      beams3d_powertable(beam_data);
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.0

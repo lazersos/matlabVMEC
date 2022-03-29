@@ -147,12 +147,12 @@ dex3 = wall_out.faces(3,:);
 wall_out.A  = wall_out.coords(:,dex1);
 wall_out.V0 = wall_out.coords(:,dex3)-wall_out.coords(:,dex1);
 wall_out.V1 = wall_out.coords(:,dex2)-wall_out.coords(:,dex1);
-wall_out.FN = cross(wall_out.V1,wall_out.V0);
-wall_out.DOT00=dot(wall_out.V0,wall_out.V0);
-wall_out.DOT01=dot(wall_out.V0,wall_out.V1);
-wall_out.DOT11=dot(wall_out.V1,wall_out.V1);
+wall_out.FN = cross(wall_out.V1,wall_out.V0,1);
+wall_out.DOT00=dot(wall_out.V0,wall_out.V0,1);
+wall_out.DOT01=dot(wall_out.V0,wall_out.V1,1);
+wall_out.DOT11=dot(wall_out.V1,wall_out.V1,1);
 wall_out.invDenom = 1.0./(wall_out.DOT00.*wall_out.DOT11-wall_out.DOT01.*wall_out.DOT01);
-wall_out.d = dot(wall_out.FN,wall_out.A);
+wall_out.d = dot(wall_out.FN,wall_out.A,1);
 
 end
 

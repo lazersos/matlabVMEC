@@ -26,8 +26,8 @@ if (strcmp(filename(end-1:end),'h5'))
     data.X_lines=data.R_lines.*cos(data.PHI_lines);
     data.Y_lines=data.R_lines.*sin(data.PHI_lines);
     data.phiend = data.PHI_lines(data.npoinc,:);
-    
-    if ndims(data.X_lines) > 2
+    % Fix for old formats
+    if ndims(data.X_lines) == 3
         data.X_lines=squeeze(data.X_lines(:,1,:));
         data.Y_lines=squeeze(data.Y_lines(:,1,:));
         data.Z_lines=squeeze(data.Z_lines(:,1,:));
@@ -37,21 +37,21 @@ if (strcmp(filename(end-1:end),'h5'))
         data.wall_strikes = double(data.wall_strikes);
         data.lwall=1;
     end
-    if data.VERSION < 3
+    % Create the rho helper array
+    if isfield(data,'ns_prof1')
+        data.ns_prof = double(data.ns_prof1);
+        h = 1.0/data.ns_prof;
+        data.rho = h/2.:h:(1-h/2);
+    end
+    % Fix non-double values
+    for k={'ns_prof1','ns_prof2','ns_prof3','ns_prof4','ns_prof5','Beam',...
+            'end_state','neut_lines','wall_faces','nbeams'}
+        if isfield(data,k{1})
+            data.(k{1})=double(data.(k{1}));
+        end
+    end
+    if and(data.VERSION < 3,isfield(data,'ns_prof1'))
         disp('Old version be careful with distribution function');
-        % Fix non-double values
-        for k={'ns_prof1','ns_prof2','ns_prof3','ns_prof4','ns_prof5','Beam',...
-                'end_state','neut_lines','wall_faces'}
-            if isfield(data,k{1})
-                data.(k{1})=double(data.(k{1}));
-            end
-        end
-        % Catch some old format issues
-        if isfield(data,'ns_prof1')
-            data.ns_prof = data.ns_prof1;
-            h = 1./data.ns_prof1;
-            data.rho = h/2.:h:(1-h/2);
-        end
         if isfield(data,'dist_prof') && ~isfield(data,'dist2d_prof')
             % This is a patch for 2018a still used by IPP-HGW because of
             % reasons
@@ -69,6 +69,11 @@ if (strcmp(filename(end-1:end),'h5'))
                 data.dense_prof  = data.dense_prof./drho;
             end
         end
+        if isfield(data,'dense_prof')
+            [s,~,Vp] = beams3d_volume(data);
+            dVdrho=pchip(sqrt(s),2.*sqrt(s).*Vp,data.rho);
+            data.dense_prof  = data.dense_prof./repmat(dVdrho,[data.nbeams 1]);
+        end
         % Make the 5D Axis variables
         data.dist_rhoaxis=(double(1:data.ns_prof1)-0.5)./(data.ns_prof1);
         data.dist_uaxis=2.*pi.*(double(1:data.ns_prof2)-0.5)./(data.ns_prof2);
@@ -77,16 +82,26 @@ if (strcmp(filename(end-1:end),'h5'))
         d5=data.partvmax./data.ns_prof5;
         data.dist_Vaxis= (-data.partvmax+d4.*0.5):d4:(data.partvmax-d4.*0.5);
         data.dist_Waxis=data.partvmax.*(double(1:data.ns_prof5)-0.5)./(data.ns_prof5);
+        % Add anything missing
+        data.lfusion=0;
     else
         % Fix non-double values
-        for k={'ndist1','ndist2','ndist3','ndist3','ndist1','Beam',...
-                'end_state','neut_lines','wall_faces','npoinc'}
-            data.(k{1})=double(data.(k{1}));
-            data.ns_prof1 = size(data.ipower_prof,2);
+        for k={'ns_prof1','ns_prof2','ns_prof3','ns_prof4','ns_prof5','Beam',...
+                'end_state','neut_lines','wall_faces','nbeams'}
+            if isfield(data,k{1})
+                data.(k{1})=double(data.(k{1}));
+            end
         end
+        % Make the 5D Axis variables
+        data.dist_rhoaxis=(double(1:data.ns_prof1)-0.5)./(data.ns_prof1);
+        data.dist_uaxis=2.*pi.*(double(1:data.ns_prof2)-0.5)./(data.ns_prof2);
+        data.dist_paxis=2.*pi.*(double(1:data.ns_prof3)-0.5)./(data.ns_prof3);
+        d4=data.partvmax.*2./(data.ns_prof4);
+        d5=data.partvmax./data.ns_prof5;
+        data.dist_Vaxis= (-data.partvmax+d4.*0.5):d4:(data.partvmax-d4.*0.5);
+        data.dist_Waxis=data.partvmax.*(double(1:data.ns_prof5)-0.5)./(data.ns_prof5);
     end
 elseif (strcmp(filename(1:12),'beams3d_diag'))
-    
     fid=fopen(filename,'r');
     line=fgetl(fid);
     if (strfind(line,'BEAMLINES'))  % New multi-beam file format

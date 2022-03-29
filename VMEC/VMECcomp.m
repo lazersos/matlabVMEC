@@ -64,6 +64,11 @@ else
     
 end
 
+% Fix underscores in filesname
+for i=1:length(filename)
+    filename{i} = strrep(filename{i},'_','\_');
+end
+
 switch datatype
     case 'curtor'
         hold on

@@ -13,7 +13,7 @@ function vmec_out = vmec_scaleup(vmec_data,scale,varargin)
 %       data_big = vmec_scaleup(data,1.5);
 %
 %   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
-%   Version: 1.0
+%   Version: 1.2
 
 % Defaults
 lplot=0;
@@ -52,13 +52,19 @@ if lfixmajor
     end
 end
 
+% Find Odd modes in m
+odd_dex=repmat(mod(vmec_out.xm,2)==1,[1 vmec_out.ns]);
+scale2d = ones([vmec_out.mnmax vmec_data.ns]).*scale;
+rho2d = sqrt(repmat(0:1.0/(vmec_out.ns-1):1,[vmec_out.mnmax 1]));
+scale2d(odd_dex) = scale2d(odd_dex).*rho2d(odd_dex);
+
 % Scale up
-vmec_out.rmnc = vmec_out.rmnc.*scale;
-vmec_out.zmns = vmec_out.zmns.*scale;
+vmec_out.rmnc = vmec_out.rmnc.*scale2d;
+vmec_out.zmns = vmec_out.zmns.*scale2d;
 
 if vmec_out.iasym==1
-    vmec_out.rmns = vmec_out.rmns.*scale;
-    vmec_out.zmnc = vmec_out.zmnc.*scale;
+    vmec_out.rmns = vmec_out.rmns.*scale2d;
+    vmec_out.zmnc = vmec_out.zmnc.*scale2d;
 end
 
 if lfixmajor

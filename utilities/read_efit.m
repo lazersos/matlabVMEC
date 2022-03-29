@@ -32,7 +32,7 @@ switch filetype
         efit_data.date=sscanf(header,'%*10c %10c %*s',1);
         efit_data.shot=sscanf(header,'%*10c %*10c %9c %*s',1);
         efit_data.time=sscanf(header,'%*10c %*10c %*9c %10c %*s',1);
-        temp=sscanf(header,'%*43c %d %d %d');
+        temp=sscanf(header,'%*49c %d %d %d');
         efit_data.ipest=temp(1);
         nx=temp(2);
         nz=temp(3);
