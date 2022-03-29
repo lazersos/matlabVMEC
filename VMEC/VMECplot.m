@@ -1461,7 +1461,7 @@ switch contents{get(handles.plottype,'Value')}
             z(:,:,end+1) = z(:,:,1);
             phi = 0:2*pi/(size(r,3)-1):2*pi;
             if (handles.rval > 1)
-                isotoro(r,z,phi,handles.rval, 'STL');
+                isotoro(r,z,phi,handles.rval);
                 title(strcat('Flux Surface (ns=',num2str(handles.rval),')'));
             else
                 plot3(squeeze(r(1,1,:)).*cos(phi'),...
