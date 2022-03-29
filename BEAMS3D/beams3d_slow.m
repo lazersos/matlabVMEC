@@ -157,125 +157,125 @@ v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./plas
 vcrit_cube = v_crit.^3;
 tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
 nu0_fe = 6.6E-11 .* NE_BEAM .* myZ.*myZ ./ sqrt(MASS./9.31E-31) ./ (E_BEAM ./ 1.6022E-19).^(3/2) .* (coulomb_log./17);
-% 
-% % Integrate
-% C1 = 1./tau_spit;
-% C2 = vcrit_cube./tau_spit;
-% v_sound = 1.5*sqrt(ec.*TI_BEAM./plasma_mass);
-% V  = SPEED;
-% V2 = V;
-% dt = 1E-4;
-% Ee = zeros(1,length(W_BEAM));
-% Ei = zeros(1,length(W_BEAM));
-% jb = zeros(1,length(W_BEAM));
-% t=0;
-% while any(V > v_sound)
-%     t = t+dt;
-%     dex = V > v_sound;
-%     dve = C1(dex).*V(dex);
-%     dvi = C2(dex)./(V(dex).*V(dex));
-%     dvt = dve+dvi;
-%     V2(dex) = V(dex) - dvt.*dt;
-%     Ee(dex) = Ee(dex) + V(dex).*dve.*dt;
-%     Ei(dex) = Ei(dex) + V(dex).*dvi.*dt;
-%     jb(dex) = jb(dex) + V(dex).*PITCH(dex).*dt;
-%     V = max(V2,v_sound);
-%     disp([num2str(t) ' ' num2str(V(1:3))]);
-% end
-% Pe = MASS.*W_BEAM.*Ee;
-% Pi = MASS.*W_BEAM.*Ei;
-% J = CHARGE.*W_BEAM.*jb;
-% 
-% % Define RHO
-% RHO_BEAM = sqrt(abs(S_BEAM));
-% [~,RHO] = hist(RHO_BEAM,100);
-% RHO=[0 RHO];
-% 
-% % Sum by beam and rho
-% PE_RHO = zeros(1,length(RHO));
-% PI_RHO = zeros(1,length(RHO));
-% J_RHO  = zeros(1,length(RHO));
-% for i = 1:length(RHO)-1
-%     dex = and(RHO_BEAM<RHO(i+1), RHO_BEAM>= RHO(i));
-%     %dex = and(dex,BEAM==k);
-%     PE_RHO(i+1) = sum(Pe(dex));
-%     PI_RHO(i+1) = sum(Pi(dex));
-%     J_RHO(i+1) = sum(J(dex));
-% end 
-% 
-% % Calculate Volume for each radial point
-% % dV = dV/drho * drho
-% vp = ppval(vp_spl,RHO)./length(RHO);
-% 
-% if lplot
-%     if max(PE_RHO) > 1E6 || max(PI_RHO) > 1E6
-%         factor = 1.0E-6;
-%         units = '[MW/\Phi]';
-%         units2 = '[MW/m^3]';
-%     elseif max(PE_RHO) > 1E3 || max(PI_RHO) > 1E3
-%         factor = 1.0E-3;
-%         units = '[kW/\Phi]';
-%         units2 = '[kW/m^3]';
-%     else
-%         factor = 1.0;
-%         units = '[W/\Phi]';
-%         units2 = '[W/m^3]';
-%     end
-%     if max(J_RHO)>1E6
-%         factorj = 1E-6;
-%         unitsj2  = '[MA/m^2]';
-%     elseif max(J_RHO) > 1E3
-%         factorj = 1E-3;
-%         unitsj2  = '[kA/m^2]';
-%     else
-%         factorj = 1.0;
-%         unitsj2  = '[A/m^2]';
-%     end 
-%     vp2=vp;
-%     vp2(1)=vp2(2);
-%     figure('Position',[1 1 1024 768],'Color','white');
-%     plot(RHO,factor.*PE_RHO./vp2,'b','LineWidth',4);
-%     hold on;
-%     plot(RHO,factor.*PI_RHO./vp2,'r','LineWidth',4);
-%     set(gca,'FontSize',36);
-%     xlabel('Effective Radius (\rho/a)');
-%     ylabel(['Power Density ' units2]);
-%     title('BEAMS3D Simple Power Deposition');
-%     legend('P_{electrons}','P_{ions}');
-%     text(min(xlim)+0.025*diff(xlim),...
-%         max(ylim)-0.050*diff(ylim),...
-%         ['P_{injected} = ' num2str(Pinj./1E6,'%5.2f [MW]')],'Color','black','FontSize',36);
-%     text(min(xlim)+0.025*diff(xlim),...
-%         max(ylim)-0.110*diff(ylim),...
-%         ['\tau_{therm} = ' num2str(round(t.*1E3),'%4i [ms]')],'Color','black','FontSize',36);
-%     figure('Position',[1 1 1024 768],'Color','white');
-%     plot(RHO,factorj.*J_RHO./vp2,'k','LineWidth',4);
-%     text(min(xlim)+0.025*diff(xlim),...
-%         max(ylim)-0.050*diff(ylim),...
-%         ['I_{inj} = ' num2str(Iinj,'%5.2f [A]')],'Color','black','FontSize',36);
-%     set(gca,'FontSize',36);
-%     xlabel('Effective Radius (\rho/a)');
-%     ylabel(['Beam Current ' unitsj2]);
-%     title('BEAMS3D Simple Current');
-% end
-% 
-% data.PE = PE_RHO;
-% data.PI = PI_RHO;
-% data.RHO  = RHO;
-% data.Pinj = Pinj;
-% data.Iinj = Iinj;
-% data.tslow = t;
+
+% Integrate
+C1 = 1./tau_spit;
+C2 = vcrit_cube./tau_spit;
+v_sound = 1.5*sqrt(ec.*TI_BEAM./plasma_mass);
+V  = SPEED;
+V2 = V;
+dt = 1E-4;
+Ee = zeros(1,length(W_BEAM));
+Ei = zeros(1,length(W_BEAM));
+jb = zeros(1,length(W_BEAM));
+t=0;
+while any(V > v_sound)
+    t = t+dt;
+    dex = V > v_sound;
+    dve = C1(dex).*V(dex);
+    dvi = C2(dex)./(V(dex).*V(dex));
+    dvt = dve+dvi;
+    V2(dex) = V(dex) - dvt.*dt;
+    Ee(dex) = Ee(dex) + V(dex).*dve.*dt;
+    Ei(dex) = Ei(dex) + V(dex).*dvi.*dt;
+    jb(dex) = jb(dex) + V(dex).*PITCH(dex).*dt;
+    V = max(V2,v_sound);
+    disp([num2str(t) ' ' num2str(V(1:3))]);
+end
+Pe = MASS.*W_BEAM.*Ee;
+Pi = MASS.*W_BEAM.*Ei;
+J = CHARGE.*W_BEAM.*jb;
+
+% Define RHO
+RHO_BEAM = sqrt(abs(S_BEAM));
+[~,RHO] = hist(RHO_BEAM,100);
+RHO=[0 RHO];
+
+% Sum by beam and rho
+PE_RHO = zeros(1,length(RHO));
+PI_RHO = zeros(1,length(RHO));
+J_RHO  = zeros(1,length(RHO));
+for i = 1:length(RHO)-1
+    dex = and(RHO_BEAM<RHO(i+1), RHO_BEAM>= RHO(i));
+    %dex = and(dex,BEAM==k);
+    PE_RHO(i+1) = sum(Pe(dex));
+    PI_RHO(i+1) = sum(Pi(dex));
+    J_RHO(i+1) = sum(J(dex));
+end 
+
+% Calculate Volume for each radial point
+% dV = dV/drho * drho
+vp = ppval(vp_spl,RHO)./length(RHO);
+
+if lplot
+    if max(PE_RHO) > 1E6 || max(PI_RHO) > 1E6
+        factor = 1.0E-6;
+        units = '[MW/\Phi]';
+        units2 = '[MW/m^3]';
+    elseif max(PE_RHO) > 1E3 || max(PI_RHO) > 1E3
+        factor = 1.0E-3;
+        units = '[kW/\Phi]';
+        units2 = '[kW/m^3]';
+    else
+        factor = 1.0;
+        units = '[W/\Phi]';
+        units2 = '[W/m^3]';
+    end
+    if max(J_RHO)>1E6
+        factorj = 1E-6;
+        unitsj2  = '[MA/m^2]';
+    elseif max(J_RHO) > 1E3
+        factorj = 1E-3;
+        unitsj2  = '[kA/m^2]';
+    else
+        factorj = 1.0;
+        unitsj2  = '[A/m^2]';
+    end 
+    vp2=vp;
+    vp2(1)=vp2(2);
+    figure('Position',[1 1 1024 768],'Color','white');
+    plot(RHO,factor.*PE_RHO./vp2,'b','LineWidth',4);
+    hold on;
+    plot(RHO,factor.*PI_RHO./vp2,'r','LineWidth',4);
+    set(gca,'FontSize',36);
+    xlabel('Effective Radius (\rho/a)');
+    ylabel(['Power Density ' units2]);
+    title('BEAMS3D Simple Power Deposition');
+    legend('P_{electrons}','P_{ions}');
+    text(min(xlim)+0.025*diff(xlim),...
+        max(ylim)-0.050*diff(ylim),...
+        ['P_{injected} = ' num2str(Pinj./1E6,'%5.2f [MW]')],'Color','black','FontSize',36);
+    text(min(xlim)+0.025*diff(xlim),...
+        max(ylim)-0.110*diff(ylim),...
+        ['\tau_{therm} = ' num2str(round(t.*1E3),'%4i [ms]')],'Color','black','FontSize',36);
+    figure('Position',[1 1 1024 768],'Color','white');
+    plot(RHO,factorj.*J_RHO./vp2,'k','LineWidth',4);
+    text(min(xlim)+0.025*diff(xlim),...
+        max(ylim)-0.050*diff(ylim),...
+        ['I_{inj} = ' num2str(Iinj,'%5.2f [A]')],'Color','black','FontSize',36);
+    set(gca,'FontSize',36);
+    xlabel('Effective Radius (\rho/a)');
+    ylabel(['Beam Current ' unitsj2]);
+    title('BEAMS3D Simple Current');
+end
+
+data.PE = PE_RHO;
+data.PI = PI_RHO;
+data.RHO  = RHO;
+data.Pinj = Pinj;
+data.Iinj = Iinj;
+data.tslow = t;
 data.tau_spit = tau_spit;
 data.nu0_fe = nu0_fe;
-% if ~isempty(vp)
-%     data.VP = vp;
-%     data.QE = PE_RHO./vp;
-%     data.QI = PI_RHO./vp;
-%     data.JB =  J_RHO./vp;
-%     data.QE(1) = 0;
-%     data.QI(1) = 0;
-%     data.JB(1) = 0;
-% end
+if ~isempty(vp)
+    data.VP = vp;
+    data.QE = PE_RHO./vp;
+    data.QI = PI_RHO./vp;
+    data.JB =  J_RHO./vp;
+    data.QE(1) = 0;
+    data.QI(1) = 0;
+    data.JB(1) = 0;
+end
 
 
 return

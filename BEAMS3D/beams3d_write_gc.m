@@ -31,6 +31,7 @@ function groupid = beams3d_write_gc(beam_data,dex,varargin)
 %   Version:       1.00
 
 % Defaults
+lplot=0;
 lbeams3d = 1;
 lascot5  = 0;
 ndiv = 1;
@@ -94,9 +95,13 @@ else
     dex_local = dex;
 end
 
+U_lines=beams3d_fixUlines(beam_data);
+
 % Now process subarrays
 nnew=sum(dex_local>0);
 nold   = nnew;
+rho    = zeros(1,nnew); %temp
+u      = zeros(1,nnew);
 r      = zeros(1,nnew);
 phi    = zeros(1,nnew);
 z      = zeros(1,nnew);
@@ -112,6 +117,8 @@ k=1;
 for i=1:beam_data.nparticles
     if mask(i)
         j = dex_local(i);
+        rho(k) = sqrt(beam_data.S_lines(j,i));
+        u(k) = U_lines(j,i);
         r(k)   = beam_data.R_lines(j,i);
         phi(k) = beam_data.PHI_lines(j,i);
         z(k)   = beam_data.Z_lines(j,i);
@@ -293,7 +300,10 @@ elseif lascot5
         xlabel('V_{ll}/V_{total}');
         ylabel(' Energy [keV]');
     end
+
 end
+
+    
 
 return;
 end

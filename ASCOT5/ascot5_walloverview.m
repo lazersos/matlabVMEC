@@ -152,7 +152,7 @@ end
 %mdex{3} = and(pm>=3*factor,pm<pi);
 %mdex{4} = and(pm>=-pi,pm<-3*factor);
 %mdex{5} = and(pm>=-3*factor,pm<-factor);
-fig=figure('Position',[1 1 1920 768],'Color','white','InvertHardCopy','off');
+fig=figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
 t = tiledlayout(1,5, 'TileSpacing','none');
 t.TileSpacing = 'none';
 t.Padding = 'none';
