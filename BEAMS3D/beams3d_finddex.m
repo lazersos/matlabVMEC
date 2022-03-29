@@ -9,7 +9,7 @@ function dex = beams3d_finddex(beam_data,varargin)
 %       'orbit_birth':      Initial condition for any orbiting particle.
 %       'orbit_last':       Last timepoint for orbiting particle.
 %       'therm_birth':      Initial condition for any thermalized particle.
-%       'therm_end':        Point at which particle thermalizes.
+%       'therm_last':        Point at which particle thermalizes.
 %       'wall_birth':       Initial condition for wall strikes.
 %       'wall_hit':         Point of wall collision
 %       'shine_birth':      Initial condition of shinethorugh particles.

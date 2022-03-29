@@ -1292,7 +1292,8 @@ switch contents{get(handles.plottype,'Value')}
                 num2str(handles.theta(handles.thetaval))]);
             axis tight
         elseif strcmp(handles.cuttype,'zeta2')
-            torocont(handles.r,handles.z,f,handles.zetaval)
+            torocont(handles.r,handles.z,f,handles.zetaval);
+            hold off;
             xlabel('Radius (R) [m]');
             ylabel('Elevation (Z) [m]');
             title([name ' at \phi=',num2str(handles.zeta(handles.zetaval))]);
@@ -1369,6 +1370,7 @@ switch contents{get(handles.plottype,'Value')}
             set(hp,'FaceColor','none','EdgeColor','black');
             hold on
             plot(handles.r(1,1,handles.zetaval),handles.z(1,1,handles.zetaval),'o');
+            
             hold off
             xlabel('Radius (R) [m]');
             ylabel('Elevation (Z) [m]');

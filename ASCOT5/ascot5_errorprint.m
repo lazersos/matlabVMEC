@@ -28,6 +28,12 @@ if ~isfile(a5file)
     return;
 end
 
+if isempty(runid)
+    runid=h5readatt(a5file,'/results','active');
+    disp(['  Using runid: ' runid]);
+end
+
+
 % from error.h
 file_errs={'mccc_wiener.c','mccc_push.c','mccc_coefs.c','mccc.c','step_fo_vpa.c',...
     'step_gc_cashkarp.c','step_gc_rk4.c','N0_3D.c','N0_ST.c','B_3DS.c',...
