@@ -1307,6 +1307,10 @@ switch contents{get(handles.plottype,'Value')}
             phi = 0:2*pi/(size(r,3)-1):2*pi;
             if (handles.rval > 1)
                 isotoro(r,z,phi,handles.rval,f);
+                try %Only when app is present
+                    evalin('base', 'app');
+                    assignin('base','ColorData',f);
+                end
                 title([name ' on Flux Surface (ns=',num2str(handles.rval),')']);
             else
                 plot3(squeeze(r(1,1,:)).*cos(phi'),...

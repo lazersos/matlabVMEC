@@ -3,8 +3,6 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %The PLOT_BEAMS function creates various canned plot of BEAMS3D data.  The
 %particle trajectory data or diagnostic data can be read using the
 %READ_BEAMS3D function and the resulting strucutre passed to PLOT_BEAMS.
-% Options
-%      'beam': specify the beams to subsample
 %
 % Example usage
 %      beam_data = read_beams3d('beams3d_test.h5');
@@ -24,7 +22,8 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      plot_beams(beam_data,'orbit_rz'); % Full particle Orbit in RZ
 %      plot_beams(beam_data,'orbit_flux'); % Full particle Orbit in flux
 %      plot_beams(beam_data,'orbit_vspace'); % Full particle Orbit in V
-%      plot_beams(beam_data,'frac_loss'); % Loss fraction
+%      plot_beams(beam_data,'frac_loss'); % Wall Loss fraction
+%      plot_beams(beam_data,'frac_therm'); % Thermalized fraction
 %      plot_beams(beam_data,'distribution'); % 2D vll/vperp distribution
 %      plot_beams(beam_data,'heating'); % 1D Heating profiles
 %      plot_beams(beam_data,'current'); % 1D Current Density profiles
@@ -61,7 +60,7 @@ if nargin > 1
                     'orbit_rz','orbit_flux','orbit_vspace',...
                     'rho','rho_therm','rho_birth','rho_total',...
                     'rho_initial','rho_lost_initial','rho_therm_initial',...
-                    'frac_loss',...
+                    'frac_loss', 'frac_therm',...
                     'distribution','heating','current','fueling',...
                     'injection','birth_image',...
                     'wall','wall_loss','wall_heat','wall_shine','benchmarks',...
@@ -415,14 +414,11 @@ else
         case 'rho'
             cdex=pchip([0 1],[1 0 0; 0 1 0]',0:1./double(beam_data.npoinc):1)';
             colororder(cdex);
-            h  = 1.2/64.0;
-            edges = 0:h:1.2;
-            rho   = 0.5.*(edges(1:end-1)+edges(2:end));
-            [s_b3d, vol, ~] = beams3d_volume(beam_data);
-            vol_s    = pchip(s_b3d,vol,edges.*edges);
-            volp = diff(vol_s)./diff(edges);
             for j=1:beam_data.npoinc+1
                 x1 =  sqrt(beam_data.S_lines(j,orbit_dex));
+                h  = 1.2/64.0;
+                edges = 0:h:1.2;
+                rho   = 0.5.*(edges(1:end-1)+edges(2:end));
                 y=zeros(1,64);
                 for i=1:length(edges)-1
                     sm = x1 > edges(i);
@@ -430,40 +426,37 @@ else
                     y(i) = sum(and(sm,sp));
                 end
                 hold on;
-                plot(rho,y./volp);
+                plot(rho,y);
                 hold off;
             end
             xlim([0 1.2]);
             xlabel('r/a');
-            ylabel('Marker Density [m^-3]');
+            ylabel('# Particles');
             title('Orbiting Particles');
         case 'rho_therm'
             cdex=pchip([0 1],[1 0 0; 0 1 0]',0:1./double(beam_data.npoinc):1)';
             colororder(cdex);
             leg_text={};
             dt = double(beam_data.t_end(1))./double(beam_data.npoinc);
-            h  = 1.2/64.0;
-            edges = 0:h:1.2;
-            rho   = 0.5.*(edges(1:end-1)+edges(2:end));
-            [s_b3d, vol, ~] = beams3d_volume(beam_data);
-            vol_s    = pchip(s_b3d,vol,edges.*edges);
-            volp = diff(vol_s)./diff(edges);
             for j=1:beam_data.npoinc+1
                 leg_text{j} = ['t=' num2str(dt.*double(j-1).*1000,'%3.0f')];
                 x1 =  sqrt(beam_data.S_lines(j,therm_dex));
+                h  = 1.2/64.0;
+                edges = 0:h:1.2;
+                rho   = 0.5.*(edges(1:end-1)+edges(2:end));
                 y=zeros(1,64);
                 for i=1:length(edges)-1
                     sm = x1 > edges(i);
                     sp = x1 <= edges(i+1);
                     y(i) =sum(and(sm,sp));
                 end
-                plot(rho,y./volp);
+                plot(rho,y);
                 hold on;
             end
             hold off;
             xlim([0 1.2]);
             xlabel('r/a');
-            ylabel('Marker Density [m^-3]');
+            ylabel('# Particles');
             title('Thermalized Particles');
             legend(leg_text);
         case 'rho_birth'
@@ -540,7 +533,7 @@ else
             vll = beam_data.vll_lines(:,orbit_dex);
             w = double(beam_data.Weight(orbit_dex));
             vperp = vperp(:,orbit_dex);
-            pitch = atan2d(vperp,vll);
+            pitch = atan2d(vll,vperp);
             ld    = last_dex(orbit_dex);
             p2    = length(ld);
             for i=1:length(ld)
@@ -564,7 +557,7 @@ else
             vll = beam_data.vll_lines(:,therm_dex);
             w = double(beam_data.Weight(therm_dex));
             vperp = vperp(:,therm_dex);
-            pitch = atan2d(vperp,vll);
+            pitch = atan2d(vll,vperp);
             ld    = last_dex(therm_dex);
             p2    = length(ld);
             for i=1:length(ld)
@@ -590,7 +583,7 @@ else
             vll = beam_data.vll_lines(:,lost_dex);
             w = double(beam_data.Weight(lost_dex));
             vperp = vperp(:,lost_dex);
-            pitch = atan2d(vperp,vll);
+            pitch = atan2d(vll,vperp);
             ld    = last_dex(lost_dex);
             p2    = length(ld);
             nres = 128;
@@ -611,7 +604,7 @@ else
             vll = beam_data.vll_lines(dex1,born_dex);
             w = double(beam_data.Weight(born_dex));
             vperp = vperp(dex1,born_dex);
-            pitch = atan2d(vperp,vll);
+            pitch = atan2d(vll,vperp);
             p2    = pitch(1,:);
             nres = 128;
             y_size=[min(p2) max(p2)];
@@ -631,7 +624,7 @@ else
             vll = beam_data.vll_lines(:,orbit_dex);
             w = double(beam_data.Weight(orbit_dex));
             vperp = vperp(:,orbit_dex);
-            pitch = atan2d(vperp,vll);
+            pitch = atan2d(vll,vperp);
             ld    = last_dex(orbit_dex);
             p2    = pitch(1,:);
             nres = 128;
@@ -652,7 +645,7 @@ else
             vll = beam_data.vll_lines(:,therm_dex);
             w = double(beam_data.Weight(therm_dex));
             vperp = vperp(:,therm_dex);
-            pitch = atan2d(vperp,vll);
+            pitch = atan2d(vll,vperp);
             ld    = last_dex(therm_dex);
             p2    = pitch(1,:);
             nres = 128;
@@ -673,7 +666,7 @@ else
             vll = beam_data.vll_lines(:,lost_dex);
             w = double(beam_data.Weight(lost_dex));
             vperp = vperp(:,lost_dex);
-            pitch = atan2d(vperp,vll);
+            pitch = atan2d(vll,vperp);
             ld    = last_dex(lost_dex);
             p2    = pitch(1,:);
             nres = 128;
@@ -1180,11 +1173,12 @@ else
                 case 'wall_loss'
                     val=beam_data.wall_strikes;
                 case 'wall_shine'
-                    val=sum(beam_data.wall_shine(beamdex,:),1)';
+                    val=sum(beam_data.wall_shine(beamdex,:))';
                 case 'wall_heat'
-                    val=sum(beam_data.wall_load(beamdex,:),1)';
+                    val=sum(beam_data.wall_load(beamdex,:))';
             end
             output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',val,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
+
             cmap = colormap('hot');
             cmap(1,:) = [0.2 0.2 0.2]; % grey
             colormap(cmap);
@@ -1309,19 +1303,17 @@ else
             end
             scatter3(x,y,z,s.*0.0+1,s,'o');
         case 'frac_loss'
+            ftotal = sum(beam_data.Weight(beam_dex));
             w   = repmat(beam_data.Weight',[beam_data.npoinc+1,1]);
-            %dex = zeros(beam_data.npoinc+1,beam_data.nparticles);
-            temp=repmat(beam_data.end_state',[beam_data.npoinc+1 1]);
+            endcond = repmat(beam_data.end_state',[beam_data.npoinc+1,1]);
             dex = beam_data.S_lines;
             dex(dex<=1) = 0;
             dex(dex>1)  = 1;
-            dex(temp<=1)=0; % %orbit and therm particles not lost
+            dex(endcond~=2) = 0; %Only consider wall hits
             dex = dex.*w;
-            % Plot Total
-            f = sum(dex(dex1:end,beam_dex)');
-            ftotal = sum(beam_data.Weight(born_dex));
+            f = sum(dex(:,beam_dex)');
             tend = max(beam_data.t_end(beam_dex));
-            t = 0:tend./double(beam_data.npoinc-dex1+1):tend;
+            t = 0:tend./double(beam_data.npoinc):tend;
             figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
             units = '[ms]'; factor =1E3;
             if (tend < 1E-6)
@@ -1330,26 +1322,36 @@ else
                 units = '[µs]'; factor = 1E6;
             end
             plot(t.*factor,100.*f./ftotal,'k','LineWidth',4);
-            beamval = unique(beam_data.Beam(beam_dex));
-            if length(beamval) > 1
-                hold on;
-                leg_text{1} = 'Total';
-                for i=beamval'
-                    leg_text{i+1} = ['Population #' num2str(i,'%i')];
-                    sub_dex = and(beam_dex,beam_data.Beam==i);
-                    f = sum(dex(dex1:end,sub_dex)');
-                    %ftotal = sum(beam_data.Weight(sub_dex));
-                    tend = max(beam_data.t_end(sub_dex));
-                    t = 0:tend./double(beam_data.npoinc-dex1+1):tend;
-                    plot(t.*factor,100.*f./ftotal,'LineWidth',4);
-                end
-                legend(leg_text);
-            end
             xlabel(['Time ' units]);
             ylabel('Percentage Lost [%]');
             title('Loss Fraction Evolution');
             ylim([0 min(1.2*max(ylim),100)]);
             set(gca,'FontSize',24);
+        case 'frac_therm'
+            ftotal = sum(beam_data.Weight(beam_dex));
+            w   = repmat(beam_data.Weight',[beam_data.npoinc+1,1]);
+            endcond = repmat(beam_data.end_state',[beam_data.npoinc+1,1]);
+            dex = beam_data.S_lines;
+            dex(dex<=1) = 0;
+            dex(dex>1)  = 1;
+            dex(endcond~=1) = 0; %Only consider thermalized markers
+            dex = dex.*w;
+            f = sum(dex(:,beam_dex)');
+            tend = max(beam_data.t_end(beam_dex));
+            t = 0:tend./double(beam_data.npoinc):tend;
+            figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+            units = '[ms]'; factor =1E3;
+            if (tend < 1E-6)
+                units = '[ns]'; factor = 1E9;
+            elseif (tend<1E-3)
+                units = '[µs]'; factor = 1E6;
+            end
+            plot(t.*factor,100.*f./ftotal,'k','LineWidth',4);
+            xlabel(['Time ' units]);
+            ylabel('Percentage Thermalized [%]');
+            title('Thermalized Fraction Evolution');
+            ylim([0 min(1.2*max(ylim),100)]);
+            set(gca,'FontSize',24);            
         case 'bmir'
             vperp = beams3d_calc_vperp(beam_data);
             B_mir = beam_data.B_lines.*(vperp.^2+beam_data.vll_lines.^2)./(vperp.^2);

@@ -1,4 +1,4 @@
-function beams3d_write_gc(beam_data,dex,varargin)
+function groupid = beams3d_write_gc(beam_data,dex,varargin)
 %BEAMS3D_WRITE_GC Outputs a subset of particles as input
 %   The BEAMS3D_WRITE_GC function outputs to a file a subset of particles
 %   based on a beams3d run.  It takes a beams3d data strucuture as returned
@@ -299,6 +299,7 @@ elseif lascot5
         xlabel('V_{ll}/V_{total}');
         ylabel(' Energy [keV]');
     end
+
 end
 
     
