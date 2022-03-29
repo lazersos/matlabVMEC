@@ -11,6 +11,7 @@ function w7x_beam_params( source ,varargin)
 %       'He':               Helium Beams
 %       'plots':            Generate Geometry Plots
 %       'rudix':            Include Rudix Geometry
+%       'optemist':         Include Optemist Geometry
 %       'write_beams3d':    Generate BEAMS3D Input
 %       'grid':             Specify Accelerating Voltage (60 or 100)
 %
@@ -29,6 +30,7 @@ function w7x_beam_params( source ,varargin)
 % Defaults
 lplots = 0;
 lrudix = 0;
+loptemist = 0;
 lwrite_beams3d = 0;
 grid = 60;
 species ='H2';
@@ -71,6 +73,8 @@ if nargin > 1
                     grid=varargin{i};
                 case {'Rudix','RUDIX','rudix'}
                     lrudix=1;
+                case {'optemist','OPTEMIST','Optemist'}
+                    loptemist=1;
                     vmec_data.rmax_surf = 6.5; %Maybe should even be after this section, to avoid WALL OUTSIDE GRID DOMAIN! error
                     vmec_data.rmin_surf = 4.25;
                     vmec_data.zmax_surf = 1.0;
@@ -301,10 +305,9 @@ if ~isempty(source)
     end
 end
 if lrudix
-    E_RUDI = (50:10:250) * 1000; %20-60 kV
+    E_RUDI = 60E3; %20-60 kV
     %PFRAC = [56 22 22];
     P_RUDI = 250E3; %250 kW
-    for i=1:length(E_RUDI)
         r_beam(1,j) = sqrt(xo_RUDI.^2+yo_RUDI.^2);
         r_beam(2,j) = sqrt(xt_RUDI.^2+yt_RUDI.^2);
         p_beam(1,j) = atan2(yo_RUDI,xo_RUDI);
@@ -312,15 +315,38 @@ if lrudix
         z_beam(1,j) = zo_RUDI;
         z_beam(2,j) = zt_RUDI;
         power_beam(j) = P_RUDI;
-        energy_beam(j) = E_RUDI(i);
+        energy_beam(j) = E_RUDI;
         div_beam(j)    = 0.0125;
         note{j} = 'RUDIX BEAM';
+        source = [source 9]; % Treat as source 9
+    if lplots
+        hold(ax, 'on');
+        plot3(ax,[xo_RUDI xt_RUDI],[yo_RUDI yt_RUDI],[zo_RUDI zt_RUDI],'k');
+        hold(ax,'off');
+    end
+end
+
+if loptemist
+    E_OPT = (50:10:250) * 1000; 
+    %PFRAC = [56 22 22];
+    P_OPT = 250E3; %250 kW
+    for i=1:length(E_OPT)
+        r_beam(1,j) = sqrt(xo_RUDI.^2+yo_RUDI.^2); %RUDIX Geometry
+        r_beam(2,j) = sqrt(xt_RUDI.^2+yt_RUDI.^2);
+        p_beam(1,j) = atan2(yo_RUDI,xo_RUDI);
+        p_beam(2,j) = atan2(yt_RUDI,xt_RUDI);
+        z_beam(1,j) = zo_RUDI;
+        z_beam(2,j) = zt_RUDI;
+        power_beam(j) = P_OPT;
+        energy_beam(j) = E_OPT(i);
+        div_beam(j)    = 0.0125;
+        note{j} = 'OPTEMIST BEAM';
         source = [source j]; % Treat as source 9
         j = j + 1;
     end
     if lplots
         hold(ax, 'on');
-        plot3(ax,[xo_RUDI xt_RUDI],[yo_RUDI yt_RUDI],[zo_RUDI zt_RUDI],'k');
+        plot3(ax,[xo_OPT xt_OPT],[yo_OPT yt_OPT],[zo_OPT zt_OPT],'k');
         hold(ax,'off');
     end
 end
