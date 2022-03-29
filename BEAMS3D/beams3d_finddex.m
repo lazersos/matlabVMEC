@@ -98,13 +98,17 @@ if and(size(beam_data.R_lines,1) == 3,lhitonly)
     %return;
 else    
     if llast
-%         dex2=zeros(1,beam_data.nparticles);
-%         for i=1:beam_data.nparticles
-%             dex2(i) = min([find(beam_data.R_lines(:,i)==0,1,'first')-1 beam_data.npoinc+1]);
-%         end
+%          dex=zeros(1,beam_data.nparticles);
+%          for i=1:beam_data.nparticles
+%              dex(i) = min([find(beam_data.R_lines(:,i)==0,1,'first')-1 beam_data.npoinc+1]);
+%          end      
+        %dex = double(min([B-1; repmat(beam_data.npoinc+1,1,size(beam_data.R_lines,2))],[],1));
+        %[row,col] = find(beam_data.R_lines(:,:)==0,numel(beam_data.R_lines),'first');
         [~,B] = max(beam_data.R_lines(:,:)==0,[],1); %Much faster, but test to see if it works!
-        dex = double(min([B-1; repmat(beam_data.npoinc+1,1,size(beam_data.R_lines,2))],[],1));
-        %disp(isequal(dex,dex2));
+        B(B~=0) = B(B~=0)-1;
+        B(B==0) = beam_data.npoinc+1;
+        %disp(isequal(dex,B));
+        dex = B;
     else
         dex = ones(1,beam_data.nparticles);
     end
