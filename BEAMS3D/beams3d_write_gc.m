@@ -269,7 +269,8 @@ elseif lascot5
     vtotal = sqrt(vll.*vll+vperp2);
     energy = 0.5.*mass.*vtotal.*vtotal./ec;
     pitch  = vll./vtotal;
-    zeta   = zeros(1,nnew);
+    %zeta   = zeros(1,nnew);
+    zeta   = rand(1,nnew).*pi.*2;
     charge2 = round(charge./ec);
     anum    = round(mass./amu);
     znum    = round(charge./ec);
