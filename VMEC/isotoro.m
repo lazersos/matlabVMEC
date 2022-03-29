@@ -160,7 +160,20 @@ scale = 1.0; x0=0; y0=0; z0=0;
 
 % Handle plotting a single surface
 if ns==1
-    hpatch=patch('Vertices',vertex,'Faces',faces,'FaceVertexCData',cfacedata);
+    try
+        app = evalin('base','app');
+        hpatch=patch(app.UIAxes, 'Vertices',vertex,'Faces',faces, 'FaceVertexCData',cfacedata, 'FaceColor','none', 'EdgeColor','flat');
+        %set(hpatch, 'FaceAlpha',0.5, 'EdgeColor','black');
+%         hpatch.AmbientStrength = 0.55;
+%         hpatch.DiffuseStrength = 0.7;
+%         hpatch.SpecularStrength = 0;
+        assignin('base','xData',squeeze(vertex(:,1,1))); %Expects there to only be one plotted flux surface
+        assignin('base', 'yData',squeeze(vertex(:,2,1)));
+        assignin('base','zData',squeeze(vertex(:,3,1)));
+        assignin('base','Faces',faces);
+    catch
+        hpatch=patch('Vertices',vertex,'Faces',faces,'FaceVertexCData',cfacedata);
+    end
     if ~isempty(new_color)
         set(hpatch,'EdgeColor','none','FaceColor','interp','CDataMapping','scaled');
     else        

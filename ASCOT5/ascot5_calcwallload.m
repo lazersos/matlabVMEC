@@ -15,15 +15,18 @@ function wall_load = ascot5_calcwallload(a5file,wallid,runid,varargin)
 %       wall_load = ascot5_calcwallload(a5file,wallid,runid); %Heat flux [W/m^2]
 %       wall_load = ascot5_calcwallload(a5file,[],[]); %Active ID's
 %       wall_load = ascot5_calcwallload(a5file,[],[],'hits'); % Strikes
+%       wall_load = ascot5_calcwallload(a5file,[],[],'power'); % Power
 %     
 %   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 %   Version:       1.0  
 
 amu = 1.66053906660E-27;
+
 wall_load = [];
 pts_mask=[];
 area_mask = 0.0;
 lhits = 0;
+lpow = 0;
 lcx=0;
 
 % Handle varargin
@@ -36,6 +39,8 @@ if nargin > 3
         switch varargin{i}
             case{'hits','nhits'}
                 lhits = 1;
+            case 'power'
+                lpow = 1;
             case{'cx','cxsim'}
                 lcx = 1;
             case{'mask_points'}
@@ -77,8 +82,6 @@ catch
     return;
 end
 
-wall_load = zeros(1,size(x1x2x3,2));
-
 % Pull particle data
 path_run = ['/results/run_' num2str(runid,'%10.10i') '/endstate'];
 try
@@ -87,6 +90,7 @@ catch
     disp(['ERROR: Could not result: ' num2str(runid,'%10.10i')]);
     return;
 end
+
 %walltile = h5read(a5file,[path_run '/walltile'])+1; % now in matlab index
 walltile = h5read(a5file,[path_run '/walltile']); % Old index (better?)
 
@@ -99,6 +103,7 @@ end
 % Correct walltile
 dex = endcond ~= 8; % endcond=8 is wall hit
 walltile(dex) = 0;
+
 % Count hits
 nhits=[];
 mask = unique(walltile);
@@ -130,28 +135,25 @@ if ~lhits
         weight = weight.*fact;
     end
     q  = 0.5.*mass.*v2.*weight;
-    V0=[x1x2x3(2,:)-x1x2x3(1,:);y1y2y3(2,:)-y1y2y3(1,:);z1z2z3(2,:)-z1z2z3(1,:)];
-    V1=[x1x2x3(3,:)-x1x2x3(1,:);y1y2y3(3,:)-y1y2y3(1,:);z1z2z3(3,:)-z1z2z3(1,:)];
-    F = cross(V0,V1);
-    A = 0.5.*sqrt(sum(F.*F));
+    if ~lpow
+        V0=[x1x2x3(2,:)-x1x2x3(1,:);y1y2y3(2,:)-y1y2y3(1,:);z1z2z3(2,:)-z1z2z3(1,:)];
+        V1=[x1x2x3(3,:)-x1x2x3(1,:);y1y2y3(3,:)-y1y2y3(1,:);z1z2z3(3,:)-z1z2z3(1,:)];
+        F = cross(V0,V1);
+        A = 0.5.*sqrt(sum(F.*F));
+    end
+    %Construct wall_load using accumarray
+    walltile(walltile==0) = size(x1x2x3,2) + 1; %set 0's from before to extra value to be able to truncate (accumarray needs positive integers)
     % Convert to heatflux
-    qflux=[];
-    for i = mask'
-        if (i==0), continue; end
-        dex = walltile==i;
-        qtemp = q(dex);
-        qflux = [qflux; sum(qtemp)];
-    end
-    wall_load(mask_final)=qflux;
-    wall_load = wall_load./A;
-    wall_load(A<=area_mask) = 0;
+    wall_load = accumarray(walltile,q); %Sum all entries in q that have the same value in walltile, put result at the position given by walltile
+    wall_load = wall_load(1:end-1)'; %truncate "0's"
+    if ~lpow
+        wall_load = wall_load./A;
+    end       
 else
-    for i = mask'
-        if (i==0), continue; end
-        dex = walltile==i;
-        nhits = [nhits; sum(weight(dex))];
-    end
-    wall_load(mask_final) = nhits;
+    walltile(walltile==0) = size(x1x2x3,2) + 1;
+    wall_load = accumarray(walltile,1); %Sum all entries with same value in walltile, put result at the position given by the value (output is marker hits per wall element)
+    wall_load = wall_load(1:end-1)'; 
+
 end
 
 return;
