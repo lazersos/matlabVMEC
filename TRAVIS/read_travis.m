@@ -1,6 +1,7 @@
 function data = read_travis
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+%read_travis Reads a TRAVIS directory
+%   The READ_TRAVIS routine reads the files in the current directory into a
+%   a structure for plotting.
 
 files=dir('beamtrace*');
 for i=1:length(files)

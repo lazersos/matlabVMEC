@@ -4,7 +4,7 @@ function data = read_emc3_grid(file)
 
 
 fid=fopen(file,'r');
-for j=1:7
+for j=1:1
     temp=fscanf(fid,'%d %d %d',3);
     data.nr = temp(1);
     data.ntheta = temp(2);
