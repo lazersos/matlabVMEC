@@ -1292,7 +1292,8 @@ switch contents{get(handles.plottype,'Value')}
                 num2str(handles.theta(handles.thetaval))]);
             axis tight
         elseif strcmp(handles.cuttype,'zeta2')
-            torocont(handles.r,handles.z,f,handles.zetaval)
+            torocont(handles.r,handles.z,f,handles.zetaval);
+            hold off;
             xlabel('Radius (R) [m]');
             ylabel('Elevation (Z) [m]');
             title([name ' at \phi=',num2str(handles.zeta(handles.zetaval))]);
@@ -1369,6 +1370,7 @@ switch contents{get(handles.plottype,'Value')}
             set(hp,'FaceColor','none','EdgeColor','black');
             hold on
             plot(handles.r(1,1,handles.zetaval),handles.z(1,1,handles.zetaval),'o');
+            
             hold off
             xlabel('Radius (R) [m]');
             ylabel('Elevation (Z) [m]');
@@ -1739,6 +1741,9 @@ switch handles.cuttype
     case {'zeta2','other'}
         set(handles.graph,'XLim',[handles.xmin handles.xmax]);
         set(handles.graph,'YLim',[handles.zmin handles.zmax]);
+        delete(findall(handles.figure1,'type','annotation'));
+        str = ['Min: ', num2str(handles.graph.CLim(1)), ' Max: ', num2str(handles.graph.CLim(2))];
+        handles.text10 = annotation(handles.figure1, 'textbox', [.4 0 .3 .3], 'String', str ,'FitBoxToText','on'); %handles.output
         zoom on
         colorbar('FontSize',16)
         rotate3d off
@@ -1795,6 +1800,7 @@ switch contents{get(handles.plottype,'Value')}
 end
 % Now Fix theta
 handles.theta=temp_theta;
+
         
         
 function guiupdate(handles)

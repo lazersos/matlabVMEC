@@ -9,7 +9,7 @@ function dex = beams3d_finddex(beam_data,varargin)
 %       'orbit_birth':      Initial condition for any orbiting particle.
 %       'orbit_last':       Last timepoint for orbiting particle.
 %       'therm_birth':      Initial condition for any thermalized particle.
-%       'therm_end':        Point at which particle thermalizes.
+%       'therm_last':        Point at which particle thermalizes.
 %       'wall_birth':       Initial condition for wall strikes.
 %       'wall_hit':         Point of wall collision
 %       'shine_birth':      Initial condition of shinethorugh particles.
@@ -98,13 +98,15 @@ if and(size(beam_data.R_lines,1) == 3,lhitonly)
     %return;
 else    
     if llast
-%         dex2=zeros(1,beam_data.nparticles);
-%         for i=1:beam_data.nparticles
-%             dex2(i) = min([find(beam_data.R_lines(:,i)==0,1,'first')-1 beam_data.npoinc+1]);
-%         end
-        [~,B] = max(beam_data.R_lines(:,:)==0,[],1); %Much faster, but test to see if it works!
-        dex = double(min([B-1; repmat(beam_data.npoinc+1,1,size(beam_data.R_lines,2))],[],1));
-        %disp(isequal(dex,dex2));
+%          dex=zeros(1,beam_data.nparticles);
+%          for i=1:beam_data.nparticles
+%              dex(i) = min([find(beam_data.R_lines(:,i)==0,1,'first')-1 beam_data.npoinc+1]);
+%          end      
+        %dex = double(min([B-1; repmat(beam_data.npoinc+1,1,size(beam_data.R_lines,2))],[],1));
+        %[row,col] = find(beam_data.R_lines(:,:)==0,numel(beam_data.R_lines),'first');
+        [~,dex] = max(beam_data.R_lines(:,:)==0,[],1);
+        dex(dex~=0) = dex(dex~=0)-1;
+        dex(dex==0) = beam_data.npoinc+1;
     else
         dex = ones(1,beam_data.nparticles);
     end
