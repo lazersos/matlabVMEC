@@ -40,6 +40,11 @@ if ~isfile(a5file)
     return;
 end
 
+nsave = 0;
+if isempty(bfieldid) && isempty(plasmaid)
+    nsave = 1;
+end
+
 % Use active
 if isempty(bfieldid)
     bfieldid=h5readatt(a5file,'/bfield','active');
@@ -146,6 +151,10 @@ set(gca,'FontSize',24);
 xlabel('Rho');
 ylabel('T [keV]');
 xlim([0 max(rho)]);
+
+if nsave == 1
+    exportgraphics(gcf, ['Profile_' a5file(1:end-4) '.png']);
+end
 
 end
 

@@ -306,14 +306,22 @@ end
 fprintf(fid,'/\n');
 
 if lplots
+    try
+        app =  evalin('base', 'app');
+    axe = app.UIAxes;
+    hold(axe,'on');
+    catch
     fig=figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
-    thv=0:2*pi./63:2*pi;
+    axe = gca;
+    end
+    
+    thv=0:2*pi/63:2*pi;
     dphi=2*pi./vmec_data.nfp;
     n1=min(min(phi_beam));
     n2=max(max(phi_beam));
     temp=max(min(ceil(0.01+(n2-n1)/dphi)*dphi,2*pi),dphi);
     n1 = (n2-n1)./2; azi=rad2deg(n1);
-    zeta = (-.5:1./63:.5).*temp+n1;
+    zeta = (-2.5:1/63:2).*temp+n1; %Rudix:(-1.03:1/63:-0.2).*temp+n1;%(-2.5:1./63:2).*temp+n1; %
     rv = cfunct(thv,zeta,vmec_data.rmnc,vmec_data.xm,vmec_data.xn);
     zv = sfunct(thv,zeta,vmec_data.zmns,vmec_data.xm,vmec_data.xn);
     if vmec_data.iasym==1
@@ -322,10 +330,21 @@ if lplots
     end
     x_beam = r_beam.*cos(phi_beam);
     y_beam = r_beam.*sin(phi_beam);
-    ha=isotoro(rv,zv,zeta,vmec_data.ns);
+%     rv = repmat(rv(:,:,1:end-1),[1 1 vmec_data.nfp]);
+%     zv = repmat(zv(:,:,1:end-1),[1 1 vmec_data.nfp]);
+%     rv(:,:,end+1) = rv(:,:,1);
+%     zv(:,:,end+1) = zv(:,:,1);   
+%     phi = (-.5:1./63:4.5).*temp+n1; %0:2*pi/(size(rv,3)-1):2*pi;
+
+    try 
+        modb = evalin('base', 'ColorData');
+        ha=isotoro(rv,zv,zeta,vmec_data.ns,modb);
+    catch
+        ha=isotoro(rv,zv,zeta,vmec_data.ns);
+    end
     set(ha,'FaceAlpha',0.33); hold on;
-    plot3(squeeze(rv(1,1,:)).*cos(zeta)',squeeze(rv(1,1,:)).*sin(zeta)',squeeze(zv(1,1,:)),'k');
-    plot3(x_beam,y_beam,z_beam);
+    plot3(axe,squeeze(rv(1,1,:)).*cos(zeta)',squeeze(rv(1,1,:)).*sin(zeta)',squeeze(zv(1,1,:)),'k');
+    plot3(axe,x_beam,y_beam,z_beam);
     nx=diff(x_beam);
     ny=diff(y_beam);
     nz=diff(z_beam);
@@ -340,26 +359,26 @@ if lplots
     %quiver3(x_beam(1,:),y_beam(1,:),z_beam(1,:),nx,ny,nz)
     %quiver3(x_beam(1,:),y_beam(1,:),z_beam(1,:),ax,ay,az)
     %quiver3(x_beam(1,:),y_beam(1,:),z_beam(1,:),bx,by,bz)
-    % Add apperature
+    % Add aperture
     for i=1:nbeams
         appx=(ax(i).*cos(0:2*pi./64:2*pi)+bx(i).*sin(0:2*pi./64:2*pi)).*asize(i)+nx(i).*adist(i)+x_beam(1,i);
         appy=(ay(i).*cos(0:2*pi./64:2*pi)+by(i).*sin(0:2*pi./64:2*pi)).*asize(i)+ny(i).*adist(i)+y_beam(1,i);
         appz=(az(i).*cos(0:2*pi./64:2*pi)+bz(i).*sin(0:2*pi./64:2*pi)).*asize(i)+nz(i).*adist(i)+z_beam(1,i);
-        plot3(appx,appy,appz,'k');
+        plot3(axe,appx,appy,appz,'k');
     end
     % Add cone (resue app variable)
     for i=1:nbeams
-        r=n(i).*tan(div_beam(i));
-        appx=(ax(i).*cos(0:2*pi./64:2*pi)+bx(i).*sin(0:2*pi./64:2*pi)).*r+nx(i).*n(i)+x_beam(1,i);
-        appy=(ay(i).*cos(0:2*pi./64:2*pi)+by(i).*sin(0:2*pi./64:2*pi)).*r+ny(i).*n(i)+y_beam(1,i);
-        appz=(az(i).*cos(0:2*pi./64:2*pi)+bz(i).*sin(0:2*pi./64:2*pi)).*r+nz(i).*n(i)+z_beam(1,i);
+        rv=n(i).*tan(div_beam(i));
+        appx=(ax(i).*cos(0:2*pi./64:2*pi)+bx(i).*sin(0:2*pi./64:2*pi)).*rv+nx(i).*n(i)+x_beam(1,i);
+        appy=(ay(i).*cos(0:2*pi./64:2*pi)+by(i).*sin(0:2*pi./64:2*pi)).*rv+ny(i).*n(i)+y_beam(1,i);
+        appz=(az(i).*cos(0:2*pi./64:2*pi)+bz(i).*sin(0:2*pi./64:2*pi)).*rv+nz(i).*n(i)+z_beam(1,i);
         x1x2x3=[]; y1y2y3=[]; z1z2z3=[];
         for j=1:length(appx)-1
             x1x2x3(:,j)=[x_beam(1,i) appx(j) appx(j+1)];
             y1y2y3(:,j)=[y_beam(1,i) appy(j) appy(j+1)];
             z1z2z3(:,j)=[z_beam(1,i) appz(j) appz(j+1)];
         end
-        ha=patch('XData',x1x2x3,'YData',y1y2y3,'ZData',z1z2z3);
+        ha=patch(axe,'XData',x1x2x3,'YData',y1y2y3,'ZData',z1z2z3);
         set(ha,'FaceColor','blue','FaceAlpha',0.33,'LineStyle','none');
     end
     title('');
@@ -367,6 +386,7 @@ if lplots
     set(gca,'Clipping','off');
     axis off;
 end
+fclose(fid);
 
 end
 

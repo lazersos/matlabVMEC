@@ -99,11 +99,11 @@ end
 function  data2 = eqdisk2vmec_file(filename)
 data=read_efit(filename);
 subplot(3,2,[1 3 5]);
-contourf(data.xgrid,data.zgrid,data.psixz',100); axis equal; axis tight; 
+contourf(data.xgrid,data.zgrid,data.psixz',100, 'DisplayName','EFIT Psi'); axis equal; axis tight; 
 hold on; 
-plot(data.xbndry,data.zbndry,'r','LineWidth',2); 
-plot(data.xaxis,data.zaxis,'+r','LineWidth',2); 
-plot(data.xlim,data.zlim,'k','LineWidth',2); hold off;
+plot(data.xbndry,data.zbndry,'r','LineWidth',2, 'DisplayName','EFIT Boundary'); 
+plot(data.xaxis,data.zaxis,'+r','LineWidth',2, 'DisplayName','Axis'); 
+plot(data.xlim,data.zlim,'k','LineWidth',2, 'DisplayName','EFIT Surfaces'); hold off;
 xlabel('R'); ylabel('Z'); title('GEQDSK');
 mpol = 12;
 ntor = 0;
@@ -254,7 +254,7 @@ r=cfunct(theta,zeta,rmnc,xm,xn)+sfunct(theta,zeta,rmns,xm,xn);
 z=cfunct(theta,zeta,zmnc,xm,xn)+sfunct(theta,zeta,zmns,xm,xn);
 subplot(3,2,[1 3 5]);
 hold on
-plot(r,z,'b');
+plot(r,z,'.-b', 'LineWidth', 1.5, 'DisplayName','VMEC');
 hold off
 
 return
@@ -517,7 +517,7 @@ r=cfunct(theta,zeta,rmnc,xm,xn)+sfunct(theta,zeta,rmns,xm,xn);
 z=cfunct(theta,zeta,zmnc,xm,xn)+sfunct(theta,zeta,zmns,xm,xn);
 subplot(3,2,[1 3 5]);
 hold on
-plot(r,z,'b');
+plot(r,z,'--b', 'VMEC');
 hold off
 return
 end

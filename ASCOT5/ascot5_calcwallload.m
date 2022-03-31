@@ -21,7 +21,6 @@ function wall_load = ascot5_calcwallload(a5file,wallid,runid,varargin)
 %   Version:       1.0  
 
 amu = 1.66053906660E-27;
-
 wall_load = [];
 pts_mask=[];
 area_mask = 0.0;
@@ -91,8 +90,10 @@ catch
     return;
 end
 
+
 %walltile = h5read(a5file,[path_run '/walltile'])+1; % now in matlab index
 walltile = h5read(a5file,[path_run '/walltile']); % Old index (better?)
+
 
 % Handle downselect of particles
 if ~isempty(pts_mask)
@@ -103,7 +104,6 @@ end
 % Correct walltile
 dex = endcond ~= 8; % endcond=8 is wall hit
 walltile(dex) = 0;
-
 % Count hits
 nhits=[];
 mask = unique(walltile);
@@ -153,7 +153,6 @@ else
     walltile(walltile==0) = size(x1x2x3,2) + 1;
     wall_load = accumarray(walltile,1); %Sum all entries with same value in walltile, put result at the position given by the value (output is marker hits per wall element)
     wall_load = wall_load(1:end-1)'; 
-
 end
 
 return;
