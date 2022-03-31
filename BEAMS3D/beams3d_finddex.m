@@ -104,11 +104,9 @@ else
 %          end      
         %dex = double(min([B-1; repmat(beam_data.npoinc+1,1,size(beam_data.R_lines,2))],[],1));
         %[row,col] = find(beam_data.R_lines(:,:)==0,numel(beam_data.R_lines),'first');
-        [~,B] = max(beam_data.R_lines(:,:)==0,[],1);
-        B(B~=0) = B(B~=0)-1;
-        B(B==0) = beam_data.npoinc+1;
-        disp(isequal(dex,B));
-        dex = B;
+        [~,dex] = max(beam_data.R_lines(:,:)==0,[],1);
+        dex(dex~=0) = dex(dex~=0)-1;
+        dex(dex==0) = beam_data.npoinc+1;
     else
         dex = ones(1,beam_data.nparticles);
     end
