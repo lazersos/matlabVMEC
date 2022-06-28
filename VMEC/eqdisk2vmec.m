@@ -180,7 +180,7 @@ fun = @(x) ppval(q_spl,x);
 for i=1:length(pflux)
     tflux(i) = integral(fun,pflux(1),pflux(i));
 end
-phiedge = tflux(end).*2.*pi.*sign(data.btor);
+phiedge = tflux(end).*2.*pi.*sign(data.btor);%;%Physical flux?
 tflux = tflux./tflux(length(tflux));
 s = 0:1/99:1;
 am_aux_s = s;

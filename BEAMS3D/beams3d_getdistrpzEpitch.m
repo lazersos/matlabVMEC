@@ -6,7 +6,9 @@ function dist = beams3d_getdistrpzEpitch(data,r,phi,z,E,pitch)
 %   of points can be passed to the funciton as R [m], PHI (rad), Z [m],
 %   Energy [eV], and pitch (vll/v).  Points which fall outside the
 %   domain return 0.  The function returns a 2D array of size (NBEAMS,
-%   NPTS) where NPTS is the nubmer of requested datapoints.
+%   NPTS) where NPTS is the nubmer of requested datapoints. The
+%   distribution function units are the same as that of FIDASIM:
+%   [1/cm^3/keV/(dOmega/4pi(?))]
 %
 % Example usage
 %      % Return an RPZ shaped array
@@ -84,13 +86,21 @@ dist5d_norm=data.dist_prof;
 
 % Jacobian from D. Moseev paper
 % https://doi.org/10.1063/1.5085429
-jac = 1.0./(mass.*sqrt(1-pitch.*pitch));
+%jac = 1.0./(mass.*sqrt(1-pitch.*pitch)); % this is wrong for the current
+%beams3d normalization (f2D_Ep = 2pi v/m f3D_Car)
+
+jac = V ./mass .* ec / 1000;%2pi factor is already in beams3d normalization
 
 
+
+% size_dist = size(dist5d_norm);
+% dist5d_norm = reshape(dist5d_norm, size(dist5d_norm,1),[]);% .* jac;
+% dist = reshape(dist,size_dist);
 dist=zeros(data.nbeams,length(r));
+%dist(:,maskt) = dist5d_norm(:,mask1,mask1,mask3,mask4,mask5).*jac;
 for i=1:length(maskt)
     if maskt(i)
-        dist(:,i) = dist5d_norm(:,dexr(i),dexu(i),dexp(i),dexv(i),dexw(i)).*jac(i);
+        dist(:,i) = dist5d_norm(:,dexr(i),dexu(i),dexp(i),dexv(i),dexw(i)).*jac(i); %this is now in [1/cm^3/keV/(dOmega/4pi)]
     end
 end
 
