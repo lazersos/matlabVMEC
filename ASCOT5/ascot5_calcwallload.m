@@ -148,11 +148,10 @@ if ~lhits
     wall_load = wall_load(1:end-1)'; %truncate "0's"
     if ~lpow
         wall_load = wall_load./A;
-    end
-        
+    end       
 else
     walltile(walltile==0) = size(x1x2x3,2) + 1;
-    wall_load = accumarray(walltile,1); %Sum all entries with same value in walltile, put result at the position given by the value
+    wall_load = accumarray(walltile,1); %Sum all entries with same value in walltile, put result at the position given by the value (output is marker hits per wall element)
     wall_load = wall_load(1:end-1)'; 
 end
 

@@ -94,6 +94,8 @@ if nargin > 2
                 i = i+1;
                 endframe = varargin{i};
                 
+            case {'gc'}
+                lgc = 1;
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -112,6 +114,7 @@ for f = 1:size(files,2)
             disp(['  Using runid: ' runid]);
         catch
             runid=[];
+            disp(['  Couldnt finde runid!']);
             return;
         end
     end
@@ -160,6 +163,9 @@ for f = 1:size(files,2)
     end
     
 end
+vll = pll./amu; %ONLY CORRECT FOR HYDROGEN!!!
+bmir = b .* (vll.^2 + vperp .^2) ./ vperp.^2;
+    
 %----------Calculate Orbits
 
 %Prepare Figure
@@ -349,6 +355,17 @@ switch plottype
                             plot(ax3, plotx, ploty, 'Color', linecolors{f}(j,:));
                         end
                     end
+                    if mirspace
+                        plot(ax2, time(:,j), bmir(:,j), 'Color', linecolors(j,:));
+                        plot(ax2, time(i-tail:i,j), bmir(i-tail:i,j));
+                        plot(ax2, time(i,j), bmir(i,j), 'r.', 'MarkerSize', 36);
+                         for m = plot_torrevolutions(j,1):plot_torrevolutions(j,1) %Frames for toroidal crossings
+                            ploty = phi(i-tail:i,j)-toroidalextent*m;
+                            ploty = ploty(dex);
+                            %ploty = mod(ploty(dex),toroidalextent); %Mod should be removed by previous calculations
+                            plot(ax3, plotx, ploty, 'Color', linecolors(j,:));
+                        end                       
+                    end
                     
                     %scatter(ax1,plotx(:,j)-poloidalextent*plotrevolutions(j), ploty(:,j), 5, reshape(plotcolors, [size(plotcolors,1) 3]));
                 end
@@ -449,11 +466,23 @@ switch plottype
                     plot(ax3, rhosintheta{f}(i-tail:i,j), rhocostheta{f}(i-tail:i,j), 'Color', linecolors{f}(j,:));
                 end
             end
-            
-            ax1.YLim = [-8 8];
-            ax1.XLim = [-8 7];
-            axis equal;
-            ax1.CLim = [min(b{1}, [], 'all'), max(b{1}, [], 'all')];
+            if mirspace
+                %ax2.XLim = [-3E6 3E6];
+                %ax2.YLim = [0 4E6];
+                xlabel(ax2,'Time [s]');
+                ylabel(ax2,'B_{mir} = E/\mu [T]')
+                %title(ax2,'Phase space');
+                set(ax2,'FontSize',20);
+                %h5 = plot(ax3, plotx(:,:), mod(phi(i-tail:i,:),toroidalextent));
+                ax3.XLim = [0 poloidalextent];
+                ax3.YLim = [0 toroidalextent];
+                xlabel(ax3, 'Poloidal angle \theta [deg]');
+                ylabel(ax3, 'Toroidal angle \phi [deg]');
+                set(ax3,'FontSize',20);
+            end
+            ax1.YLim = [0 1.5];
+            ax1.XLim = [0 poloidalextent];
+            ax1.CLim = [min(b, [], 'all'), max(b, [], 'all')];
             c = colorbar(ax1,'south');
             c.Label.String = 'B Field [T]';
             set(ax1,'FontSize',24);
@@ -507,4 +536,54 @@ switch plottype
 end
 
 
+
+function [time, varargout] = get_properties_time_trace(a5file, path, parts, varargin)
+
+% Get IDS and time for sorting
+ids = double(h5read(a5file,[path '/ids']));
+time = double(h5read(a5file,[path '/mileage']));
+if isempty(parts)
+    parts = unique(ids);
 end
+
+
+dex = ismember(ids,parts);
+ids = ids(dex);
+time = time(dex);
+
+npart = length(unique(parts));
+
+% get array sizes
+[C,~,ic] = unique(ids);
+a_counts = accumarray(ic,1);
+value_counts = [C, a_counts];
+nsteps = max(value_counts(:,2));
+padfun = @(x) [x; NaN(nsteps-size(x,1),1)];
+
+timecell = mat2cell(time, value_counts(:,2),1);
+timecell = cellfun(padfun, timecell, 'UniformOutput', false); 
+time = cell2mat(timecell); %deal with differently sized time-traces
+time = reshape(time,[nsteps npart]);
+
+% create particle sorting array
+[time,idex] = sort(time);
+
+
+% Handle varargin
+    i=1;
+    while i <= size(varargin,2)
+        temp = h5read(a5file,[path '/' varargin{i}]);
+        temp = temp(dex);
+        tempcell = mat2cell(temp, value_counts(:,2),1);
+        tempcell = cellfun(padfun, tempcell, 'UniformOutput', false); 
+        temp = cell2mat(tempcell); %deal with differently sized time-traces
+        temp = reshape(temp,[nsteps npart]);
+        for j=1:npart
+            temp(:,j) = temp(idex(:,j),j); %sort in time
+        end
+        varargout{i} = temp;
+        i = i + 1;
+    end
+end
+
+

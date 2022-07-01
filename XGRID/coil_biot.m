@@ -4,7 +4,7 @@ function [bx by bz] = coil_biot(coildata,x,y,z,extcur)
 %   system at a point in space.  The algorithm is based upon:
 %   J.D. Hanson and S.P. Hirshman,"Compact expressions for the Biot-Savart
 %   fields of a filamentary segment." Phys. Plasmas, Vol 9. No. 10, 2002
-%   The x, y, and z inputs can now be vectors.
+%   The x, y, and z inputs can now be vectors. They must not be 0.
 %
 %   Usage:
 %       coil_data=read_coils('coils.test');

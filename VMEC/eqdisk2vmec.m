@@ -1,8 +1,16 @@
-function data = eqdisk2vmec( filename )
+function data = eqdisk2vmec( varargin )
 %EQDSK2VMEC Converts EQDSK files to VMEC INDATA namelists
 %   The EQDSK2VMEC routine takes an EQDSK file and computes a VMEC INDATA
-%   namelist.  Plots showing the fitting routines used are also made.  
-%   This is a work in progress
+%   namelist.  Plots showing the fitting routines used are also made.
+%   Please note that an attempt is made to properly set CURTOR and AI
+%   according to the Jacobian.
+%
+%   Example:
+%       eqdisk2vmec('g164723.03059');
+%
+%   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
+%   Version:       1.0
+%   
 
 if (nargin == 1)
     if isstr(varargin{1})
@@ -41,9 +49,9 @@ vmec_input.nzeta = 1;
 vmec_input.nstep = 200;
 vmec_input.ntheta = 2*vmec_input.mpol+6;
 vmec_input.phiedge = data.phiedge;
-vmec_input.lfreeb = 1;
+vmec_input.lfreeb = 0;
 vmec_input.mgrid_file = '';
-vmec_input.extcur =[];
+vmec_input.extcur =[0 0 0];
 vmec_input.nvacskip = 6;
 vmec_input.gamma = 0.0;
 vmec_input.bloat = 1.0;
@@ -56,6 +64,7 @@ vmec_input.am_aux_s = data.am_aux_s;
 vmec_input.am_aux_f = data.am_aux_f;
 vmec_input.pcurr_type = 'akima_spline_ip';
 vmec_input.curtor = data.curtor;
+vmec_input.ncurr = 1;
 vmec_input.ac = data.ac;
 vmec_input.ac_aux_s = data.ac_aux_s;
 vmec_input.ac_aux_f = data.ac_aux_f;
@@ -90,11 +99,11 @@ end
 function  data2 = eqdisk2vmec_file(filename)
 data=read_efit(filename);
 subplot(3,2,[1 3 5]);
-contourf(data.xgrid,data.zgrid,data.psixz',100); axis equal; axis tight; 
+contourf(data.xgrid,data.zgrid,data.psixz',100, 'DisplayName','EFIT Psi'); axis equal; axis tight; 
 hold on; 
-plot(data.xbndry,data.zbndry,'r','LineWidth',2); 
-plot(data.xaxis,data.zaxis,'+r','LineWidth',2); 
-plot(data.xlim,data.zlim,'k','LineWidth',2); hold off;
+plot(data.xbndry,data.zbndry,'r','LineWidth',2, 'DisplayName','EFIT Boundary'); 
+plot(data.xaxis,data.zaxis,'+r','LineWidth',2, 'DisplayName','Axis'); 
+plot(data.xlim,data.zlim,'k','LineWidth',2, 'DisplayName','EFIT Surfaces'); hold off;
 xlabel('R'); ylabel('Z'); title('GEQDSK');
 mpol = 12;
 ntor = 0;
@@ -230,6 +239,14 @@ for m1 = 1: mpol + 1
         mn = mn + 1;
     end
 end
+% Check the jacobian
+jac = sum(zmns(:,1).*xm(:));
+if jac>0
+    data2.curtor = -data2.curtor;
+    data2.ai_aux_f = -data2.ai_aux_f;
+    data2.ai = -data2.ai;
+end
+% Plot
 ntheta=360;
 theta=0:2*pi/(ntheta-1):2*pi;
 zeta = 0;
@@ -237,7 +254,7 @@ r=cfunct(theta,zeta,rmnc,xm,xn)+sfunct(theta,zeta,rmns,xm,xn);
 z=cfunct(theta,zeta,zmnc,xm,xn)+sfunct(theta,zeta,zmns,xm,xn);
 subplot(3,2,[1 3 5]);
 hold on
-plot(r,z,'b');
+plot(r,z,'.-b', 'LineWidth', 1.5, 'DisplayName','VMEC');
 hold off
 
 return
@@ -500,7 +517,7 @@ r=cfunct(theta,zeta,rmnc,xm,xn)+sfunct(theta,zeta,rmns,xm,xn);
 z=cfunct(theta,zeta,zmnc,xm,xn)+sfunct(theta,zeta,zmns,xm,xn);
 subplot(3,2,[1 3 5]);
 hold on
-plot(r,z,'b');
+plot(r,z,'--b', 'VMEC');
 hold off
 return
 end

@@ -11,6 +11,7 @@ function w7x_beam_params( source ,varargin)
 %       'He':               Helium Beams
 %       'plots':            Generate Geometry Plots
 %       'rudix':            Include Rudix Geometry
+%       'optemist':         Include Optemist Geometry
 %       'write_beams3d':    Generate BEAMS3D Input
 %       'grid':             Specify Accelerating Voltage (60 or 100)
 %
@@ -29,6 +30,7 @@ function w7x_beam_params( source ,varargin)
 % Defaults
 lplots = 0;
 lrudix = 0;
+loptemist = 0;
 lwrite_beams3d = 0;
 grid = 60;
 species ='H2';
@@ -62,6 +64,7 @@ if nargin > 1
                 case {'H2','D2','He'}
                     species=varargin{i};
                 case 'plots'
+                    %lplots=1;
                     next_varargin = [next_varargin varargin{i}];
                 case 'write_beams3d'
                     lwrite_beams3d=1;
@@ -70,6 +73,8 @@ if nargin > 1
                     grid=varargin{i};
                 case {'Rudix','RUDIX','rudix'}
                     lrudix=1;
+                case {'optemist','OPTEMIST','Optemist'}
+                    loptemist=1;
                     vmec_data.rmax_surf = 6.5; %Maybe should even be after this section, to avoid WALL OUTSIDE GRID DOMAIN! error
                     vmec_data.rmin_surf = 4.25;
                     vmec_data.zmax_surf = 1.0;
@@ -156,8 +161,7 @@ x_q8 = u_q8*ux_NI21+v_q8*vx_NI21+xo_NI21; y_q8 = u_q8*uy_NI21+v_q8*vy_NI21+yo_NI
 xstart=[x_q1, x_q2, x_q3, x_q4, x_q5, x_q6, x_q7, x_q8];
 ystart=[y_q1, y_q2, y_q3, y_q4, y_q5, y_q6, y_q7, y_q8];
 zstart=[z_q1, z_q2, z_q3, z_q4, z_q5, z_q6, z_q7, z_q8];
-rstart=sqrt(xstart.^2+ystart.^2);
-pstart=atan2(ystart,xstart);
+
 
 
 % Target points
@@ -173,62 +177,76 @@ x_s67 = u_s67*ux_NI21+v_s67*vx_NI21+xo_NI21; y_s67 = u_s67*uy_NI21+v_s67*vy_NI21
 xtarget=[x_s14, x_s23, x_s23, x_s14, x_s58, x_s67, x_s67, x_s58];
 ytarget=[y_s14, y_s23, y_s23, y_s14, y_s58, y_s67, y_s67, y_s58];
 ztarget=[z_s14, z_s23, z_s23, z_s14, z_s58, z_s67, z_s67, z_s58];
+
+factor_distance = 1.2;
+
+start = [xstart; ystart; zstart]';
+target = [xtarget; ytarget; ztarget]';
+
+V = target - start;
+target = start +  V * factor_distance; %Extend to backside of LCFS
+xtarget = target(:,1)';
+ytarget = target(:,2)';
+ztarget = target(:,3)';
+
+rstart=sqrt(xstart.^2+ystart.^2);
+pstart=atan2(ystart,xstart);
 rtarget=sqrt(xtarget.^2+ytarget.^2);
 ptarget=atan2(ytarget,xtarget);
 
 if lplots
     % plot box geometry
-    hold on;
+    hold(ax,'on');
     if (any(source < 5))
-        plot3([0 xo_NI20],[0 yo_NI20],[0 zo_NI20],'-k')
-        plot3(xo_NI20,yo_NI20,zo_NI20,'ok')
-        quiver3(xo_NI20,yo_NI20,zo_NI20,ux_NI20,uy_NI20,0,6.5,'r')
-        quiver3(xo_NI20,yo_NI20,zo_NI20,vx_NI20,vy_NI20,0,1,'r')
-        quiver3(xo_NI20,yo_NI20,zo_NI20,0,0,1,1,'r')
-        plot3(x_s14,y_s14,z_s14,'+k')
-        plot3(x_s23,y_s23,z_s23,'+k')
+        plot3(ax,[0 xo_NI20],[0 yo_NI20],[0 zo_NI20],'-k')
+        plot3(ax,xo_NI20,yo_NI20,zo_NI20,'ok')
+        quiver3(ax,xo_NI20,yo_NI20,zo_NI20,ux_NI20,uy_NI20,0,6.5,'r')
+        quiver3(ax,xo_NI20,yo_NI20,zo_NI20,vx_NI20,vy_NI20,0,1,'r')
+        quiver3(ax,xo_NI20,yo_NI20,zo_NI20,0,0,1,1,'r')
+        plot3(ax,x_s14,y_s14,z_s14,'+k')
+        plot3(ax,x_s23,y_s23,z_s23,'+k')
     end
     if (any(source > 4))
-        plot3([0 xo_NI21],[0 yo_NI21],[0 zo_NI21],'-k')
-        plot3(xo_NI21,yo_NI21,zo_NI21,'ok')
-        quiver3(xo_NI21,yo_NI21,zo_NI21,ux_NI21,uy_NI21,0,6.5,'r')
-        quiver3(xo_NI21,yo_NI21,zo_NI21,vx_NI21,vy_NI21,0,1,'r')
-        quiver3(xo_NI21,yo_NI21,zo_NI21,0,0,1,1,'r')
-        plot3(x_s58,y_s58,z_s58,'+k')
-        plot3(x_s67,y_s67,z_s67,'+k')
+        plot3(ax,[0 xo_NI21],[0 yo_NI21],[0 zo_NI21],'-k')
+        plot3(ax,xo_NI21,yo_NI21,zo_NI21,'ok')
+        quiver3(ax,xo_NI21,yo_NI21,zo_NI21,ux_NI21,uy_NI21,0,6.5,'r')
+        quiver3(ax,xo_NI21,yo_NI21,zo_NI21,vx_NI21,vy_NI21,0,1,'r')
+        quiver3(ax,xo_NI21,yo_NI21,zo_NI21,0,0,1,1,'r')
+        plot3(ax,x_s58,y_s58,z_s58,'+k')
+        plot3(ax,x_s67,y_s67,z_s67,'+k')
     end
     d = 0.15;
     if (find(source == 1))
-        plot3(x_q1,y_q1,z_q1,'ok'); text(x_q1,y_q1,z_q1+d,'Q1');
-        quiver3(x_q1,y_q1,z_q1,[x_s14-x_q1],[y_s14-y_q1],[z_s14-z_q1],'b')
+        plot3(ax,x_q1,y_q1,z_q1,'ok'); text(x_q1,y_q1,z_q1+d,'Q1');
+        quiver3(ax,x_q1,y_q1,z_q1,[x_s14-x_q1],[y_s14-y_q1],[z_s14-z_q1],'b')
     end
     if (find(source == 2))
-        plot3(x_q2,y_q2,z_q2,'ok'); text(x_q2,y_q2,z_q2+d,'Q2');
-        quiver3(x_q2,y_q2,z_q2,[x_s23-x_q2],[y_s23-y_q2],[z_s23-z_q2],'b')
+        plot3(ax,x_q2,y_q2,z_q2,'ok'); text(x_q2,y_q2,z_q2+d,'Q2');
+        quiver3(ax,x_q2,y_q2,z_q2,[x_s23-x_q2],[y_s23-y_q2],[z_s23-z_q2],'b')
     end
     if (find(source == 3))
-        plot3(x_q3,y_q3,z_q3,'ok'); text(x_q3,y_q3,z_q3+d,'Q3');
-        quiver3(x_q3,y_q3,z_q3,[x_s23-x_q3],[y_s23-y_q3],[z_s23-z_q3],'b')
+        plot3(ax,x_q3,y_q3,z_q3,'ok'); text(x_q3,y_q3,z_q3+d,'Q3');
+        quiver3(ax,x_q3,y_q3,z_q3,[x_s23-x_q3],[y_s23-y_q3],[z_s23-z_q3],'b')
     end
     if (find(source == 4))
-        plot3(x_q4,y_q4,z_q4,'ok'); text(x_q4,y_q4,z_q4+d,'Q4');
-        quiver3(x_q4,y_q4,z_q4,[x_s14-x_q4],[y_s14-y_q4],[z_s14-z_q4],'b')
+        plot3(ax,x_q4,y_q4,z_q4,'ok'); text(x_q4,y_q4,z_q4+d,'Q4');
+        quiver3(ax,x_q4,y_q4,z_q4,[x_s14-x_q4],[y_s14-y_q4],[z_s14-z_q4],'b')
     end
     if (find(source == 5))
-        plot3(x_q5,y_q5,z_q5,'ok'); text(x_q5,y_q5,z_q5+d,'Q5');
-        quiver3(x_q5,y_q5,z_q5,[x_s58-x_q5],[y_s58-y_q5],[z_s58-z_q5],'b')
+        plot3(ax,x_q5,y_q5,z_q5,'ok'); text(x_q5,y_q5,z_q5+d,'Q5');
+        quiver3(ax,x_q5,y_q5,z_q5,[x_s58-x_q5],[y_s58-y_q5],[z_s58-z_q5],'b')
     end
     if (find(source == 6))
-        plot3(x_q6,y_q6,z_q6,'ok'); text(x_q6,y_q6,z_q6+d,'Q6');
-        quiver3(x_q6,y_q6,z_q6,[x_s67-x_q6],[y_s67-y_q6],[z_s67-z_q6],'b')
+        plot3(ax,x_q6,y_q6,z_q6,'ok'); text(x_q6,y_q6,z_q6+d,'Q6');
+        quiver3(ax,x_q6,y_q6,z_q6,[x_s67-x_q6],[y_s67-y_q6],[z_s67-z_q6],'b')
     end
     if (find(source == 7))
-        plot3(x_q7,y_q7,z_q7,'ok'); text(x_q7,y_q7,z_q7+d,'Q7');
-        quiver3(x_q7,y_q7,z_q7,[x_s67-x_q7],[y_s67-y_q7],[z_s67-z_q7],'b')
+        plot3(ax,x_q7,y_q7,z_q7,'ok'); text(x_q7,y_q7,z_q7+d,'Q7');
+        quiver3(ax,x_q7,y_q7,z_q7,[x_s67-x_q7],[y_s67-y_q7],[z_s67-z_q7],'b')
     end
     if (find(source == 8))
-        plot3(x_q8,y_q8,z_q8,'ok'); text(x_q8,y_q8,z_q8+d,'Q8');
-        quiver3(x_q8,y_q8,z_q8,[x_s58-x_q8],[y_s58-y_q8],[z_s58-z_q8],'b')
+        plot3(ax,x_q8,y_q8,z_q8,'ok'); text(x_q8,y_q8,z_q8+d,'Q8');
+        quiver3(ax,x_q8,y_q8,z_q8,[x_s58-x_q8],[y_s58-y_q8],[z_s58-z_q8],'b')
     end
     axis tight; axis equal;
 end
@@ -287,10 +305,9 @@ if ~isempty(source)
     end
 end
 if lrudix
-    E_RUDI = (50:10:250) * 1000; %20-60 kV
+    E_RUDI = 60E3; %20-60 kV
     %PFRAC = [56 22 22];
     P_RUDI = 250E3; %250 kW
-    for i=1:length(E_RUDI)
         r_beam(1,j) = sqrt(xo_RUDI.^2+yo_RUDI.^2);
         r_beam(2,j) = sqrt(xt_RUDI.^2+yt_RUDI.^2);
         p_beam(1,j) = atan2(yo_RUDI,xo_RUDI);
@@ -298,16 +315,39 @@ if lrudix
         z_beam(1,j) = zo_RUDI;
         z_beam(2,j) = zt_RUDI;
         power_beam(j) = P_RUDI;
-        energy_beam(j) = E_RUDI(i);
+        energy_beam(j) = E_RUDI;
         div_beam(j)    = 0.0125;
         note{j} = 'RUDIX BEAM';
+        source = [source 9]; % Treat as source 9
+    if lplots
+        hold(ax, 'on');
+        plot3(ax,[xo_RUDI xt_RUDI],[yo_RUDI yt_RUDI],[zo_RUDI zt_RUDI],'k');
+        hold(ax,'off');
+    end
+end
+
+if loptemist
+    E_OPT = (50:10:250) * 1000; 
+    %PFRAC = [56 22 22];
+    P_OPT = 250E3; %250 kW
+    for i=1:length(E_OPT)
+        r_beam(1,j) = sqrt(xo_RUDI.^2+yo_RUDI.^2); %RUDIX Geometry
+        r_beam(2,j) = sqrt(xt_RUDI.^2+yt_RUDI.^2);
+        p_beam(1,j) = atan2(yo_RUDI,xo_RUDI);
+        p_beam(2,j) = atan2(yt_RUDI,xt_RUDI);
+        z_beam(1,j) = zo_RUDI;
+        z_beam(2,j) = zt_RUDI;
+        power_beam(j) = P_OPT;
+        energy_beam(j) = E_OPT(i);
+        div_beam(j)    = 0.0125;
+        note{j} = 'OPTEMIST BEAM';
         source = [source j]; % Treat as source 9
         j = j + 1;
     end
     if lplots
-        hold on;
-        plot3([xo_RUDI xt_RUDI],[yo_RUDI yt_RUDI],[zo_RUDI zt_RUDI],'k');
-        hold off;
+        hold(ax, 'on');
+        plot3(ax,[xo_OPT xt_OPT],[yo_OPT yt_OPT],[zo_OPT zt_OPT],'k');
+        hold(ax,'off');
     end
 end
 

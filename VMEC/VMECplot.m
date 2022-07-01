@@ -1292,7 +1292,8 @@ switch contents{get(handles.plottype,'Value')}
                 num2str(handles.theta(handles.thetaval))]);
             axis tight
         elseif strcmp(handles.cuttype,'zeta2')
-            torocont(handles.r,handles.z,f,handles.zetaval)
+            torocont(handles.r,handles.z,f,handles.zetaval);
+            hold off;
             xlabel('Radius (R) [m]');
             ylabel('Elevation (Z) [m]');
             title([name ' at \phi=',num2str(handles.zeta(handles.zetaval))]);
@@ -1306,7 +1307,7 @@ switch contents{get(handles.plottype,'Value')}
             f(:,:,end+1) = f(:,:,1);
             phi = 0:2*pi/(size(r,3)-1):2*pi;
             if (handles.rval > 1)
-                isotoro(r,z,phi,handles.rval,f, 'STL');
+                isotoro(r,z,phi,handles.rval,f);
                 try %Only when app is present
                     evalin('base', 'app');
                     assignin('base','ColorData',f);
@@ -1369,6 +1370,7 @@ switch contents{get(handles.plottype,'Value')}
             set(hp,'FaceColor','none','EdgeColor','black');
             hold on
             plot(handles.r(1,1,handles.zetaval),handles.z(1,1,handles.zetaval),'o');
+            
             hold off
             xlabel('Radius (R) [m]');
             ylabel('Elevation (Z) [m]');
@@ -1376,7 +1378,7 @@ switch contents{get(handles.plottype,'Value')}
             axis equal
         elseif strcmp(handles.cuttype,'3D')
             set(handles.rtext,'String','Flux');
-            isotoro(handles.r,handles.z,handles.zeta,handles.rval, 'STL');
+            isotoro(handles.r,handles.z,handles.zeta,handles.rval);
             title(strcat('Flux Surface (ns=',num2str(handles.rval),')'));
             xlabel('X [m]');
             ylabel('Y [m]');
@@ -1459,7 +1461,7 @@ switch contents{get(handles.plottype,'Value')}
             z(:,:,end+1) = z(:,:,1);
             phi = 0:2*pi/(size(r,3)-1):2*pi;
             if (handles.rval > 1)
-                isotoro(r,z,phi,handles.rval, 'STL');
+                isotoro(r,z,phi,handles.rval);
                 title(strcat('Flux Surface (ns=',num2str(handles.rval),')'));
             else
                 plot3(squeeze(r(1,1,:)).*cos(phi'),...
