@@ -72,10 +72,14 @@ if isempty(wallid)
     wallid=h5readatt(a5file,'/wall','active');
     disp(['  Using wallid: ' wallid]);
 end
-% if isempty(runid)
-%     runid=h5readatt(a5file,'/results','active');
-%     disp(['  Using runid: ' runid]);
-% end
+if isempty(runid)
+    try
+        runid=h5readatt(a5file,'/results','active');
+        disp(['  Using runid: ' runid]);
+    catch
+        runid=[];
+    end
+end
 
 % Pull Wall
 path = ['/wall/wall_3D_' num2str(wallid,'%10.10i')];
@@ -163,8 +167,6 @@ if isempty(wall_load) && isempty(wall_strikes)
     hp=patch(x1x2x3,y1y2y3,z1z2z3,zeros(1,size(x1x2x3,2)),'EdgeColor','none');
 else
         hp=patch(x1x2x3,y1y2y3,z1z2z3,wall_load,'EdgeColor','none');
-    end
-
 end
 set(hp,'AmbientStrength',1.0,'SpecularStrength',0,'DiffuseStrength',1);
 if lpts
@@ -183,7 +185,7 @@ dr = (r1-r0);
 cmap = r0+dr*(0:1.0/127:1);
 dr = (r2-r1);
 cmap = [cmap r1+dr*(0:1.0/127:1)];
-colormap('parula');
+colormap(cmap');
 
 return;
 

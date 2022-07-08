@@ -69,17 +69,17 @@ for i = end_range'
         end_str='Thermalized';
     elseif (i==8)
         end_str='Wall collision';
-    elseif (i==10)
+    elseif (i==16)
         end_str='Minimum rho';
-    elseif (i==20)
+    elseif (i==32)
         end_str='Maximum rho';
-    elseif (i==40)
+    elseif (i==64)
         end_str='Poloidal limit';
-    elseif (i==80)
+    elseif (i==128)
         end_str='Toroidal limit';
-    elseif (i==100)
+    elseif (i==256)
         end_str='Wall time exceeded';
-    elseif (i==200)
+    elseif (i==512)
         end_str='Hybrid mode condition';
     else
         end_str=['Unknown: ' num2str(i,'%i')];
