@@ -77,7 +77,7 @@ if nargin > 1
                     loptemist=1;
                     vmec_data.rmax_surf = 6.5; %Maybe should even be after this section, to avoid WALL OUTSIDE GRID DOMAIN! error
                     vmec_data.rmin_surf = 4.25;
-                    vmec_data.zmax_surf = 1.0;
+                    vmec_data.zmax_surf = 1.25;
                 case 't_end'
                     i=i+1;
                     t_end=varargin{i};
@@ -329,7 +329,8 @@ end
 if loptemist
     E_OPT = (50:10:250) * 1000; 
     %PFRAC = [56 22 22];
-    P_OPT = 250E3; %250 kW
+    PFRAC = 1;
+    P_OPT = 1E6; %1 MW 
     for i=1:length(E_OPT)
         r_beam(1,j) = sqrt(xo_RUDI.^2+yo_RUDI.^2); %RUDIX Geometry
         r_beam(2,j) = sqrt(xt_RUDI.^2+yt_RUDI.^2);
@@ -354,7 +355,7 @@ end
 % Write if requested
 if (lwrite_beams3d)
     next_varargin=[next_varargin species 'pfrac' PFRAC 'beam_dex' source];
-    beams3d_beamnamelist_temp(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
+    beams3d_beamnamelist(vmec_data,energy_beam,power_beam,r_beam,p_beam,...
         z_beam,div_beam,next_varargin{:},'note',note,'t_end',t_end);
 end
 return

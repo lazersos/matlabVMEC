@@ -38,6 +38,7 @@ ti_s=[]; ti_f=[];
 zeff_s=[]; zeff_f=[];
 pot_s=[]; pot_f=[];
 nr=128; nz=128; nphi=[];
+nrho_dist=16; ntheta_dist = 8; nzeta_dist=80; nvpara_dist = 32; nvperp_dist=16; partvmax=1.25E7;
 npoinc=2;
 Zatom=1;
 species_type='H';
@@ -218,6 +219,12 @@ if isempty(nphi)
     nphi = max(round(360/(2*vmec_data.nfp)),1);
 end
 
+% Handle the distribution function data
+if nzeta_dist < vmec_data.nfp*4
+    nzeta_dist = vmec_data.nfp*4;
+end
+partvmax = (6./5).*max(sqrt(2.*energy./mass));
+
 % Handle no profiles passed
 if isempty(ne_f)
     ne_s = 0:0.2:1;
@@ -276,6 +283,13 @@ fprintf(fid,[ '  TE_AUX_S = ' num2str(te_s,'%12.6E  ') '\n']);
 fprintf(fid,[ '  TE_AUX_F = ' num2str(te_f,'%12.6E  ') '\n']);
 fprintf(fid,[ '  TI_AUX_S = ' num2str(ti_s,'%12.6E  ') '\n']);
 fprintf(fid,[ '  TI_AUX_F = ' num2str(ti_f,'%12.6E  ') '\n']);
+fprintf(fid, '!--------Distribution Function Parameters------\n');
+fprintf(fid,['  NRHO_DIST = ' num2str(nrho_dist,'%d') '\n']);
+fprintf(fid,['  NTHETA_DIST = ' num2str(ntheta_dist,'%d') '\n']);
+fprintf(fid,['  NZETA_DIST = ' num2str(nzeta_dist,'%d') '\n']);
+fprintf(fid,['  NVPARA_DIST = ' num2str(nvpara_dist,'%d') '\n']);
+fprintf(fid,['  NVPERP_DIST = ' num2str(nvperp_dist,'%d') '\n']);
+fprintf(fid,['  PARTVMAX = ' num2str(partvmax,'%20.10E') '\n']);
 fprintf(fid, '!--------Universal Beam Parameters------\n');
 fprintf(fid,['  NPARTICLES_START = ' num2str(nparticles_start,'%d') '\n']);
 fprintf(fid,['  T_END_IN = ' num2str(ntotal,'%d') '*' num2str(t_end,'%-8.2E') '\n']);

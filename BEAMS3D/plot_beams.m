@@ -202,7 +202,7 @@ else
     % Calc Last Index for each particle
     last_dex=zeros(1,beam_data.nparticles);
     for i=1:beam_data.nparticles
-        last_dex(i) = max([find(beam_data.R_lines(:,i)>0,1,'last') beam_data.npoinc+1]);
+        last_dex(i) = min([find(beam_data.R_lines(:,i)>0,1,'last') beam_data.npoinc+1]);
     end
     % Make plots
     for i = 1:size(plot_type,2)
@@ -1175,9 +1175,9 @@ else
                 case 'wall_loss'
                     val=beam_data.wall_strikes;
                 case 'wall_shine'
-                    val=sum(beam_data.wall_shine(beamdex,:))';
+                    val=sum(beam_data.wall_shine(beamdex,:),1)';
                 case 'wall_heat'
-                    val=sum(beam_data.wall_load(beamdex,:))';
+                    val=sum(beam_data.wall_load(beamdex,:),1)';
             end
             output_args{1}=patch('Vertices',beam_data.wall_vertex,'Faces',beam_data.wall_faces,'FaceVertexCData',val,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
             cmap = colormap('hot');

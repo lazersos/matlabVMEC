@@ -82,7 +82,7 @@ vmec_input.rbs = data.refou2';
 vmec_input.zbc = data.zefou2';
 vmec_input=rmfield(vmec_input,'raxis');
 vmec_input=rmfield(vmec_input,'zaxis');
-dex = strfind(filename,'.');
+dex = strfind(filename,'.txt');
 if ~isempty(dex)
     filename = filename(1:(dex(1)-1));
 end
@@ -189,7 +189,7 @@ fun = @(x) ppval(q_spl,x);
 for i=1:length(pflux)
     tflux(i) = integral(fun,pflux(1),pflux(i));
 end
-phiedge = tflux(end).*2.*pi.*sign(data.btor);
+phiedge = abs(tflux(end)).*2.*pi.*sign(data.btor);
 tflux = tflux./tflux(length(tflux));
 s = 0:1/99:1;
 am_aux_s = s;
@@ -238,13 +238,6 @@ for m1 = 1: mpol + 1
         zmns(mn,1) = zefou(m1,n1);
         mn = mn + 1;
     end
-end
-% Check the jacobian
-jac = sum(zmns(:,1).*xm(:));
-if jac>0
-    data2.curtor = -data2.curtor;
-    data2.ai_aux_f = -data2.ai_aux_f;
-    data2.ai = -data2.ai;
 end
 % Plot
 ntheta=360;
@@ -377,7 +370,7 @@ plot(data.xbndry,data.zbndry,'r','LineWidth',2);
 plot(data.xaxis,data.zaxis,'+r','LineWidth',2); 
 plot(data.xlim,data.zlim,'k','LineWidth',2); hold off;
 xlabel('R'); ylabel('Z'); title(['\' type '  GEQDSK']);
-mpol = 12;
+mpol = 18;
 ntor = 0;
 R = data.xbndry;
 Z = data.zbndry;

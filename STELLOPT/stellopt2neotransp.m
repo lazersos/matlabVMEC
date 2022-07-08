@@ -111,58 +111,31 @@ Opt.roots='i/e';          %can be 'i', 'e', 'i&e'
 
 Transp = neotransp(equilID,rho2,Prof,B00axis,Opt);
 
-% Now we need to fit the data
-factor = 1E-3;
-dphi = Transp.dPhidskV(1,:).*1E3; %kV to V
-%dphi2 = Transp.dPhidskV(2,:).*1E3;
-
-% Handle single root
-%dphi1(isnan(dphi1)) = dphi2(isnan(dphi1));
-%dphi2(isnan(dphi2)) = dphi1(isnan(dphi2));
-
 rho  = Transp.rho;
 s    = Transp.s;
-fig = figure('Position',[ 1 1 1024 768],'Color','white');
-subplot(1,2,1);
-plot(s,factor.*dphi./phiedge,'ok');
-hold on;
-xlim([0 1]);
-set(gca,'FontSize',24);
-xlabel('Norm. Toridal Flux (s)');
-ylabel('dV/ds [kV/Wb]');
-title('NEOTRANSP E');
-s = s(~isnan(dphi));
-dphi = dphi(~isnan(dphi));
-pp = pchip([0 s 1],[0 dphi 0]);
-%pp=polyfit([0 s 1],[0 dphi 0], 6);
-h = 0.01;
-s2 = 0:h:1;
-%plot(s2,factor.*polyval(pp,s2)./phiedge,'g');
-plot(s2,factor.*ppval(pp,s2)./phiedge,'g');
-legend('d\Phi/d\Psi','Polyfit');
-subplot(1,2,2);
-s_lin = min(s):range(s)./128:max(s);
-dphi_lin = pchip(s,dphi,s_lin);
-plot(s_lin,factor.*cumsum(dphi_lin).*(s_lin(2)-s_lin(1)),'b'); hold on;
-%plot(s2,factor.*cumsum(polyval(pp,s2)).*h,'ok');
-plot(s2,factor.*cumsum(ppval(pp,s2)).*h,'ok');
-xlim([0 1]);
-set(gca,'FontSize',24);
-xlabel('Norm. Toridal Flux (s)');
-ylabel('e-static Potential [kV]');
-title('NEOTRANSP Potential');
-legend('\Phi','Fit');
-text(0.025,0.85*max(ylim),['EQUILID: ' equilID],'FontSize',24)
-saveas(fig,['neotransp_ER_' ext '.fig']);
-saveas(fig,['neotransp_ER_' ext '.png']);
+% Now we need to fit the data
+dphi = Transp.dPhidskV(1,:).*1E3; %kV to V
+dphi(isnan(dphi)) = 0;
+sh = 0.5.*(s(2:end)+s(1:end-1)); %half grid
+f =(dphi(2:end)+dphi(1:end-1)).*0.5; %half grid
+phi = cumsum(f.*diff(s))+dphi(1);
+pp = pchip(sqrt(sh),phi);
+h3 = 0.05;
+s3 = 0:h3:1;
+rho3=sqrt(s3);
+% Make a plot
+plottransp(Transp); set(gcf,'Position',[1 1 1024 768],'Color','white');
+drawnow;
+subplot(2,3,3); hold on; f=ppval(pp,rho3); x=0.5.*(s3(2:end)+s3(1:end-1)); dphids=-diff(f)./diff(s3); Er=dphids.*sqrt(x).*2./Transp.minorradiusW7AS./1E3; plot(sqrt(x),Er,'or');
+saveas(gcf,['transp_' ext '.fig']);
+saveas(gcf,['transp_' ext '.png']);
+close(gcf);
 
 h3 = 0.05;
 s3 = 0:h3:1;
 disp(['  POT_AUX_S = ' num2str(s3,' %20.10E')]);
 %disp(['  POT_AUX_F = ' num2str(cumsum(polyval(pp,s3)),' %20.10E')]);
 disp(['  POT_AUX_F = ' num2str(cumsum(ppval(pp,s3)).*h3,' %20.10E')]);
-pause(5);
-close(fig);
 
 end
 
