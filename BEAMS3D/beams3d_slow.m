@@ -21,12 +21,15 @@ function data=beams3d_slow(varargin)
 % Helpers
 me = 9.10938356D-31;
 ec = 1.60217662E-19;
+hbar = 1.05457182E-34;
+eps0 = 8.8541878128E-12;
 lplot = 0;
 beam_dex = []; % Use to downselect beams
 vmec_data=[];
 beam_data=[];
 data=[];
 plasma_mass=[];
+log_type = 3;
 
 % Handle varargin
 if nargin > 0
@@ -50,6 +53,12 @@ if nargin > 0
                 case 'mass'
                     i=i+1;
                     plasma_mass=varargin{i};
+                case 'full_logarithm'
+                    log_type = 3;
+                case 'NRLions_logarithm'
+                    log_type = 2;
+                case 'NRLions_logarithm_old'
+                    log_type = 1;
             end
         end
         i=i+1;
@@ -117,6 +126,7 @@ end
 NEUT   = beam_data.neut_lines(ldex,:);
 dex    = and(NEUT == 0,dex);
 R_BEAM = beam_data.R_lines(ldex,dex);
+B_BEAM = beam_data.B_lines(ldex,dex);
 P_BEAM = mod(beam_data.PHI_lines(ldex,dex),max(beam_data.phiaxis));
 Z_BEAM = beam_data.Z_lines(ldex,dex);
 S_BEAM = beam_data.S_lines(ldex,dex);
@@ -149,9 +159,35 @@ Iinj = sum(CHARGE.*W_BEAM);
 
 % Calculate Values
 TE3=TE_BEAM.^3;
-%coulomb_log=[];
 beta = SPEED./299792458;
-coulomb_log = 35 - log(myZ.*ZE_BEAM.*(MASS+plasma_mass).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*plasma_mass.*beta.*beta.*6.02214076208E+26));
+if log_type == 1
+    %coulomb_log=[];
+    coulomb_log = 35 - log(myZ.*ZE_BEAM.*(MASS+plasma_mass).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*plasma_mass.*beta.*beta.*6.02214076208E+26));
+elseif log_type == 2
+    coulomb_log = 43 - log(myZ.*ZE_BEAM.*(MASS+plasma_mass).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*plasma_mass.*beta.*beta.*6.02214076208E+26));
+elseif log_type == 3
+    map  = plasma_mass.*MASS./(plasma_mass+MASS);
+    mae  = me.*MASS./(me+MASS);
+    ue    = sqrt(3.*ec.*TE_BEAM./me);
+    ui    = sqrt(3.*ec.*TI_BEAM./plasma_mass);
+    uave2  = SPEED.*SPEED + ue.*ue;
+    uavi2  = SPEED.*SPEED + ui.*ui;
+    rmincle = myZ.*ZE_BEAM.*ec.*ec./(mae.*uave2);
+    rmincli = myZ.*ZE_BEAM.*ec.*ec./(map.*uavi2);
+    rminque = hbar./(2.*mae.*sqrt(uave2));
+    rminqui = hbar./(2.*map.*sqrt(uavi2));
+    rmine = max(rmincle,rminque);
+    rmini = max(rmincli,rminqui);
+    omegape2 = NE_BEAM.*ec.*ec./(me.*eps0);
+    omegapi2 = (NE_BEAM./ZE_BEAM).*ec.*ec./(plasma_mass.*eps0);
+    omegace = ec.*B_BEAM./me;
+    omegaci = ec.*B_BEAM./plasma_mass;
+    omegae2 = omegape2+omegace.*omegace;
+    omegai2 = omegapi2+omegaci.*omegaci;
+    rmax = sqrt(1./(omegae2./uave2 + omegai2./uavi2));
+    coulomb_loge = log(rmax./rmine);
+    coulomb_logi = log(rmax./rmini);
+end
 coulomb_log(coulomb_log <=1) = 1;
 v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./plasma_mass);
 vcrit_cube = v_crit.^3;
