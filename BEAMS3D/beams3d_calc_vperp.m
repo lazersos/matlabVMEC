@@ -11,7 +11,6 @@ function vperp = beams3d_calc_vperp(beam_data)
 % Version:       1.0
 
 vperp = [];
-
 nsteps = beam_data.npoinc+1;
 mass = repmat(beam_data.mass',[nsteps 1]);
 mu = beam_data.moment_lines;
