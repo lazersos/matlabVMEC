@@ -50,6 +50,12 @@ nx=nx./n; ny=ny./n; nz=nz./n;
 
 % Select beam data (and downselect)
 dex = beams3d_finddex(beam_data,'orbit_birth');
+dex_beam = false(1,beam_data.nparticles);
+BEAM = beam_data.Beam';
+for i=1:length(beamdex)
+    dex_beam = or(dex_beam,beamdex(i)==BEAM);
+end
+dex = and(dex,dex_beam);
 r_beam = beam_data.R_lines(2,dex~=0);
 phi_beam = beam_data.PHI_lines(2,dex~=0);
 z_beam = beam_data.Z_lines(2,dex~=0);
