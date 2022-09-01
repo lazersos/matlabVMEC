@@ -52,28 +52,39 @@ if strcmp(filename(n-3:n),'.dat')
     data.machine=strtrim(header_line1(strfind(header_line1,':')+1:numel(header_line1)));
     data.date=strtrim(header_line2(strfind(header_line2,':')+1:numel(header_line2)));
     temp=fscanf(fid,'%d',2);
-    if and(temp(1)==0,temp(2)==0)
-        disp('  Accelerated File Detected');
-        temp=fscanf(fid,'%d',2);
-    end
     data.nvertex = temp(1);
     data.nfaces = temp(2);
     % Read dataset
     data.coords=fscanf(fid,'%E %E %E',[3 data.nvertex]);
     data.faces=fscanf(fid,'%d %d %d',[3 data.nfaces]);
     fclose(fid);
+%elseif strcmp(filename(n-3:n),'.stl')
+%    stl_data=stlread(filename);
+%    data.machine=['STL: ' filename];
+%    data.date=datestr(now,'mm-dd-yyyy');
+%    data.coords=stl_data.Points';
+%    data.faces=stl_data.ConnectivityList';
+%    if max(max(abs(data.coords)))>1000
+%        disp('  COORDS>1000 detected, assuming mm, rescaling!');
+%        data.coords=data.coords.*1E-3;
+%    end
+%    data.nvertex = size(data.coords,2);
+%    data.nfaces = size(data.faces,2);
 elseif strcmp(filename(n-3:n),'.stl')
-    stl_data=stlread(filename);
+    tri=stlread(filename);
+    data.nfaces = size(tri,1);
+    data.nvertex = size(tri,1).*3;
+    data.faces = reshape(1:data.nvertex,[3 data.nfaces]);
+    x = tri(:,[1 4 7])';
+    y = tri(:,[2 5 8])';
+    z = tri(:,[3 6 9])';
+    data.coords = [x(:)'; y(:)'; z(:)'];
     data.machine=['STL: ' filename];
     data.date=datestr(now,'mm-dd-yyyy');
-    data.coords=stl_data.Points';
-    data.faces=stl_data.ConnectivityList';
-    if max(max(abs(data.coords)))>100
-        disp('  COORDS>1000 detected, assuming mm, rescaling!');
-        data.coords=data.coords.*1E-3;
-    end
-    data.nvertex = size(data.coords,2);
-    data.nfaces = size(data.faces,2);
+%    if max(max(abs(data.coords)))>1000
+%        disp('  COORDS>1000 detected, assuming mm, rescaling!');
+%        data.coords=data.coords.*1E-3;
+%    end
 else
     disp(' READ_WALL accepts STL and DAT wall files only!');
     data=[];
@@ -92,12 +103,12 @@ dex3 = face(3,:);
 data.A  = vertex(:,dex1);
 data.V0 = vertex(:,dex3)-vertex(:,dex1);
 data.V1 = vertex(:,dex2)-vertex(:,dex1);
-data.FN = cross(data.V1,data.V0,1);
-data.DOT00=dot(data.V0,data.V0,1);
-data.DOT01=dot(data.V0,data.V1,1);
-data.DOT11=dot(data.V1,data.V1,1);
+data.FN = cross(data.V1,data.V0);
+data.DOT00=dot(data.V0,data.V0);
+data.DOT01=dot(data.V0,data.V1);
+data.DOT11=dot(data.V1,data.V1);
 data.invDenom = 1.0./(data.DOT00.*data.DOT11-data.DOT01.*data.DOT01);
-data.d = dot(data.FN,data.A,1);
+data.d = dot(data.FN,data.A);
 data.datatype='limiter_trimesh';
 return;
 
