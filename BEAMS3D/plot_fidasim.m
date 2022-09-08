@@ -71,25 +71,34 @@ for i = 1:size(plot_type,2)
     %figure('Color','white','Position',[1 -100 1024 768])
     switch lower(plot_type{i})
         case 'energy'
-
-            plot(ax,dist.energy, squeeze(trapz(dist.phi,trapz(dist.z,trapz(dist.r,trapz(dist.pitch,dist.f,2),3),4),5)),'DisplayName','Pitch');
+            if ndims(dist.f) == 5
+                tmp = squeeze(trapz(dist.phi,trapz(dist.z,trapz(dist.pitch,dist.f,2),4),5));
+            else
+                tmp = squeeze(trapz(dist.z,trapz(dist.pitch,dist.f,2),4))*2*pi;
+            end
+            plot(ax,dist.energy, squeeze(trapz(dist.r,repmat(dist.r',size(dist.f,1),1).*tmp,2)),'DisplayName','Energy');
             xlabel('Energy [keV]')
             ylabel('Fast Ion Distribution [1/keV]')
         case 'pitch'
             dr = dist.r(2)-dist.r(1);
             dz = dist.z(2)-dist.z(1);
-            dphi = dist.phi(2) - dist.phi(1);
-            % Area
-            %area=dr*100.*dz*100;
-            area=dr.*dz;
-            % Volume (function of R)
-            vol = dist.r.*dphi.*area;
-            vol2d=repmat(vol,[1 dist.nz dist.nphi]);
 
-            n_fida = sum(dist.denf.*vol2d,'all');
+            if ndims(dist.f) == 5
+                dphi = dist.phi(2) - dist.phi(1);
+                % Area
+                %area=dr*100.*dz*100;
+                area=dr.*dz;
+                % Volume (function of R)
+                vol = dist.r.*dphi.*area;
+                vol2d=repmat(vol,[1 dist.nz dist.nphi]);
 
+                n_fida = sum(dist.denf.*vol2d,'all');
+                tmp = squeeze(trapz(dist.phi,trapz(dist.z,trapz(dist.energy,dist.f,1),4),5));
+            else
+                n_fida = 2*pi*dr*dz*sum(dist.r.*sum(squeeze(dist.denf(:,:,1)),2)); %Axisymmetric only.
+                tmp = squeeze(trapz(dist.z,trapz(dist.energy,dist.f,1),4))*2*pi;
+            end
             fprintf('Total fast ions in %s: %3.2e\n',filename,n_fida);
-            tmp = squeeze(trapz(dist.phi,trapz(dist.z,trapz(dist.energy,dist.f,1),4),5));
             plot(ax,dist.pitch, squeeze(trapz(dist.r,repmat(dist.r',size(dist.f,2),1).*tmp,2)),'DisplayName','Pitch');
 
             %plot(dist.pitch, squeeze(trapz(dist.phi,trapz(dist.z,trapz(dist.r,trapz(dist.energy,dist.f,1),3),4),5)),'DisplayName','Pitch');
@@ -127,7 +136,15 @@ for i = 1:size(plot_type,2)
             ylabel('Fast ion density [m^{-3}]')
             title('Fast ion density profile at z=0')
         case 'ep2d'
-            pixplot(dist.energy,dist.pitch,squeeze(trapz(dist.phi,trapz(dist.z,trapz(dist.r,dist.f,3),4),5)))
+            if ndims(dist.f) == 5
+                tmp = squeeze(trapz(dist.phi,trapz(dist.z,dist.f,4),5));
+                rtmp = permute(repmat(dist.r,1,size(dist.f,1),size(dist.f,2),1),[2,3,1]);
+            else
+                tmp = squeeze(trapz(dist.z,dist.f,4));
+                rtmp = permute(repmat(dist.r,1,size(dist.f,1),size(dist.f,2),1),[2,3,1]);
+            end
+            tmp = squeeze(trapz(dist.r,rtmp.*tmp,3));
+            pixplot(dist.energy,dist.pitch,tmp)
             ylabel('Pitch [-]')
             xlabel('Energy [keV]')
             cstring='Fast Ion Distribution [1/keV]';
