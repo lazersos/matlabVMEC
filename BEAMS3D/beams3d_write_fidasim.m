@@ -70,9 +70,9 @@ if ~isempty(varargin)
     end
 end
 
-Emax = 0.5.*mass.*data.partvmax.^2./ec;
-Eaxis   = linspace(0,Emax,nE);%%0:10E3:100E3;
-pitchaxis = linspace(-1,1,np);%-1:0.1:1;
+Emax = ceil(0.5.*mass.*data.partvmax.^2./ec/1e4)*1e4;
+Eaxis   = 0.5*max(Emax)/nE:max(Emax)/nE:max(Emax);%linspace(0,Emax,nE);%%0:10E3:100E3;
+pitchaxis = -1+1/np:2/np:1;%linspace(-1,1,np);%-1:0.1:1;
 [R,P,Z,E,PITCH] = ndgrid(raxis,paxis,zaxis,Eaxis,pitchaxis);
 [R3,P3,Z3] = ndgrid(raxis,paxis,zaxis);
 [Rd,Pd,Zd] = ndgrid(data.raxis,data.phiaxis,data.zaxis);
@@ -108,7 +108,7 @@ Eaxis = Eaxis./1000;
 %E = E/1000;
 
 denf = squeeze(trapz(Eaxis, f,1));
-denf = squeeze(trapz(pitchaxis, denf,1))*2*pi;%Integration in velocity space
+denf = squeeze(trapz(pitchaxis, denf,1));%Integration in velocity space
 
 
 F = griddedInterpolant(Rd,Pd,Zd, data.B_R, 'spline');
