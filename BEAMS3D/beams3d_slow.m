@@ -21,12 +21,15 @@ function data=beams3d_slow(varargin)
 % Helpers
 me = 9.10938356D-31;
 ec = 1.60217662E-19;
+eps_0 = 8.854187817E-12;
+hbar = 6.62606896E-34/(2*pi);
 lplot = 0;
 beam_dex = []; % Use to downselect beams
 vmec_data=[];
 beam_data=[];
 data=[];
 plasma_mass=[];
+plasma_charge=[];
 
 % Handle varargin
 if nargin > 0
@@ -109,6 +112,14 @@ if isempty(plasma_mass)
     end
 end
 
+% Handle lack of plasma charge
+if isempty(plasma_charge)
+    plasma_charge = 1.6726219E-27;
+    if isfield(beam_data,'plasma_Zmean')
+        plasma_charge = beam_data.plasma_Zmean*ec;
+    end
+end
+
 % Check to see what type of run it is and extract information
 ldex=1;
 if any(beam_data.neut_lines(1,:) > 0) %NBI run
@@ -133,6 +144,7 @@ NE   = permute(beam_data.NE,[2 1 3]);
 TI   = permute(beam_data.TI,[2 1 3]);
 TE   = permute(beam_data.TE,[2 1 3]);
 ZEFF   = permute(beam_data.ZEFF_ARR,[2 1 3]);
+MODB   = permute(sqrt(beam_data.B_R.^2+beam_data.B_PHI.^2+beam_data.B_Z.^2),[2 1 3]);
 NE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     NE,R_BEAM,P_BEAM,Z_BEAM);
 TE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
@@ -141,6 +153,8 @@ TI_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     TI,R_BEAM,P_BEAM,Z_BEAM);
 ZE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     ZEFF,R_BEAM,P_BEAM,Z_BEAM);
+MODB_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
+    MODB,R_BEAM,P_BEAM,Z_BEAM);
 
 % PInj
 if size(W_BEAM,2) == 1, W_BEAM=W_BEAM'; end % Flip W
@@ -153,6 +167,18 @@ TE3=TE_BEAM.^3;
 beta = SPEED./299792458;
 coulomb_log = 35 - log(myZ.*ZE_BEAM.*(MASS+plasma_mass).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*plasma_mass.*beta.*beta.*6.02214076208E+26));
 coulomb_log(coulomb_log <=1) = 1;
+
+omega_p2 = (NE_BEAM .* plasma_charge^2) / (plasma_mass * eps_0);
+Omega_p =  plasma_charge / plasma_mass .* MODB_BEAM;
+%bmax = ((omega_p2 + Omega_p.^2)./(TE_BEAM.*ec./plasma_mass + 2*E_BEAM ./ MASS)).^(-.5);
+bmax = ((omega_p2)./((TE_BEAM).*ec./plasma_mass)).^(-.5);
+mu_ip = plasma_mass * MASS ./ (plasma_mass + MASS);
+u_ip2 = 3 *  (TE_BEAM).*ec / plasma_mass + 2 * E_BEAM ./ MASS;
+bmin_c = (CHARGE * plasma_charge) ./ (4*pi*eps_0 .* mu_ip .* u_ip2);
+bmin_q = hbar ./ (2.*mu_ip.*sqrt(u_ip2)) .* exp(-.5);
+bmin = max(bmin_q,bmin_c);
+coulomb_log = log(bmax./bmin);
+
 v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./plasma_mass);
 vcrit_cube = v_crit.^3;
 tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
