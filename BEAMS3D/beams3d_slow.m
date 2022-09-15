@@ -164,20 +164,28 @@ Iinj = sum(CHARGE.*W_BEAM);
 % Calculate Values
 TE3=TE_BEAM.^3;
 %coulomb_log=[];
-beta = SPEED./299792458;
-coulomb_log = 35 - log(myZ.*ZE_BEAM.*(MASS+plasma_mass).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*plasma_mass.*beta.*beta.*6.02214076208E+26));
+therm_factor = 1.5;
+fact_vsound = 1.5*sqrt(ec/plasma_mass)*therm_factor;
+vs = fact_vsound.*sqrt(TI_BEAM);
+beta = abs(SPEED-vs)./299792458;
+
+coulomb_log = 43 - log(myZ.*ZE_BEAM.*(MASS+plasma_mass).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*plasma_mass.*beta.*beta.*6.02214076208E+26));
 coulomb_log(coulomb_log <=1) = 1;
 
 omega_p2 = (NE_BEAM .* plasma_charge^2) / (plasma_mass * eps_0);
 Omega_p =  plasma_charge / plasma_mass .* MODB_BEAM;
-%bmax = ((omega_p2 + Omega_p.^2)./(TE_BEAM.*ec./plasma_mass + 2*E_BEAM ./ MASS)).^(-.5);
-bmax = ((omega_p2)./((TE_BEAM).*ec./plasma_mass)).^(-.5);
+bmax = ((omega_p2 + Omega_p.^2)./(TE_BEAM.*ec./plasma_mass + 2*E_BEAM ./ MASS)).^(-.5);
+%bmax = ((omega_p2)./((TE_BEAM).*ec./plasma_mass)).^(-.5);
 mu_ip = plasma_mass * MASS ./ (plasma_mass + MASS);
 u_ip2 = 3 *  (TE_BEAM).*ec / plasma_mass + 2 * E_BEAM ./ MASS;
 bmin_c = (CHARGE * plasma_charge) ./ (4*pi*eps_0 .* mu_ip .* u_ip2);
 bmin_q = hbar ./ (2.*mu_ip.*sqrt(u_ip2)) .* exp(-.5);
 bmin = max(bmin_q,bmin_c);
-coulomb_log = log(bmax./bmin);
+coulomb_log2 = log(bmax./bmin);
+
+plot(R_BEAM, coulomb_log,'+','DisplayName','BEAMS3D Formulation')
+hold on
+plot(R_BEAM, coulomb_log2,'+','DisplayName','NUBEAM Formulation')
 
 v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./plasma_mass);
 vcrit_cube = v_crit.^3;
