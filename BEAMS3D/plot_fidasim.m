@@ -66,6 +66,7 @@ if nargin > 1
             case {'fida', 'bes', 'fidabes'}
                 i=i+1;
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
+                disp(['ERROR: Option ', varargin{i}, ' not implemented here. Use plot_fidasim_profiles instead.']);
                 lspec = 1;
                 lgeom = 1;
             case 'save'
@@ -166,7 +167,7 @@ for i = 1:size(plot_type,2)
     if i>numel(figs)
         figs{i}=figure;
         ax = gca;
-        hold on;
+        hold(ax,'on');
     else
         allAxesInFigure = findall(figs{i},'type','axes');
         ax = allAxesInFigure(~ismember(get(allAxesInFigure,'Tag'),{'legend','Colobar'}));
@@ -388,43 +389,6 @@ end
 
 end
 
-function [R, bes, fida, spectmp, lambda] = get_bes_fida(filename,bes_range, fida_range,dispersion,lambda_dat)
-%h5info(filename);
-R = h5read(filename,'/radius');
-full = h5read(filename,'/full');
-half= h5read(filename,'/half');
-third= h5read(filename,'/third');
-halo= h5read(filename,'/halo');
-dcx= h5read(filename,'/dcx');
-fida= h5read(filename,'/fida');
-brems= h5read(filename,'/brems');
-lambda = h5read(filename,'/lambda');
-spec = full + half + third + halo + dcx + fida;% + brems;
-
-
-
-%spect = interp1(lambda, (spec').', (lambda_dat').'); %Vectorized interpolation
-for i = 1:size(lambda_dat,2)
-    spectmp(:,i) = interp1(lambda, spec(:,i), lambda_dat(:,i),'spline');
-end
-
-
-bes_dex = (lambda_dat > repmat(bes_range(:,1)',size(lambda_dat,1),1)) & (lambda_dat < repmat(bes_range(:,2)',size(lambda_dat,1),1));
-fida_dex = (lambda_dat > fida_range(1)) & (lambda_dat < fida_range(2));
-spectmp = movmean(spectmp,5);
-disp('Applying moving mean to FIDASIM data');
-% for i = 1:size(lambda_dat,2)
-% dispersion_tmp(:,i) = interp1(lambda_dat(:,i),dispersion(:,i),lambda);
-% end
-%
-% bes = sum(spec.*dispersion_tmp.*bes_dex,1);
-% fida = sum(spec.*dispersion_tmp.*fida_dex,1);
-
-
-bes = sum(spectmp.*dispersion.*bes_dex,1,'omitnan');
-fida = sum(spectmp.*dispersion.*fida_dex,1,'omitnan');
-
-end
 
 
 
