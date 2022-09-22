@@ -23,6 +23,8 @@ me = 9.10938356D-31;
 ec = 1.60217662E-19;
 eps_0 = 8.854187817E-12;
 hbar = 6.62606896E-34/(2*pi);
+amu = 1.66053906660E-27;
+
 lplot = 0;
 beam_dex = []; % Use to downselect beams
 vmec_data=[];
@@ -141,12 +143,14 @@ E_BEAM = (0.5).*MASS.*SPEED.*SPEED;
 
 % Get profile information
 NE   = permute(beam_data.NE,[2 1 3]);
+
 TI   = permute(beam_data.TI,[2 1 3]);
 TE   = permute(beam_data.TE,[2 1 3]);
 ZEFF   = permute(beam_data.ZEFF_ARR,[2 1 3]);
 MODB   = permute(sqrt(beam_data.B_R.^2+beam_data.B_PHI.^2+beam_data.B_Z.^2),[2 1 3]);
 NE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     NE,R_BEAM,P_BEAM,Z_BEAM);
+
 TE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     TE,R_BEAM,P_BEAM,Z_BEAM);
 TI_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
@@ -172,25 +176,79 @@ beta = abs(SPEED-vs)./299792458;
 coulomb_log = 43 - log(myZ.*ZE_BEAM.*(MASS+plasma_mass).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*plasma_mass.*beta.*beta.*6.02214076208E+26));
 coulomb_log(coulomb_log <=1) = 1;
 
-omega_p2 = (NE_BEAM .* plasma_charge^2) / (plasma_mass * eps_0);
-Omega_p =  plasma_charge / plasma_mass .* MODB_BEAM;
-bmax = ((omega_p2 + Omega_p.^2)./(TE_BEAM.*ec./plasma_mass + 2*E_BEAM ./ MASS)).^(-.5);
-%bmax = ((omega_p2)./((TE_BEAM).*ec./plasma_mass)).^(-.5);
-mu_ip = plasma_mass * MASS ./ (plasma_mass + MASS);
-u_ip2 = 3 *  (TE_BEAM).*ec / plasma_mass + 2 * E_BEAM ./ MASS;
-bmin_c = (CHARGE * plasma_charge) ./ (4*pi*eps_0 .* mu_ip .* u_ip2);
-bmin_q = hbar ./ (2.*mu_ip.*sqrt(u_ip2)) .* exp(-.5);
-bmin = max(bmin_q,bmin_c);
-coulomb_log2 = log(bmax./bmin);
 
-plot(R_BEAM, coulomb_log,'+','DisplayName','BEAMS3D Formulation')
-hold on
-plot(R_BEAM, coulomb_log2,'+','DisplayName','NUBEAM Formulation')
 
-v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./plasma_mass);
+% omega_p2 = (NE_BEAM .* plasma_charge^2) / (plasma_mass * eps_0);
+% Omega_p =  plasma_charge / plasma_mass .* MODB_BEAM;
+% bmax = ((omega_p2 + Omega_p.^2)./(TE_BEAM.*ec./plasma_mass + 2*E_BEAM ./ MASS)).^(-.5);
+% bmax = ((omega_p2)./((TE_BEAM).*ec./plasma_mass)).^(-.5);
+% mu_ip = plasma_mass * MASS ./ (plasma_mass + MASS);
+% u_ip2 = 3 *  (TE_BEAM).*ec / plasma_mass + 2 * E_BEAM ./ MASS;
+% bmin_c = (CHARGE * plasma_charge) ./ (4*pi*eps_0 .* mu_ip .* u_ip2);
+% bmin_q = hbar ./ (2.*mu_ip.*sqrt(u_ip2)) .* exp(-.5);
+% bmin = max(bmin_q,bmin_c);
+% coulomb_log2 = log(bmax./bmin);
+% 
+% 
+% %Original NUBEAM formulation
+% N_BEAM = zeros(size(beam_data.NI,1)+1,numel(NE_BEAM));
+% for i=1:size(beam_data.NI,1)
+%     tmp =  permute(squeeze(beam_data.NI(i,:,:,:)),[2 1 3]);
+% N_BEAM(i,:) =interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
+%     tmp,R_BEAM,P_BEAM,Z_BEAM);
+% end
+% N_BEAM(size(beam_data.NI,1)+1,:)= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
+%     NE,R_BEAM,P_BEAM,Z_BEAM);
+% 
+% denb =  N_BEAM;
+% tempb=TE_BEAM/1000;%TI?
+% zb = plasma_charge/ec;
+% ab = plasma_mass/amu;
+% 
+% at = MASS/amu;
+% zt = CHARGE/ec;
+% et = E_BEAM/ec/1000;
+% 
+%     omega2=1.74d0*zb.^2./ab.*NE_BEAM ...
+%          +9.18d15.*zt.^2./ab.^2.*MODB_BEAM.^2;
+%     vrel2=9.58d10*(TI_BEAM./ab/1000 + 2*et./at);
+%  sm = omega2./vrel2;
+% 
+%      omega2=1.74d0./(1./1836.1).*NE_BEAM ...
+%          +9.18d15.*zt.^2./(1./1836.1).^2.*MODB_BEAM.^2;
+%     vrel2=9.58d10*(TE_BEAM./(1./1836.1)/1000 + 2*et./at);%SPEED.^2/ec*amu/1000
+%  sm = sm+omega2./vrel2;
+%  rmax=sqrt(1./sm);
+% 
+% 
+% % for k = 1:size(denb,4)
+% % %     omega2=1.74d0*plasma_charge.^2./plasma_mass.*NE_BEAM ...
+% % %          +9.18d15.*CHARGE.^2./plasma_mass.^2.*MODB_BEAM.^2;
+% % %     vrel2=9.58d10*(TE_BEAM./plasma_mass/1000 + 2*E_BEAM ./ MASS/ec/1000);
+% %     omega2=1.74d0*zb.^2/ab.*denb(:,:,:,i) ...
+% %          +9.18d15*zb.^2./ab.^2.*MODB_BEAM.^2;
+% %     vrel2=9.58d10*(T/ab(i) + 2*et/at);
+% % end
+% 
+% %     sm = sm+omega2/vrel2;
+% %     rmax=sqrt(1./sm);
+% % 
+% vrel2=9.58d10*(TI_BEAM./ab/1000 + 2*et./at);
+%     rmincl=0.13793d0.*abs(zt.*zb).*(ab + at)./ab./at./vrel2;
+%     rminqu=1.9121d-8*(ab + at)./ab./at./sqrt(vrel2);
+%     rmin=max(rmincl,rminqu);
+%     cln=log(rmax./rmin);
+% 
+% plot(R_BEAM, coulomb_log,'+','DisplayName','BEAMS3D Formulation')
+% hold on
+% plot(R_BEAM, coulomb_log2,'+','DisplayName','LOCUST Formulation')
+% plot(R_BEAM, cln,'+','DisplayName','NUBEAM Formulation')
+% legend()
+
+v_crit = ((0.75.*sqrt(pi.*ab./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./ab);
 vcrit_cube = v_crit.^3;
-tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
-nu0_fe = 6.6E-11 .* NE_BEAM .* myZ.*myZ ./ sqrt(MASS./9.31E-31) ./ (E_BEAM ./ 1.6022E-19).^(3/2) .* (coulomb_log./17);
+tau_spit = 3.777183E41.*at.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
+nu0_fe = 6.6E-11 .* NE_BEAM .* myZ.*myZ ./ sqrt(at./9.31E-31) ./ (E_BEAM ./ 1.6022E-19).^(3/2) .* (coulomb_log./17);
 
 % Integrate
 C1 = 1./tau_spit;

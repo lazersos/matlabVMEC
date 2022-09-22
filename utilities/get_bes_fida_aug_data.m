@@ -36,9 +36,9 @@ if nargin > 2
                 if strcmp("F50",string(varargin{i}))
                     fida_range = [652.5,653.5];
                 else
-                    fida_range = [660, 661];
+                    fida_range = [659.5, 660.5];
                 end
-                            case{'spectrum'}
+            case{'spectrum'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 i=i+1;
                 channel = varargin{i};
@@ -122,6 +122,7 @@ end
 
 time_dex = (t_point + avg_time/2 >= time) & (t_point -avg_time/2 <= time);
 time_dex = permute(repmat(time_dex',size(spec_in,2),1,size(spec_in,1)),[3,1,2]);
+disp(['Max. Frames used for averaging of ', filename,': ', num2str(max(sum(time_dex(1,:,:),3)))]);
 if t_passive~=0
     time_dex_passive = (t_passive + avg_time/2 >= time) & (t_passive -avg_time/2 <= time);
     time_dex_passive = permute(repmat(time_dex_passive',size(spec_in,2),1,size(spec_in,1)),[3,1,2]);
@@ -156,8 +157,8 @@ spec_err = sqrt(spec_err_in.^2 + bg_err.^2);
 
 bes_err = sqrt(sum((spec_err.*dispersion.*bes_dex).^2,1));
 fida_err =sqrt(sum((spec_err.*dispersion.*fida_dex).^2,1));
-fida_bes_err = squeeze(sqrt((1.0./bes).^2.*fida_err.^2+(spec./bes.^2).^2.*bes_err.^2));
-fida_bes_err = sum(fida_bes_err.*dispersion.*and(bes_dex,fida_dex)./sum(and(bes_dex,fida_dex),1),1,'omitnan');
+fida_bes_err = squeeze(sqrt((1.0./bes).^2.*fida_err.^2+(fida./bes.^2).^2.*bes_err.^2));
+%fida_bes_err = sqrt(sum((fida_bes_err.*or(bes_dex,fida_dex)).^2,1));
 %bg_err = squeeze(bg_err);
 bes = squeeze(bes);
 fida = squeeze(fida);
@@ -177,18 +178,21 @@ chandex =  squeeze(any(dex,[1,3]))'; %only channel dex
 
 dex = squeeze(dex(1,:,:));
 time_dex = squeeze(time_dex(1,:,:));
-time_dex_passive = squeeze(time_dex_passive(1,:,:));
+% if t_passive~=0
+% time_dex_passive = squeeze(time_dex_passive(1,:,:));
+% time_dex_passive = and(dex,time_dex_passive);
+% end
 bes_out = sum(bes.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
 fida_out =sum(fida.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
 %end
-bes_err_out = sum(bes_err.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
-fida_err_out = sum(fida_err.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
-fida_bes_err_out = sum(fida_bes_err.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
+bes_err_out = sqrt(sum(bes_err.^2.*dex.*time_dex,2,'omitnan').^2 + std(bes_err.*dex.*time_dex,0,2).^2)./sum(time_dex,2);
+fida_err_out = sqrt(sum(fida_err.^2.*dex.*time_dex,2,'omitnan').^2 + std(fida_err.*dex.*time_dex,0,2).^2)./sum(time_dex,2);
+fida_bes_err_out = sqrt(sum(fida_bes_err.^2.*dex.*time_dex,2,'omitnan').^2 + std(fida_bes_err.*dex.*time_dex,0,2).^2)./sum(time_dex,2);
 
 
 R_pts = repmat(R,1,size(spec_in,3))*100;
 time_dex = and(dex,time_dex);
-time_dex_passive = and(dex,time_dex_passive);
+
 for i = 1:size(plot_type,2)
     if i>numel(figs)
         figs{i}=figure;
@@ -201,31 +205,46 @@ for i = 1:size(plot_type,2)
     legend(ax,'Location','best');
     switch lower(plot_type{i})
         case 'bes'
-            plot(ax,R_pts(time_dex),bes(time_dex),'.','DisplayName',['Points ', num2str(t_point - avg_time/2),'-',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
-            plot(ax,R_pts(time_dex_passive),bes(time_dex_passive),'.','DisplayName',['Points Passive ', num2str(t_passive- avg_time/2),'-',num2str(t_passive+ avg_time/2), 's'], 'LineWidth',2.0);
+            plot(ax,R_pts(time_dex),bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),'-',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            %plot(ax,R_pts(time_dex_passive),bes(time_dex_passive),'o','DisplayName',['Data Passive ', num2str(t_passive- avg_time/2),'-',num2str(t_passive+ avg_time/2), 's'], 'LineWidth',2.0);
             tmp =bes_out;
-            tmp_err = bes_err_out;
+            tmp_err = bes.*dex.*time_dex;%bes_err_out;
+                        tmp_err(tmp_err==0) = NaN;
+            tmp_err = std(tmp_err,0,2,'omitnan');
             ystr = 'BES';
+
         case 'fida'
-            plot(ax,R_pts(time_dex),fida(time_dex),'.','DisplayName',['Points ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
-            plot(ax,R_pts(time_dex_passive),fida(time_dex_passive),'.','DisplayName',['Points Passive ', num2str(t_passive- avg_time/2),'-',num2str(t_passive+ avg_time/2), 's'], 'LineWidth',2.0);
+            plot(ax,R_pts(time_dex),fida(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            %plot(ax,R_pts(time_dex_passive),fida(time_dex_passive),'o','DisplayName',['Data Passive ', num2str(t_passive- avg_time/2),'-',num2str(t_passive+ avg_time/2), 's'], 'LineWidth',2.0);
             tmp = fida_out;
-            tmp_err = fida_err_out;
+            tmp_err = fida.*dex.*time_dex;%fida_err_out;
+                        tmp_err(tmp_err==0) = NaN;
+            tmp_err = std(tmp_err,0,2,'omitnan');
             ystr = 'FIDA';
         case 'fidabes'
-            plot(ax,R_pts(time_dex),fida(time_dex)./bes(time_dex),'.','DisplayName',['Points ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
-           % plot(ax,R_pts(time_dex_passive),fida(time_dex_passive)./bes(time_dex_passive),'.','DisplayName',['Points Passive ', num2str(t_passive), 's'], 'LineWidth',2.0);
+            plot(ax,R_pts(time_dex),fida(time_dex)./bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            % plot(ax,R_pts(time_dex_passive),fida(time_dex_passive)./bes(time_dex_passive),'.','DisplayName',['Points Passive ', num2str(t_passive), 's'], 'LineWidth',2.0);
             tmp = fida_out./bes_out;
-            tmp_err = fida_bes_err_out;
+            tmp_err = (fida./bes).*dex.*time_dex;
+            tmp_err(tmp_err==0) = NaN;
+            tmp_err = std(tmp_err,0,2,'omitnan');%fida_bes_err_out;
             ystr = 'FIDA/BES';
-            ylim([0 0.1])
-
+            ylim([0 0.16])
+            
+        case 'spectrum'
+            tmp =squeeze(sum(spec.*permute(repmat(time_dex,1,1,size(spec,1)),[3,1,2]),3)./sum(permute(repmat(time_dex,1,1,size(spec,1)),[3,1,2]),3));
+             plot(ax,lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
+             %plot(ax,lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
+             %tmp_in =squeeze(sum(spec_in.*permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3)./sum(permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3));
+             %plot(ax,lambda(:,channel),tmp_in(:,channel), 'DisplayName',['Data, bo BG sub ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+             xline(bes_range(channel,:),'DisplayName', 'BES Range')
     end
-    errorbar(ax,R(chandex)*100, tmp(chandex),tmp_err(chandex),'--','DisplayName',['Data ', num2str(t_point), 's'], 'LineWidth',2.0);
-    
-   
+
+    if ~strcmp(plot_type{i},'spectrum')
+errorbar(ax,R(chandex)*100, tmp(chandex),tmp_err(chandex),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
     xlabel(ax,'R [cm]')
     ylabel(ax,ystr);
+    end
     if lsave
         legend(ax);
         sname = [num2str(shotid), '_', plot_type{i}];

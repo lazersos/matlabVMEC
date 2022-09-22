@@ -59,6 +59,11 @@ brems= h5read(filename,'/brems');
 lambda = h5read(filename,'/lambda');
 spec = full + half + third + halo + dcx + fida;% + brems;
 
+if lmean == 1
+spec = movmean(spec,15);
+disp(['Applying moving mean to FIDASIM data: ', filename]);
+end
+
 %spect = interp1(lambda, (spec').', (lambda_dat').'); %Vectorized interpolation
 for i = 1:size(lambda_dat,2)
     spectmp(:,i) = interp1(lambda, spec(:,i), lambda_dat(:,i),'spline');
@@ -68,10 +73,7 @@ end
 bes_dex = (lambda_dat > repmat(bes_range(:,1)',size(lambda_dat,1),1)) & (lambda_dat < repmat(bes_range(:,2)',size(lambda_dat,1),1));
 fida_dex = (lambda_dat > fida_range(1)) & (lambda_dat < fida_range(2));
 
-if lmean == 1
-spectmp = movmean(spectmp,5);
-disp(['Applying moving mean to FIDASIM data: ', filename]);
-end
+
 % for i = 1:size(lambda_dat,2)
 % dispersion_tmp(:,i) = interp1(lambda_dat(:,i),dispersion(:,i),lambda);
 % end

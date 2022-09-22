@@ -39,7 +39,9 @@ leq = 0;
 ldist = 0;
 lspec = 0;
 lneut = 0;
+lmean=0;
 lgeom =0;
+n_fida=-1;
 if nargin > 1
     i = 1;
     while i < nargin
@@ -69,6 +71,11 @@ if nargin > 1
                 disp(['ERROR: Option ', varargin{i}, ' not implemented here. Use plot_fidasim_profiles instead.']);
                 lspec = 1;
                 lgeom = 1;
+            case 'mean'
+                lmean = 1;
+            case 'sim_data'
+                i=i+1;
+                sim_data = varargin{i};
             case 'save'
                 lsave = 1;
             case 'figs'
@@ -343,14 +350,24 @@ for i = 1:size(plot_type,2)
             %[R, bes, fida, spec_sim, lambda_sim] = get_bes_fida(spec_name, bes_range(:,:),fida_range,dispersion_data,lambda_data);
 
             specr = spec.full + spec.half + spec.third + spec.halo + spec.dcx + spec.fida;% + spec.brems;
-            plot(spec.lambda,specr(:,channel), 'DisplayName', 'Spectrum')
+            if lmean
+                k = 12;
+                specr = movmean(specr,k);
+                disp(['Applying moving mean with length ', num2str(k), ' to FIDASIM data: ', filename]);
+            end
+
+            for j = 1:size(sim_data.lambda,2)
+                spectmp(:,j) = interp1(spec.lambda, specr(:,j), sim_data.lambda(:,j),'spline');
+            end
+
+            plot(sim_data.lambda(:,channel),spectmp(:,channel), 'DisplayName', ['Spectrum - ' name] );
             hold on
-            plot(spec.lambda, spec.full(:,channel), 'DisplayName','Full Energy')
-            plot(spec.lambda, spec.half(:,channel), 'DisplayName','Half Energy')
-            plot(spec.lambda, spec.third(:,channel), 'DisplayName','Third Energy')
-            plot(spec.lambda, spec.halo(:,channel)+spec.dcx(:,channel), 'DisplayName','Halo+DCX') %+spec.brems(:,channel)
-            plot(spec.lambda, spec.fida(:,channel), 'DisplayName','FIDA')
-            xlabel('Wavelenght [nm]')
+            plot(spec.lambda, spec.full(:,channel), 'DisplayName',['Full - ' name] );
+            %plot(spec.lambda, spec.half(:,channel), 'DisplayName',['Half - ' name] );
+            %plot(spec.lambda, spec.third(:,channel), 'DisplayName',['Third - ' name] );
+            plot(spec.lambda, spec.halo(:,channel)+spec.dcx(:,channel), 'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
+            plot(spec.lambda, spec.fida(:,channel), 'DisplayName',['FIDA - ' name] );
+            xlabel('Wavelength [nm]')
             ylabel(' Intensity [Ph/(s nm m^2 sr)]')
             set(gca,'YScale','log')
             xlim([650 663]);
@@ -361,6 +378,7 @@ for i = 1:size(plot_type,2)
 
 
     end
+    %disp(plot_type{i});
     if strcmp(plot_type{i}(end-1:end),'2d')
         pixplot(dist.r,dist.z,tmp(:,:,1))
         xlabel('R [cm]')
