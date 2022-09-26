@@ -236,8 +236,8 @@ for i = 1:size(plot_type,2)
             cstring='Fast Ion Distribution [1/keV]';
             c = colorbar;
             c.Label.String = cstring;
-            xlim([dist.r(1) dist.r(end)])
-            ylim([dist.z(1) dist.z(end)])
+            xlim([dist.energy(1) dist.energy(end)])
+            ylim([dist.pitch(1) dist.pitch(end)])
             if lsave
                 sname = [filename, '_', plot_type{i}];
                 savefig(sname)
