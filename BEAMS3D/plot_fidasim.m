@@ -236,6 +236,8 @@ for i = 1:size(plot_type,2)
             cstring='Fast Ion Distribution [1/keV]';
             c = colorbar;
             c.Label.String = cstring;
+            xlim([dist.r(1) dist.r(end)])
+            ylim([dist.z(1) dist.z(end)])
             if lsave
                 sname = [filename, '_', plot_type{i}];
                 savefig(sname)
@@ -385,6 +387,8 @@ for i = 1:size(plot_type,2)
         ylabel('Z [cm]')
         c = colorbar;
         c.Label.String = cstring;
+        xlim([dist.r(1) dist.r(end)])
+        ylim([dist.z(1) dist.z(end)])
     elseif strcmp(plot_type{i}(end-2:end),'tor')
         if ndims(dist.f) == 5
             pixplot(dist.r,dist.phi,squeeze(tmp(:,z0_ind,:)))
@@ -392,6 +396,7 @@ for i = 1:size(plot_type,2)
             ylabel('Z [cm]')
             c = colorbar;
             c.Label.String = cstring;
+            xlim([dist.r(1) dist.r(end)])
         else
             disp('4D Distribution has no toroidal information')
         end

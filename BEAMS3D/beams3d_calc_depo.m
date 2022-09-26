@@ -37,7 +37,7 @@ for i=1:beam_data.nbeams
         dexi = and(rho_lines(:)>=edges(j),rho_lines(:)<edges(j+1));
         birth(i,j) = sum(beam_data.Weight(dexi));
     end
-    birth(i,:) = nrho*birth(i,:)./dVdrho;%/sqrt(pi);
+    birth(i,:) = nrho*birth(i,:)./dVdrho;
 end
 
 end
