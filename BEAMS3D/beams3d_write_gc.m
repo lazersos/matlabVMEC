@@ -201,7 +201,7 @@ if lbeams3d
     fid = fopen(filename,'w');
     fprintf(fid,'&BEAMS3D_INPUT\n');
     fprintf(fid,['! Created by beams3d_write_gc. ' aux_str]);
-    fprintf(fid,['!   DATE: ' disp(datestr(now,'mm-dd-yyyy HH:MM:SS'))]);
+    fprintf(fid,['!   DATE: ' datestr(now,'mm-dd-yyyy HH:MM:SS') '\n']);
     fprintf(fid,'  NR = %i\n',beam_data.nr);
     fprintf(fid,'  NZ = %i\n',beam_data.nz);
     fprintf(fid,'  NPHI = %i\n',beam_data.nphi);

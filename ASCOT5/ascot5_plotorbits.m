@@ -126,9 +126,9 @@ for f = 1:size(files,2)
     simmode = h5read(files{f}, [path_simmode '/SIM_MODE']);
     
     if simmode == 2
-        [time{f}, r{f}, phi{f}, z{f}, br{f}, bphi{f}, bz{f}, pll{f}, mu{f}, rho{f}, theta{f} ] = ascot5_get_properties_time_trace(files{f}, path, parts, 'r', 'phi', 'z', 'br', 'bphi', 'bz', 'ppar', 'mu', 'rho', 'theta');
+        [time{f}, r{f}, phi{f}, z{f}, br{f}, bphi{f}, bz{f}, pll{f}, mu{f}, rho{f}, theta{f} ] = get_properties_time_trace(files{f}, path, parts, 'r', 'phi', 'z', 'br', 'bphi', 'bz', 'ppar', 'mu', 'rho', 'theta');
     else
-        [time{f}, r{f}, phi{f}, z{f}, br{f}, bphi{f}, bz{f}, pr{f}, pphi{f}, pz{f}, rho{f}, theta{f} ] = ascot5_get_properties_time_trace(files{f}, path, parts, 'r', 'phi', 'z', 'br', 'bphi', 'bz', 'pr', 'pphi', 'pz', 'rho', 'theta');
+        [time{f}, r{f}, phi{f}, z{f}, br{f}, bphi{f}, bz{f}, pr{f}, pphi{f}, pz{f}, rho{f}, theta{f} ] = get_properties_time_trace(files{f}, path, parts, 'r', 'phi', 'z', 'br', 'bphi', 'bz', 'pr', 'pphi', 'pz', 'rho', 'theta');
         
     end
     
@@ -570,20 +570,20 @@ time = reshape(time,[nsteps npart]);
 
 
 % Handle varargin
-    i=1;
-    while i <= size(varargin,2)
-        temp = h5read(a5file,[path '/' varargin{i}]);
-        temp = temp(dex);
-        tempcell = mat2cell(temp, value_counts(:,2),1);
-        tempcell = cellfun(padfun, tempcell, 'UniformOutput', false); 
-        temp = cell2mat(tempcell); %deal with differently sized time-traces
-        temp = reshape(temp,[nsteps npart]);
-        for j=1:npart
-            temp(:,j) = temp(idex(:,j),j); %sort in time
-        end
-        varargout{i} = temp;
-        i = i + 1;
+i=1;
+while i <= size(varargin,2)
+    temp = h5read(a5file,[path '/' varargin{i}]);
+    temp = temp(dex);
+    tempcell = mat2cell(temp, value_counts(:,2),1);
+    tempcell = cellfun(padfun, tempcell, 'UniformOutput', false);
+    temp = cell2mat(tempcell); %deal with differently sized time-traces
+    temp = reshape(temp,[nsteps npart]);
+    for j=1:npart
+        temp(:,j) = temp(idex(:,j),j); %sort in time
     end
+    varargout{i} = temp;
+    i = i + 1;
 end
+
 
 

@@ -58,20 +58,7 @@ for k = 1: beam_data.nbeams
 end
 
 % Calc Aminor
-Aminor = 0;
-for j = 1:beam_data.nphi
-    S2D = squeeze(beam_data.S_ARR(:,j,:));
-    S2D(S2D>1.2) = 1.2;
-    [i,k]=find(S2D == min(S2D,[],'all'),1);
-    r0 = beam_data.raxis(i);
-    z0 = beam_data.zaxis(k);
-    cc=contourc(beam_data.raxis,beam_data.zaxis,S2D',1.0);
-    cc = cc(:,2:end-1);
-    cc(1,:) = cc(1,:)-r0;
-    cc(2,:) = cc(2,:)-z0;
-    Aminor = Aminor + mean(sqrt(sum(cc.^2,1)));
-end
-Aminor = Aminor./double(beam_data.nphi);
+Aminor = beams3d_calc_aminor(beam_data);
 
 %V = pi*r*r*L;
 %A = 2*pi*r*L;
