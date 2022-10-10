@@ -5,7 +5,12 @@ bes_range = in_data.bes_range;
 fida_range = in_data.fida_range;
 dispersion = in_data.dispersion;
 lambda_dat = in_data.lambda;
+if isfield(in_data,'dex')
 dex = in_data.dex;
+else
+    dex = [];
+end
+
 if isfield(in_data,'figs')
 figs=in_data.figs;
 else
@@ -14,6 +19,7 @@ end
 
 lsave = 0;
 lmean = 0;
+ltime=1;
 plot_type = {};
 
 fac = 1;
@@ -24,6 +30,9 @@ if nargin > 2
         switch varargin{i}
             case {'FIDA','BES','FIDABES','fida','bes','fidabes'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
+            case {'time_fida','time_bes','time_fidabes'}
+                plot_type{end+1}=varargin{i}; %Make multiple plots possible
+                ltime=1;
             case 'mean'
                 lmean =1;
             case 'save'
@@ -57,6 +66,14 @@ dcx= h5read(filename,'/dcx');
 fida= h5read(filename,'/fida');
 brems= h5read(filename,'/brems');
 lambda = h5read(filename,'/lambda');
+[R,I] = sort(R);
+full = full(:,I);
+half = half(:,I);
+third = third(:,I);
+dcx = dcx(:,I);
+fida = fida(:,I);
+brems = brems(:,I);
+
 spec = full + half + third + halo + dcx + fida;% + brems;
 
 if lmean == 1
@@ -70,6 +87,9 @@ for i = 1:size(lambda_dat,2)
 end
 
 
+dispersion_tmp = diff(lambda_dat,1);
+dispersion_tmp = [dispersion_tmp; dispersion_tmp(end,:)];
+
 bes_dex = (lambda_dat > repmat(bes_range(:,1)',size(lambda_dat,1),1)) & (lambda_dat < repmat(bes_range(:,2)',size(lambda_dat,1),1));
 fida_dex = (lambda_dat > fida_range(1)) & (lambda_dat < fida_range(2));
 
@@ -82,8 +102,8 @@ fida_dex = (lambda_dat > fida_range(1)) & (lambda_dat < fida_range(2));
 % fida = sum(spec.*dispersion_tmp.*fida_dex,1);
 
 
-bes = sum(spectmp.*dispersion.*bes_dex,1,'omitnan');
-fida = sum(spectmp.*dispersion.*fida_dex,1,'omitnan');
+bes = sum(spectmp.*dispersion_tmp.*bes_dex,1,'omitnan');
+fida = sum(spectmp.*dispersion_tmp.*fida_dex,1,'omitnan');
 
 for i = 1:size(plot_type,2)
     if i>numel(figs)
@@ -105,6 +125,7 @@ for i = 1:size(plot_type,2)
         case 'fidabes'
             tmp = fida(dex)./bes(dex);
             ystr = 'FIDA/BES';
+        %case 'time_fidabes'
 
     end
     
@@ -114,7 +135,7 @@ for i = 1:size(plot_type,2)
     else
         dispname = ['FIDASIM ', name];
     end
-    plot(ax,R(dex), tmp,'+--','DisplayName',dispname, 'LineWidth',2.0);
+    plot(ax,R(dex), tmp,'+','DisplayName',dispname, 'LineWidth',2.0);
     xlabel(ax,'R [cm]')
     ylabel(ax,ystr)
     if lsave

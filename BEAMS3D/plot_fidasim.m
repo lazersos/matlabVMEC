@@ -68,7 +68,7 @@ if nargin > 1
             case {'fida', 'bes', 'fidabes'}
                 i=i+1;
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
-                disp(['ERROR: Option ', varargin{i}, ' not implemented here. Use plot_fidasim_profiles instead.']);
+                %disp(['ERROR: Option ', varargin{i}, ' not implemented here. Use plot_fidasim_profiles instead.']);
                 lspec = 1;
                 lgeom = 1;
             case 'mean'
@@ -347,10 +347,17 @@ for i = 1:size(plot_type,2)
             cstring = 'Beam neutral density [1/cm^3]';
             c = colorbar;
             c.Label.String = cstring;
+        case 'fida'
+            
         case 'spectrum'
             %[R_data, bes_data, fida_data,spec_data, lambda_data, names,bes_err,fida_err,fida_bes_err,dispersion_data] = get_bes_fida_aug_data(filename_cfr,time(tim),bes_range,fida_range);
             %[R, bes, fida, spec_sim, lambda_sim] = get_bes_fida(spec_name, bes_range(:,:),fida_range,dispersion_data,lambda_data);
-
+            [~,I] = sort(spec.radius);
+            if ischar(channel)
+                channel = find(strcmp(channel,cellstr(deblank(names'))));
+            else
+                channel = I(channel);
+            end
             specr = spec.full + spec.half + spec.third + spec.halo + spec.dcx + spec.fida;% + spec.brems;
             if lmean
                 k = 12;

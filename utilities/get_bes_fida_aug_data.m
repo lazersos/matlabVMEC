@@ -1,4 +1,4 @@
-function [plot_data,sim_data] = get_bes_fida_aug_data(filename,t_point,varargin)
+function [plot_data,sim_data] = get_bes_fida_aug_data(filename,varargin)
 %This function expects an hdf5 file with CXRS data from AUG shotfiles
 %exported as follows (for shot 38581):
 % idl
@@ -13,6 +13,10 @@ figs = {};
 lsave = 0;
 avg_time=0;
 t_passive =0;
+t_point = 0;
+fida_range = [660, 661];
+
+dex_in = '';
 
 R = h5read(filename,'/r_pos');
 spec_in= h5read(filename,'/intens');
@@ -23,9 +27,18 @@ names = h5read(filename,'/los_name');
 dispersion_in=h5read(filename,'/dispersion');
 time = h5read(filename,'/time_arr');
 
+[R,I] = sort(R);
+spec_in = spec_in(:,I,:);
+spec_err_in = spec_err_in(:,I,:);
+lambda = lambda(:,I);
+lambdatmp = lambdatmp(:,I);
+dispersion_in = dispersion_in(:,I);
+names = names(I);
+
+
 if nargin > 2
     i = 1;
-    while i < nargin-1
+    while i < nargin
         switch varargin{i}
             case {'FIDA','BES','FIDABES','fida','bes','fidabes'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
@@ -36,12 +49,23 @@ if nargin > 2
                 if strcmp("F50",string(varargin{i}))
                     fida_range = [652.5,653.5];
                 else
-                    fida_range = [659.5, 660.5];
+                    fida_range = [660, 661];
                 end
-            case{'spectrum'}
+            case{'spectrum', 'timetrace_fida', 'timetrace_bes', 'timetrace_fidabes'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 i=i+1;
-                channel = varargin{i};
+                if ischar(varargin{i}) %TODO: Allow for multiple channels to be specified
+                    channel = find(strcmp(varargin{i},cellstr(deblank(names'))));
+                elseif iscell(varargin{i})
+                    for j = 1:numel(varargin{i})
+                        channel(j) = find(strcmp(varargin{i}{j},cellstr(deblank(names'))));
+                    end
+                else
+                    channel = I(varargin{i});
+                end
+            case 't_point'
+                i=i+1;
+                t_point = varargin{i};
             case 't_passive'
                 i = i+1;
                 t_passive = varargin{i};
@@ -120,14 +144,22 @@ if shotid < 32000
 end
 
 
-time_dex = (t_point + avg_time/2 >= time) & (t_point -avg_time/2 <= time);
-time_dex = permute(repmat(time_dex',size(spec_in,2),1,size(spec_in,1)),[3,1,2]);
-disp(['Max. Frames used for averaging of ', filename,': ', num2str(max(sum(time_dex(1,:,:),3)))]);
-if t_passive~=0
-    time_dex_passive = (t_passive + avg_time/2 >= time) & (t_passive -avg_time/2 <= time);
-    time_dex_passive = permute(repmat(time_dex_passive',size(spec_in,2),1,size(spec_in,1)),[3,1,2]);
+bes_range=bes_range(I,:);
+
+
+if t_point ~=0
+    time_dex = (t_point + avg_time/2 >= time) & (t_point -avg_time/2 <= time);
+    time_dex = permute(repmat(time_dex',size(spec_in,2),1,size(spec_in,1)),[3,1,2]);
+    disp(['Max. Frames used for averaging of ', filename,': ', num2str(max(sum(time_dex(1,:,:),3)))]);
+    if t_passive~=0
+        time_dex_passive = (t_passive + avg_time/2 >= time) & (t_passive -avg_time/2 <= time);
+        time_dex_passive = permute(repmat(time_dex_passive',size(spec_in,2),1,size(spec_in,1)),[3,1,2]);
+    end
 end
-dex = permute(repmat(dex_in,1,numel(time),size(spec_in,1)),[3,1,2]);
+if ~(strcmp(dex_in,''))
+    dex = permute(repmat(dex_in,1,numel(time),size(spec_in,1)),[3,1,2]);
+    %chandex =  squeeze(any(dex,[1,3]))'; %only channel dex
+end
 
 bes_dex = (lambda > repmat(bes_range(:,1)',size(lambda,1),1)) & (lambda < repmat(bes_range(:,2)',size(lambda,1),1));
 fida_dex = (lambda > fida_range(1)) & (lambda < fida_range(2));
@@ -167,7 +199,7 @@ fida_err = squeeze(fida_err);
 fida_bes_err = squeeze(fida_bes_err);
 
 
-chandex =  squeeze(any(dex,[1,3]))'; %only channel dex
+
 % if t_passive~=0
 % time_dex_passive = (t_passive + avg_time/2 >= time) & (t_passive -avg_time/2 <= time);
 % time_dex_passive = repmat(time_dex_passive',size(dex,1),1);
@@ -176,22 +208,20 @@ chandex =  squeeze(any(dex,[1,3]))'; %only channel dex
 % spec = (sum(spec.*dex.*time_dex,3)-sum(spec.*dex.*time_dex_passive,3))./sum(dex.*time_dex,2);
 % else
 
-dex = squeeze(dex(1,:,:));
-time_dex = squeeze(time_dex(1,:,:));
+if ~(strcmp(dex_in,''))
+    dex = squeeze(dex(1,:,:));
+end
+if t_point ~=0
+    time_dex = squeeze(time_dex(1,:,:));
+    time_dex = and(dex,time_dex);
+end
 % if t_passive~=0
 % time_dex_passive = squeeze(time_dex_passive(1,:,:));
 % time_dex_passive = and(dex,time_dex_passive);
 % end
-bes_out = sum(bes.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
-fida_out =sum(fida.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
-%end
-bes_err_out = sqrt(sum(bes_err.^2.*dex.*time_dex,2,'omitnan').^2 + std(bes_err.*dex.*time_dex,0,2).^2)./sum(time_dex,2);
-fida_err_out = sqrt(sum(fida_err.^2.*dex.*time_dex,2,'omitnan').^2 + std(fida_err.*dex.*time_dex,0,2).^2)./sum(time_dex,2);
-fida_bes_err_out = sqrt(sum(fida_bes_err.^2.*dex.*time_dex,2,'omitnan').^2 + std(fida_bes_err.*dex.*time_dex,0,2).^2)./sum(time_dex,2);
-
 
 R_pts = repmat(R,1,size(spec_in,3))*100;
-time_dex = and(dex,time_dex);
+
 
 for i = 1:size(plot_type,2)
     if i>numel(figs)
@@ -207,43 +237,58 @@ for i = 1:size(plot_type,2)
         case 'bes'
             plot(ax,R_pts(time_dex),bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),'-',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             %plot(ax,R_pts(time_dex_passive),bes(time_dex_passive),'o','DisplayName',['Data Passive ', num2str(t_passive- avg_time/2),'-',num2str(t_passive+ avg_time/2), 's'], 'LineWidth',2.0);
-            tmp =bes_out;
+            tmp = sum(bes.*time_dex,2)./sum(time_dex,2);;
             tmp_err = bes.*dex.*time_dex;%bes_err_out;
-                        tmp_err(tmp_err==0) = NaN;
+            tmp_err(tmp_err==0) = NaN;
             tmp_err = std(tmp_err,0,2,'omitnan');
             ystr = 'BES';
 
         case 'fida'
             plot(ax,R_pts(time_dex),fida(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             %plot(ax,R_pts(time_dex_passive),fida(time_dex_passive),'o','DisplayName',['Data Passive ', num2str(t_passive- avg_time/2),'-',num2str(t_passive+ avg_time/2), 's'], 'LineWidth',2.0);
-            tmp = fida_out;
+            tmp = sum(fida.*time_dex,2)./sum(time_dex,2);;
             tmp_err = fida.*dex.*time_dex;%fida_err_out;
-                        tmp_err(tmp_err==0) = NaN;
+            tmp_err(tmp_err==0) = NaN;
             tmp_err = std(tmp_err,0,2,'omitnan');
             ystr = 'FIDA';
         case 'fidabes'
             plot(ax,R_pts(time_dex),fida(time_dex)./bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             % plot(ax,R_pts(time_dex_passive),fida(time_dex_passive)./bes(time_dex_passive),'.','DisplayName',['Points Passive ', num2str(t_passive), 's'], 'LineWidth',2.0);
-            tmp = fida_out./bes_out;
+            tmp = sum(fida./bes.*time_dex,2)./sum(time_dex,2);
             tmp_err = (fida./bes).*dex.*time_dex;
             tmp_err(tmp_err==0) = NaN;
             tmp_err = std(tmp_err,0,2,'omitnan');%fida_bes_err_out;
             ystr = 'FIDA/BES';
             ylim([0 0.16])
-            
+
+        case 'timetrace_fida'
+            plot(ax,time(2:end),fida(channel,2:end), 'DisplayName', ['FIDA Chan: ', names{channel}])
+            xlabel(ax,'Time [s]')
+            ylabel(ax,['Integrated FIDA: ', num2str(fida_range(1)), '-',num2str(fida_range(end)), 'nm']);
+        case 'timetrace_bes'
+            plot(ax,time(2:end),fida(channel,2:end), 'DisplayName', ['BES Chan: ', names{channel}])
+            xlabel(ax,'Time [s]')
+            ylabel(ax,['Integrated BES: ', num2str(bes_range(channel,1)), '-',num2str(bes_range(channel,end)), 'nm']);
+        case 'timetrace_fidabes'
+            %plot(ax,time(2:end),fida(channel,2:end)./bes(channel,2:end), 'DisplayName', ['FIDA/BES Chan: ', names{channel}])
+            plot(ax,repmat(time(2:end),1,numel(channel)),movmean(fida(channel,2:end)./bes(channel,2:end),8,2)', 'DisplayName', ['FIDA/BES smoothed ', names{channel}])
+            xlabel(ax,'Time [s]')
+            ylabel(ax,['Integrated FIDA/BES: ', num2str(fida_range(1)), '-',num2str(fida_range(end)), 'nm']);
+            ylim([0,0.16])
         case 'spectrum'
             tmp =squeeze(sum(spec.*permute(repmat(time_dex,1,1,size(spec,1)),[3,1,2]),3)./sum(permute(repmat(time_dex,1,1,size(spec,1)),[3,1,2]),3));
-             plot(ax,lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
-             %plot(ax,lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
-             %tmp_in =squeeze(sum(spec_in.*permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3)./sum(permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3));
-             %plot(ax,lambda(:,channel),tmp_in(:,channel), 'DisplayName',['Data, bo BG sub ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
-             xline(bes_range(channel,:),'DisplayName', 'BES Range')
+            plot(ax,lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
+
+            %plot(ax,lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
+            %tmp_in =squeeze(sum(spec_in.*permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3)./sum(permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3));
+            %plot(ax,lambda(:,channel),tmp_in(:,channel), 'DisplayName',['Data, bo BG sub ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            xline(bes_range(channel,:),'DisplayName', 'BES Range')
     end
 
-    if ~strcmp(plot_type{i},'spectrum')
-errorbar(ax,R(chandex)*100, tmp(chandex),tmp_err(chandex),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
-    xlabel(ax,'R [cm]')
-    ylabel(ax,ystr);
+    if ~strcmp(plot_type{i},'spectrum') && ~strcmp(plot_type{i}(1:3),'tim')
+        errorbar(ax,R(dex_in)*100, tmp(dex_in),tmp_err(dex_in),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
+        xlabel(ax,'R [cm]')
+        ylabel(ax,ystr);
     end
     if lsave
         legend(ax);
@@ -253,20 +298,29 @@ errorbar(ax,R(chandex)*100, tmp(chandex),tmp_err(chandex),'--','DisplayName',['A
     end
 end
 
-
 plot_data.R = R;
-plot_data.bes = bes_out;
-plot_data.fida = fida_out;
 plot_data.spec = spec;
-plot_data.bes_err = bes_err_out;
-plot_data.fida_err = fida_err_out;
-plot_data.fida_bes_err = fida_bes_err_out;
 plot_data.names = names;
 plot_data.lambda=lambdatmp;
+if t_point ~=0
+    bes_out = sum(bes.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
+    fida_out =sum(fida.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
+    bes_err_out = sqrt(sum(bes_err.^2.*dex.*time_dex,2,'omitnan').^2 + std(bes_err.*dex.*time_dex,0,2).^2)./sum(time_dex,2);
+    fida_err_out = sqrt(sum(fida_err.^2.*dex.*time_dex,2,'omitnan').^2 + std(fida_err.*dex.*time_dex,0,2).^2)./sum(time_dex,2);
+    fida_bes_err_out = sqrt(sum(fida_bes_err.^2.*dex.*time_dex,2,'omitnan').^2 + std(fida_bes_err.*dex.*time_dex,0,2).^2)./sum(time_dex,2);
+    plot_data.bes = bes_out;
+    plot_data.fida = fida_out;
+    plot_data.bes_err = bes_err_out;
+    plot_data.fida_err = fida_err_out;
+    plot_data.fida_bes_err = fida_bes_err_out;
+end
+
 sim_data.figs = figs;
 sim_data.lambda=lambdatmp;
 sim_data.dispersion = dispersion_in;
 sim_data.bes_range = bes_range;
 sim_data.fida_range = fida_range;
-sim_data.dex = chandex;
+if ~(strcmp(dex_in,''))
+    sim_data.dex = dex_in;
+end
 end
