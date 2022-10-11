@@ -7,7 +7,9 @@ function [f, denf] = beams3d_write_fidasim(data, name,varargin)
 % grid spacing, or 'axis',raxis,phiaxis,zaxis can be passed for setting the
 % axis precisely. The energy range is set to 0-Emax from the maximum particle
 % velocity. Flow velocities are set to 0 and electric field is calculated
-% from the gradient of POT_ARR.
+% from the gradient of POT_ARR. Optionally, the function outputs the fast
+% ion distribution and density as variables.
+%
 %Example usage:
 %   data = read_beams3d('test.h5');
 %   beams3d_write_fidasim(data);

@@ -1,10 +1,10 @@
 function [plot_data,sim_data] = get_bes_fida_aug_data(filename,varargin)
 %GET_BES_FIDA_AUG_DATA plots and analyses the calibrated FIDA data exported
 %from ASDEX upgrade. Various canned plots for exploring the data are
-%available, i.e. FIDA/BES radial profiles and time-traces. The standard 
+%available, i.e. FIDA/BES radial profiles and time-traces. The standard
 % FIDA integration range is [660, 661]. The spectrum can
 %also be plotted individually.
-% Averaging time length and passive subtraction time can be supplied 
+% Averaging time length and passive subtraction time can be supplied
 % optionally and error bars are calculated.
 %This function expects an hdf5 file with CXRS data from AUG shotfiles
 %exported as follows (for shot 38581):
@@ -104,7 +104,7 @@ if nargin > 2
             case 'avg_time'
                 i = i+1;
                 avg_time = varargin{i};
-                            otherwise
+            otherwise
                 disp(['ERROR: Option ', varargin{i}, ' not found!']);
 
         end
@@ -181,19 +181,19 @@ if t_point ~=0
     time_dex = permute(repmat(time_dex',size(spec_in,2),1,size(spec_in,1)),[3,1,2]);
     disp(['Max. Frames used for averaging of ', filename,': ', num2str(max(sum(time_dex(1,:,:),3)))]);
 end
-    if t_passive~=0
-        time_dex_passive = and(((t_passive + avg_time/2) >= time),((t_passive -avg_time/2) < time));
-        time_dex_passive = permute(repmat(time_dex_passive,1,1,size(spec_in,2),size(spec_in,1)),[4,3,1,2]);
-        if numel(t_passive) > 1
+if t_passive~=0
+    time_dex_passive = and(((t_passive + avg_time/2) >= time),((t_passive -avg_time/2) < time));
+    time_dex_passive = permute(repmat(time_dex_passive,1,1,size(spec_in,2),size(spec_in,1)),[4,3,1,2]);
+    if numel(t_passive) > 1
         closest_to_passive = interp1(t_passive,t_passive,time,'nearest','extrap');
         closest_to_passive = (closest_to_passive-t_passive);
         closest_to_passive(abs(closest_to_passive)<1e-3) =0;
         closest_to_passive = sum(~closest_to_passive.*(1:numel(t_passive)),2);
         closest_to_passive(closest_to_passive==0) = numel(t_passive)+1;
-        else
-            closest_to_passive = ones(size(time));
-        end
+    else
+        closest_to_passive = ones(size(time));
     end
+end
 if ~(strcmp(dex_in,''))
     dex = permute(repmat(dex_in,1,numel(time),size(spec_in,1)),[3,1,2]);
     %chandex =  squeeze(any(dex,[1,3]))'; %only channel dex
@@ -213,9 +213,9 @@ dispersion = repmat(dispersion_in,1,1,numel(time));
 spec = spec_in - repmat(sum(spec_in.*bg_dex,1)./sum(bg_dex,1),size(spec_in,1),1); %Background subtraction
 
 if t_passive~=0
-for k = 1:numel(t_passive)
-    spec_passive(:,:,k) = sum(spec.*dex.*squeeze(time_dex_passive(:,:,:,k)),3)./sum(dex.*squeeze(time_dex_passive(:,:,:,k)),3);
-end
+    for k = 1:numel(t_passive)
+        spec_passive(:,:,k) = sum(spec.*dex.*squeeze(time_dex_passive(:,:,:,k)),3)./sum(dex.*squeeze(time_dex_passive(:,:,:,k)),3);
+    end
     spec_passive(:,:,k+1) = zeros(size(lambda));
     spec = spec - spec_passive(:,:,closest_to_passive);
 end

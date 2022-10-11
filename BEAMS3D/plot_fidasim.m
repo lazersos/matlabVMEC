@@ -34,14 +34,10 @@ function [ figs, n_fida ] = plot_fidasim(filename,varargin)
 %      plot_fidasim(runid,'fac', 1.0); %Scaling factor
 %
 % Example usage of comparing BEAMS3D and TRANSP results:
-%     filename_b3d = fidasim_b3d_distribution.h5
-%     filename_transp = transp_distribution.h5
-%     [figs, n_b3d] = plot_fidasim(filename_b3d(1:end-16),'energy','pitch', 'profiles');
-%     [figs, n_transp] = plot_fidasim(filename_transp(1:end-16),'energy','pitch','profiles','figs',figs);
-%     fac = n_transp/n_b3d;
-%     plot_fidasim(filename_b3d(1:end-16),'energy','pitch', 'profiles', 'fac', fac, 'save','figs',figs);
-%     plot_fidasim(filename_b3d(1:end-16),'denf2d','ep2d');
-%     plot_fidasim(filename_transp(1:end-16),'denf2d','ep2d');
+%     filename_b3d = fidasim_b3d
+%     filename_transp = transp
+%     [figs, n_b3d] = plot_fidasim(filename_b3d,'energy','pitch', 'profiles');
+%     [figs, n_transp] = plot_fidasim(filename_transp,'energy','pitch','profiles','figs',figs);
 %
 % Maintained by: David Kulla (david.kulla@ipp.mpg.de)
 % Version:       1.00
@@ -170,6 +166,7 @@ if leq
         disp(['       Filename: ' filename]);
         data=[];
     end
+    [~,z0_ind]=min(abs(eq.fields.z));
 end
 
 if lneut
@@ -378,7 +375,7 @@ for i = 1:size(plot_type,2)
             c = colorbar;
             c.Label.String = cstring;
         case 'fida'
-            
+
         case 'spectrum'
             %[R_data, bes_data, fida_data,spec_data, lambda_data, names,bes_err,fida_err,fida_bes_err,dispersion_data] = get_bes_fida_aug_data(filename_cfr,time(tim),bes_range,fida_range);
             %[R, bes, fida, spec_sim, lambda_sim] = get_bes_fida(spec_name, bes_range(:,:),fida_range,dispersion_data,lambda_data);
@@ -418,6 +415,7 @@ for i = 1:size(plot_type,2)
 
     end
     %disp(plot_type{i});
+    if numel(plot_type{i}) > 2
     if strcmp(plot_type{i}(end-1:end),'2d')
         pixplot(dist.r,dist.z,tmp(:,:,1))
         xlabel('R [cm]')
@@ -437,6 +435,7 @@ for i = 1:size(plot_type,2)
         else
             disp('4D Distribution has no toroidal information')
         end
+    end
     end
     if lsave
         legend(ax);

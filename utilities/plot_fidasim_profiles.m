@@ -22,13 +22,13 @@ fida_range = in_data.fida_range;
 dispersion = in_data.dispersion;
 lambda_dat = in_data.lambda;
 if isfield(in_data,'dex')
-dex = in_data.dex;
+    dex = in_data.dex;
 else
     dex = [];
 end
 
 if isfield(in_data,'figs')
-figs=in_data.figs;
+    figs=in_data.figs;
 else
     figs = {};
 end
@@ -61,7 +61,7 @@ if nargin > 2
             case 'name'
                 i = i+1;
                 name = varargin{i};
-                            otherwise
+            otherwise
                 disp(['ERROR: Option ', varargin{i}, ' not found!']);
 
         end
@@ -91,8 +91,8 @@ brems = brems(:,I);
 spec = full + half + third + halo + dcx + fida;% + brems;
 
 if lmean == 1
-spec = movmean(spec,15);
-disp(['Applying moving mean to FIDASIM data: ', filename]);
+    spec = movmean(spec,15);
+    disp(['Applying moving mean to FIDASIM data: ', filename]);
 end
 
 %spect = interp1(lambda, (spec').', (lambda_dat').'); %Vectorized interpolation
@@ -141,7 +141,7 @@ for i = 1:size(plot_type,2)
             ystr = 'FIDA/BES';
 
     end
-    
+
     if fac~=1
         tmp = tmp.*fac;
         dispname = ['FIDASIM ', name, ', scaling factor: ' num2str(fac)];
