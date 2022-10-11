@@ -1,11 +1,41 @@
 function [ figs, n_fida ] = plot_fidasim(filename,varargin)
 %PLOT_FIDASIM Makes plots of FIDASIM data generated with the BEAMS3D
 %Interface.
-%The PLOT_FIDASIM function creates various canned plot of the data.  The
+%The PLOT_FIDASIM function creates various canned plots of the files used
+%for running FIDASIM and the outputs. The function reads the necessary
+%files automatically when supplied a FIDASIM runid. The function is quite
+%flexible and can also be used to compare data from multiple runs and
+%across codes. For plotting FIDA/BES profiles, see plot_fidasim_profiles.
 %
 % Example usage
-%     filename_b3d = fidasim_38581_4350_b3d_distribution.h5
-%     filename_transp = 38581A03-04350_distribution.h5
+%      plot_fidasim(runid);
+%      plot_fidasim(runid,'overview'); %NOT IMPLEMENTED
+%      plot_fidasim(runid,'profiles'); %Kinetic profiles
+%      plot_fidasim(runid,'ba'); %All magnetic field components on midplane
+%      plot_fidasim(runid,'bx_'); %Magnetic field on RZ plane (x=r,p,z)
+%      plot_fidasim(runid,'bx_'); %Magnetic field on midplane (x=r,p,z)
+%      plot_fidasim(runid,'spectrum', channel_no); %Spectral components
+%      plot_fidasim(runid,'fslice'); %Outboard midplane profile of dist.(f)
+%      plot_fidasim(runid,'denf_'); %FI density on RZ plane from denf
+%      plot_fidasim(runid,'fdenf_'); %FI density on RZ plane from f
+%      plot_fidasim(runid,'energy'); %Energy dist, int. over real space
+%      plot_fidasim(runid,'pitch'); %Pitch dist, int. over real space
+%      plot_fidasim(runid,'ep_'); %E-p dist.,  int. over real space
+%      !!! '_' can be '2d' (RZ plane) or 'tor' (midplane)
+%      plot_fidasim(runid,'ndensvert'); %Neutral density, vertical
+%      plot_fidasim(runid,'ndenshorz'); %Neutral density, horizontal
+%      plot_fidasim(runid,'figs', figs); %Figure handles for sharing plots
+%
+% Miscellaneous Arguments
+%      plot_fidasim(runid,'mean'); %Apply moving mean to spectrum
+%      plot_fidasim(runid,'sim_data',sim_data); %Used for dispersion
+%      plot_fidasim(runid,'save'); %Export figures (.fig and .png)
+%      plot_fidasim(runid,'name', 'test'); %ID Name for legend
+%      plot_fidasim(runid,'fac', 1.0); %Scaling factor
+%
+% Example usage of comparing BEAMS3D and TRANSP results:
+%     filename_b3d = fidasim_b3d_distribution.h5
+%     filename_transp = transp_distribution.h5
 %     [figs, n_b3d] = plot_fidasim(filename_b3d(1:end-16),'energy','pitch', 'profiles');
 %     [figs, n_transp] = plot_fidasim(filename_transp(1:end-16),'energy','pitch','profiles','figs',figs);
 %     fac = n_transp/n_b3d;

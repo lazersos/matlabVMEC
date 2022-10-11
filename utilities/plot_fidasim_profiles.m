@@ -1,6 +1,22 @@
 function plot_data = plot_fidasim_profiles(filename,in_data,varargin)
-
-
+%PLOT_FIDASIM_PROFILES plots radial profiles from the FIDASIM code. As
+%these are used to compare to experimental data, the integration range and
+%dispersion is set by variables in the in_data structure generated e.g. by
+%the get_bes_fida_aug_data function. Plots are shared between the
+%two functions.
+%
+% Example usage
+%      [~,sim_data] = get_bes_fida_aug_data(filename,'t_point',3.5,'fidabes');
+%      plot_fidasim_profiles(filename,sim_data,'X);
+%      !!! 'X' can be 'fida', 'bes', or 'fidabes'
+%
+% Miscellaneous Arguments
+%      plot_fidasim(runid,'mean'); %Apply moving mean to spectrum
+%      plot_fidasim(runid,'sim_data',sim_data); %Used for dispersion
+%      plot_fidasim(runid,'save'); %Export figures (.fig and .png)
+%      plot_fidasim(runid,'name', 'test'); %ID Name for legend
+%      plot_fidasim(runid,'fac', 1.0); %Scaling factor
+%
 bes_range = in_data.bes_range;
 fida_range = in_data.fida_range;
 dispersion = in_data.dispersion;
@@ -19,7 +35,6 @@ end
 
 lsave = 0;
 lmean = 0;
-ltime=1;
 plot_type = {};
 
 fac = 1;
@@ -30,9 +45,6 @@ if nargin > 2
         switch varargin{i}
             case {'FIDA','BES','FIDABES','fida','bes','fidabes'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
-            case {'time_fida','time_bes','time_fidabes'}
-                plot_type{end+1}=varargin{i}; %Make multiple plots possible
-                ltime=1;
             case 'mean'
                 lmean =1;
             case 'save'
@@ -49,6 +61,8 @@ if nargin > 2
             case 'name'
                 i = i+1;
                 name = varargin{i};
+                            otherwise
+                disp(['ERROR: Option ', varargin{i}, ' not found!']);
 
         end
         i=i+1;
@@ -125,7 +139,6 @@ for i = 1:size(plot_type,2)
         case 'fidabes'
             tmp = fida(dex)./bes(dex);
             ystr = 'FIDA/BES';
-        %case 'time_fidabes'
 
     end
     
