@@ -152,7 +152,7 @@ for i = 1:size(plot_type,2)
     xlabel(ax,'R [cm]')
     ylabel(ax,ystr)
     if lsave
-        legend(ax);
+        legend(ax,'Location','best');
         sname = [name, '_', plot_type{i}];
         savefig(figs{i},sname)
         exportgraphics(figs{i},[sname,'.png'],'Resolution',300);
