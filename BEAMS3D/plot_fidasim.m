@@ -68,6 +68,7 @@ lneut = 0;
 lmean=0;
 lgeom =0;
 n_fida=-1;
+sim_data = {};
 if nargin > 1
     i = 1;
     while i < nargin
@@ -142,16 +143,16 @@ if ldist
         % Volume (function of R)
         vol = dist.r.*dphi.*area;
         vol2d=repmat(vol,[1 dist.nz dist.nphi]);
-        disp(['Total vol2d  : ', num2str(sum(vol2d,'all'))])
+        %disp(['Total vol2d  : ', num2str(sum(vol2d,'all'))])
 
         tmp = pi*((dist.r(end)+dr).^2-dist.r(1).^2)*(dist.z(end)-dist.z(1));
-        disp(['Total cyl vol: ', num2str(sum(tmp,'all'))]);
+        %disp(['Total cyl vol: ', num2str(sum(tmp,'all'))]);
         %Correct for trapz(ones(4,1)=3 (edges not correctly accounted for)
         z = trapz(dz*nz/(nz-1),ones(nz,1));
         rdphi = repmat(dist.r.*z,1,dist.nphi);
         tmp = squeeze(trapz(dr*nr/(nr-1),trapz(dphi*nphi/(nphi-1),rdphi,2)));
 
-        disp(['Total int vol: ', num2str(sum(tmp,'all'))]);
+        %disp(['Total int vol: ', num2str(sum(tmp,'all'))]);
         n_fida = sum(dist.denf.*vol2d,'all');
     else
         n_fida = 2*pi*dr*dz*sum(dist.r.*sum(squeeze(dist.denf(:,:,1)),2)); %Axisymmetric only.
@@ -241,7 +242,7 @@ for i = 1:size(plot_type,2)
             fprintf('Total fast ions in %s: %3.2e\n',filename,n_fida);
             if fac == 1
                 plot(ax,dist.pitch, tmp,'DisplayName',['Pitch - ' name] );
-                fprintf('Total from pitch: %3.2e\n',trapz(dist.pitch, tmp));
+                %fprintf('Total from pitch: %3.2e\n',trapz(dist.pitch, tmp));
             else
                 plot(ax,dist.pitch, fac*tmp,'DisplayName',['Pitch - ' name ', scaling factor: ' num2str(fac)]);
             end
@@ -272,24 +273,23 @@ for i = 1:size(plot_type,2)
             end
             return
         case 'profiles'
-            yyaxis left
-            plot(eq.plasma.r, squeeze(eq.plasma.te(:,z0_ind,1)), 'DisplayName','T_e');
+            yyaxis(ax,'left')
+            plot(ax,eq.plasma.r, squeeze(eq.plasma.te(:,z0_ind,1)), 'DisplayName',['T_e - ' name] );
             hold on
-            plot(eq.plasma.r, squeeze(eq.plasma.ti(:,z0_ind,1)), 'DisplayName','T_i');
-            plot(eq.plasma.r, squeeze(eq.plasma.zeff(:,z0_ind,1)), 'DisplayName','Zeff [-]');
-            ylabel('T [keV]')
-            legend('Location','best')
-            yyaxis right
-            plot(eq.plasma.r, squeeze(eq.plasma.dene(:,z0_ind,1)), 'DisplayName','n_e');
-            xlabel('R [cm]')
-            ylabel('n_e [cm^{-3}]')
+            plot(ax,eq.plasma.r, squeeze(eq.plasma.ti(:,z0_ind,1)), 'DisplayName',['T_i - ' name] );
+            plot(ax,eq.plasma.r, squeeze(eq.plasma.zeff(:,z0_ind,1)), 'DisplayName',['Zeff [-] - ' name] );
+            ylabel(ax,'T [keV]')
+            legend(ax,'Location','best')
+            yyaxis(ax,'right')
+            plot(ax,eq.plasma.r, squeeze(eq.plasma.dene(:,z0_ind,1)), 'DisplayName',['n_e - ' name] );
+            xlabel(ax,'R [cm]')
+            ylabel(ax,'n_e [cm^{-3}]')
         case 'ba'
             plot(ax,eq.plasma.r, squeeze(eq.fields.br(:,z0_ind,1)), 'DisplayName','B_r');
-            hold on
             plot(ax,eq.plasma.r, squeeze(eq.fields.bt(:,z0_ind,1)), 'DisplayName','B_t');
             plot(ax,eq.plasma.r, squeeze(eq.fields.bz(:,z0_ind,1)), 'DisplayName','B_z');
-            xlabel('R [cm]')
-            ylabel('Magnetic Field [T]')
+            xlabel(ax,'R [cm]')
+            ylabel(ax,'Magnetic Field [T]')
             legend()
         case 'fslice'
             [~,e_ind]=min(abs(dist.energy-20));
@@ -392,11 +392,15 @@ for i = 1:size(plot_type,2)
                 disp(['Applying moving mean with length ', num2str(k), ' to FIDASIM data: ', filename]);
             end
 
+            if ~isempty(sim_data)
             for j = 1:size(sim_data.lambda,2)
                 spectmp(:,j) = interp1(spec.lambda, specr(:,j), sim_data.lambda(:,j),'spline');
             end
-
+            disp('Interpolated wavelength to match data');
             plot(sim_data.lambda(:,channel),spectmp(:,channel), 'DisplayName', ['Spectrum - ' name] );
+            else
+                plot(spec.lambda,specr(:,channel), 'DisplayName', ['Spectrum - ' name] );
+            end
             hold on
             plot(spec.lambda, spec.full(:,channel), 'DisplayName',['Full - ' name] );
             %plot(spec.lambda, spec.half(:,channel), 'DisplayName',['Half - ' name] );
@@ -438,7 +442,7 @@ for i = 1:size(plot_type,2)
     end
     end
     if lsave
-        legend(ax);
+        legend(ax,'Location','best');
         sname = [filename, '_', plot_type{i}];
         savefig(figs{i},sname)
         exportgraphics(figs{i},[sname,'.png'],'Resolution',300);
