@@ -381,7 +381,7 @@ for i = 1:size(plot_type,2)
             %[R, bes, fida, spec_sim, lambda_sim] = get_bes_fida(spec_name, bes_range(:,:),fida_range,dispersion_data,lambda_data);
             [~,I] = sort(spec.radius);
             if ischar(channel)
-                channel = find(strcmp(channel,cellstr(deblank(names'))));
+                channel = find(strcmp(channel,cellstr(deblank(sim_data.names'))));
             else
                 channel = I(channel);
             end

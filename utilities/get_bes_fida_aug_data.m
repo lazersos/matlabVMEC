@@ -19,9 +19,9 @@ function [plot_data,sim_data] = get_bes_fida_aug_data(filename,varargin)
 %      get_bes_fida_aug_data(filename,'channels','CER'); %Channel selector (3 characters)
 %      get_bes_fida_aug_data(filename,'X'); %Profile
 %      get_bes_fida_aug_data(filename,'timetrace_X'); %Timetrace
-%      !!! 'X' can be 'fida', 'bes', or 'fidabes'
+%      !!! 'X' can be 'fida', 'bes', or 'fidabes' and 'spectrum'
 % Miscellaneous Arguments
-%      plot_fidasim(runid,'sim_data',sim_data); %Used for dispersion
+%      plot_fidasim(runid,'figs',figs); %Used for overplotting
 %      plot_fidasim(runid,'save'); %Export figures (.fig and .png)
 %      plot_fidasim(runid,'name', 'test'); %ID Name for legend
 %
@@ -329,6 +329,7 @@ for i = 1:size(plot_type,2)
             %tmp_in =squeeze(sum(spec_in.*permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3)./sum(permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3));
             %plot(ax,lambda(:,channel),tmp_in(:,channel), 'DisplayName',['Data, bo BG sub ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             xline(bes_range(channel,:),'DisplayName', 'BES Range')
+            set(ax,'YScale','log');
     end
 
     if ~strcmp(plot_type{i},'spectrum') && ~strcmp(plot_type{i}(1:3),'tim')
@@ -362,6 +363,7 @@ if t_point ~=0
 end
 
 sim_data.figs = figs;
+sim_data.names = names;
 sim_data.lambda=lambdatmp;
 sim_data.dispersion = dispersion_in;
 sim_data.bes_range = bes_range;
