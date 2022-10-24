@@ -47,7 +47,6 @@ ec=1.6021773300E-19; % Charge of an electron (leave alone)
 if (strcmp(filename(end-1:end),'h5'))
     disp('ERROR: Only give runid (dist and eq files are loaded automatically!');
     disp(['       Filename: ' filename]);
-    data=[];
 end
 
 dist_name = [filename, '_distribution.h5'];
@@ -126,7 +125,6 @@ if ldist
     if ~isstruct(dist)
         disp('ERROR: Distribution file not found, check filename!');
         disp(['       Filename: ' filename]);
-        data=[];
     end
 
     dr = dist.r(2)-dist.r(1);
@@ -165,7 +163,6 @@ if leq
     if ~isstruct(eq)
         disp('ERROR: Equilbirium file not found, check filename!');
         disp(['       Filename: ' filename]);
-        data=[];
     end
     [~,z0_ind]=min(abs(eq.fields.z));
 end
@@ -175,7 +172,6 @@ if lneut
     if ~isstruct(neut)
         disp('ERROR: Neutrals file not found, check filename!');
         disp(['       Filename: ' filename]);
-        data=[];
     end
 end
 
@@ -184,7 +180,6 @@ if lspec
     if ~isstruct(spec)
         disp('ERROR: Spectra file not found, check filename!');
         disp(['       Filename: ' filename]);
-        data=[];
     end
 end
 if lgeom
@@ -192,7 +187,6 @@ if lgeom
     if ~isstruct(geom)
         disp('ERROR: Geometry file not found, check filename!');
         disp(['       Filename: ' filename]);
-        data=[];
     end
 end
 
@@ -242,7 +236,7 @@ for i = 1:size(plot_type,2)
             fprintf('Total fast ions in %s: %3.2e\n',filename,n_fida);
             if fac == 1
                 plot(ax,dist.pitch, tmp,'DisplayName',['Pitch - ' name] );
-                %fprintf('Total from pitch: %3.2e\n',trapz(dist.pitch, tmp));
+                fprintf('Total from pitch: %3.2e\n',trapz(dist.pitch, tmp));
             else
                 plot(ax,dist.pitch, fac*tmp,'DisplayName',['Pitch - ' name ', scaling factor: ' num2str(fac)]);
             end
@@ -310,7 +304,7 @@ for i = 1:size(plot_type,2)
             end
             xlabel('R [m]')
             ylabel('Fast ion density [m^{-3}]')
-            title('Fast ion density profile at z=0')
+            title(['Fast ion density profile at z=',num2str(dist.z(z0_ind))])
         case 'fdenf'
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
             if fac == 1
@@ -381,7 +375,7 @@ for i = 1:size(plot_type,2)
             %[R, bes, fida, spec_sim, lambda_sim] = get_bes_fida(spec_name, bes_range(:,:),fida_range,dispersion_data,lambda_data);
             [~,I] = sort(spec.radius);
             if ischar(channel)
-                channel = find(strcmp(channel,cellstr(deblank(sim_data.names'))));
+                channel = find(strcmp(channel,cellstr(deblank(geom.spec.id'))));
             else
                 channel = I(channel);
             end
@@ -390,6 +384,9 @@ for i = 1:size(plot_type,2)
                 k = 12;
                 specr = movmean(specr,k);
                 disp(['Applying moving mean with length ', num2str(k), ' to FIDASIM data: ', filename]);
+            else
+                %cwav_mid=interpol
+                
             end
 
             if ~isempty(sim_data)
@@ -432,7 +429,7 @@ for i = 1:size(plot_type,2)
         if ndims(dist.f) == 5
             pixplot(dist.r,dist.phi,squeeze(tmp(:,z0_ind,:)))
             xlabel('R [cm]')
-            ylabel('Z [cm]')
+            ylabel('Phi [rad]')
             c = colorbar;
             c.Label.String = cstring;
             xlim([dist.r(1) dist.r(end)])
@@ -451,6 +448,8 @@ for i = 1:size(plot_type,2)
 end
 
 end
+
+
 
 
 
