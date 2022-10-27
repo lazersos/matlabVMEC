@@ -46,7 +46,7 @@ R = h5read(filename,'/r_pos');
 spec_in= h5read(filename,'/intens');
 spec_err_in= h5read(filename,'/intenserr');
 lambdatmp = h5read(filename,'/cor_wavel');
-lambda = lambdatmp;
+lambda = lambdatmp-0.15;
 names_unsorted = h5read(filename,'/los_name');
 dispersion_in=h5read(filename,'/dispersion');
 time = h5read(filename,'/time_arr');
@@ -79,7 +79,7 @@ if nargin > 2
                 if strcmp("F50",string(varargin{i}))
                     fida_range = [652.5,653.5];
                 else
-                    fida_range = [660, 661];
+                    fida_range = [659, 660];
                 end
             case{'spectrum', 'timetrace_fida', 'timetrace_bes', 'timetrace_fidabes'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
@@ -346,7 +346,7 @@ for i = 1:size(plot_type,2)
     end
     if lsave
         legend(ax);
-        sname = [num2str(shotid), '_', plot_type{i}];
+        sname = [num2str(shotid), '_', num2str(t_point*1000), '_' plot_type{i}];
         savefig(figs{i},sname)
         exportgraphics(figs{i},[sname,'.png'],'Resolution',300);
     end

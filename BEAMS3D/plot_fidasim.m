@@ -380,10 +380,9 @@ for i = 1:size(plot_type,2)
 
             %[~,I2] = sort(sim_data.R);
             if ischar(channel)
-<<<<<<< HEAD
                 channel = find(strcmp(channel,cellstr(deblank(sim_data.names'))));
                 %channel = find(strcmp(channel,cellstr(deblank(geom.spec.id'))));
-                channel = I(channel)-1;
+                channel = I(channel);%-1;
             end
             geomid=[geom.spec.id(I)];
             %disp(geom.spec.id(I(any(sim_data.dex,2))));
@@ -403,15 +402,17 @@ for i = 1:size(plot_type,2)
             end
             disp('Interpolated wavelength to match data');
             plot(sim_data.lambda(:,channel),conv(spectmp(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
-            else
-                plot(spec.lambda,specr(:,channel), 'DisplayName', ['Spectrum - ' name] );
-            end
-            hold on
-            plot(spec.lambda, spec.full(:,channel), 'DisplayName',['Full - ' name] );
+            %plot(spec.lambda, conv(spec.full(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
             %plot(spec.lambda, spec.half(:,channel), 'DisplayName',['Half - ' name] );
             %plot(spec.lambda, spec.third(:,channel), 'DisplayName',['Third - ' name] );
-            plot(spec.lambda, spec.halo(:,channel)+spec.dcx(:,channel), 'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
-            plot(spec.lambda, spec.fida(:,channel), 'DisplayName',['FIDA - ' name] );
+            %plot(spec.lambda, conv((spec.halo(:,channel)+spec.dcx(:,channel)),sim_data.instfu(:,channel),'same'), 'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
+            %plot(spec.lambda, conv(spec.fida(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName',['FIDA - ' name] );
+            else
+                plot(spec.lambda,specr(:,channel), 'DisplayName', ['Spectrum - ' name] );
+                disp('Supply in_data from e.g. get_bes_fida_aug_data for more plots!')
+            end
+            hold on
+
             xlabel('Wavelength [nm]')
             ylabel(' Intensity [Ph/(s nm m^2 sr)]')
             set(gca,'YScale','log')

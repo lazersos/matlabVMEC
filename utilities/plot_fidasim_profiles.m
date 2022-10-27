@@ -100,6 +100,9 @@ for i = 1:size(lambda_dat,2)
     spectmp(:,i) = interp1(lambda, spec(:,i), lambda_dat(:,i),'spline');
 end
 
+for i = 1:size(spec,2)
+    spectmp(:,i) = conv(spectmp(:,i),in_data.instfu(:,i),'same');
+end
 
 dispersion_tmp = diff(lambda_dat,1);
 dispersion_tmp = [dispersion_tmp; dispersion_tmp(end,:)];
