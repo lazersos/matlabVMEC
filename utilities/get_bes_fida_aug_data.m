@@ -47,7 +47,7 @@ spec_in= h5read(filename,'/intens');
 spec_err_in= h5read(filename,'/intenserr');
 lambdatmp = h5read(filename,'/cor_wavel');
 lambda = lambdatmp;
-names = h5read(filename,'/los_name');
+names_unsorted = h5read(filename,'/los_name');
 dispersion_in=h5read(filename,'/dispersion');
 time = h5read(filename,'/time_arr');
 
@@ -63,9 +63,9 @@ spec_err_in = spec_err_in(:,I,:);
 lambda = lambda(:,I);
 lambdatmp = lambdatmp(:,I);
 dispersion_in = dispersion_in(:,I);
-names = names(I);
+names = names_unsorted(I);
 tmp = cell2mat(names);
-dex_in = strcmp(tmp(:,1:3),"CER");
+dex_in = true(size(names));%strcmp(tmp(:,1:3),"CER");
 
 if nargin > 2
     i = 1;
@@ -259,6 +259,7 @@ fida_bes_err = squeeze(fida_bes_err);
 
 if ~(strcmp(dex_in,''))
     dex = squeeze(dex(1,:,:));
+    %disp(names(any(dex,2)));
 end
 if t_point ~=0
     time_dex = squeeze(time_dex(1,:,:));
@@ -369,7 +370,9 @@ if t_point ~=0
 end
 
 sim_data.figs = figs;
+sim_data.R = R;
 sim_data.names = names;
+sim_data.names_unsorted = names_unsorted;
 sim_data.lambda=lambdatmp;
 sim_data.dispersion = dispersion_in;
 sim_data.bes_range = bes_range;

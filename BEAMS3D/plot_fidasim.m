@@ -181,6 +181,8 @@ if lspec
         disp('ERROR: Spectra file not found, check filename!');
         disp(['       Filename: ' filename]);
     end
+    [~,I] = sort(spec.radius);
+
 end
 if lgeom
     geom = read_hdf5(geom_name);
@@ -217,6 +219,7 @@ for i = 1:size(plot_type,2)
                 tmp=squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,1),1).*tmp,2));
             end
             if fac == 1
+               % plot(ax,dist.energy(2:end), tmp(1:end-1),'DisplayName',['Energy - ' name] );
                 plot(ax,dist.energy, tmp,'DisplayName',['Energy - ' name] );
             else
                 plot(ax,dist.energy, fac*tmp,'DisplayName',['Energy - ' name ', scaling factor: ' num2str(fac)]);
@@ -374,12 +377,16 @@ for i = 1:size(plot_type,2)
         case 'spectrum'
             %[R_data, bes_data, fida_data,spec_data, lambda_data, names,bes_err,fida_err,fida_bes_err,dispersion_data] = get_bes_fida_aug_data(filename_cfr,time(tim),bes_range,fida_range);
             %[R, bes, fida, spec_sim, lambda_sim] = get_bes_fida(spec_name, bes_range(:,:),fida_range,dispersion_data,lambda_data);
-            [~,I] = sort(spec.radius);
+
+            %[~,I2] = sort(sim_data.R);
             if ischar(channel)
-                channel = find(strcmp(channel,cellstr(deblank(geom.spec.id'))));
-            else
-                channel = I(channel);
+<<<<<<< HEAD
+                channel = find(strcmp(channel,cellstr(deblank(sim_data.names'))));
+                %channel = find(strcmp(channel,cellstr(deblank(geom.spec.id'))));
+                channel = I(channel)-1;
             end
+            geomid=[geom.spec.id(I)];
+            %disp(geom.spec.id(I(any(sim_data.dex,2))));
             specr = spec.full + spec.half + spec.third + spec.halo + spec.dcx + spec.fida;% + spec.brems;
             if lmean
                 k = 12;
@@ -413,10 +420,7 @@ for i = 1:size(plot_type,2)
             if lgeom
                 title(['Channel: ' geom.spec.id(channel)])
             end
-            legend();
-        case 'fidabes'
-
-
+            legend(ax,'Location','best');
     end
     %disp(plot_type{i});
     if numel(plot_type{i}) > 2
