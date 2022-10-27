@@ -187,6 +187,7 @@ if lgeom
     if ~isstruct(geom)
         disp('ERROR: Geometry file not found, check filename!');
         disp(['       Filename: ' filename]);
+        lgeom=0;
     end
 end
 
@@ -394,7 +395,7 @@ for i = 1:size(plot_type,2)
                 spectmp(:,j) = interp1(spec.lambda, specr(:,j), sim_data.lambda(:,j),'spline');
             end
             disp('Interpolated wavelength to match data');
-            plot(sim_data.lambda(:,channel),spectmp(:,channel), 'DisplayName', ['Spectrum - ' name] );
+            plot(sim_data.lambda(:,channel),conv(spectmp(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
             else
                 plot(spec.lambda,specr(:,channel), 'DisplayName', ['Spectrum - ' name] );
             end
@@ -409,7 +410,9 @@ for i = 1:size(plot_type,2)
             set(gca,'YScale','log')
             xlim([650 663]);
             ylim([5e15, 1e19]);
-            title(['Channel: ' geom.spec.id(channel)])
+            if lgeom
+                title(['Channel: ' geom.spec.id(channel)])
+            end
             legend();
         case 'fidabes'
 
