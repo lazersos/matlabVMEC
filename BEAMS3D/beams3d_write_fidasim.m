@@ -12,14 +12,14 @@ function [f, denf] = beams3d_write_fidasim(data, name,varargin)
 %
 %Example usage:
 %   data = read_beams3d('test.h5');
-%   beams3d_write_fidasim(data);
+%   beams3d_write_fidasim(data,'fidasim_test');
 
 ec  = 1.60217662E-19; % electron charge [C]
 amu = 1.66053906660E-27; % Dalton [kg]
 lmovie = 0;
 
-filename_dist = ['fidasim_', name,'_distribution.h5'];
-filename_eq = ['fidasim_', name,'_equilibrium.h5'];
+filename_dist = [name,'_distribution.h5'];
+filename_eq = [name,'_equilibrium.h5'];
 time = 0.0;
 mass = data.mass(1);
 

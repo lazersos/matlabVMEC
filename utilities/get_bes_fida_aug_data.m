@@ -51,6 +51,12 @@ names_unsorted = h5read(filename,'/los_name');
 dispersion_in=h5read(filename,'/dispersion');
 time = h5read(filename,'/time_arr');
 
+instfu_gamma = h5read(filename,'/instfu_gamma')';
+instfu_box_nm = h5read(filename,'/instfu_box_nm')';
+instfu_gauss_nm = h5read(filename,'/instfu_gauss_nm')';
+cwav_mid = interp1(1:size(lambda,1),lambda,[size(lambda,1)/2.]);
+instfu = box_gauss_funct(lambda,0.,1.,cwav_mid,instfu_gamma,instfu_box_nm);
+
 [R,I] = sort(R);
 spec_in = spec_in(:,I,:);
 spec_err_in = spec_err_in(:,I,:);
@@ -374,4 +380,21 @@ sim_data.fida_range = fida_range;
 if ~(strcmp(dex_in,''))
     sim_data.dex = dex_in;
 end
+sim_data.instfu=instfu;
+
+
+end
+
+%instfu = box_gauss_funct(lambda,0.,1.,cwav_mid,instfu_gamma,instfu_box_nm);
+function F = box_gauss_funct(X,A,B,C,D,E) % From /afs/ipp/home/s/sprd/XXX_DIAG/LIB
+  gam   = double(D);
+  width = double(E);
+  %b     = 0.5d0*width;
+  rl    = abs(0.5d0*width./gam);
+  Z     = abs((double(X)-double(C))./gam);
+  F     = double(B)*(0.5d0./width.*(erf(Z+rl) - erf(Z-rl)))+double(A);
+
+  % Normalization and cutoff
+  F = F./sum(F,1);  
+  F(F<1e-5) = 0;
 end
