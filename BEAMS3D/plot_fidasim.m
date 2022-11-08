@@ -91,8 +91,8 @@ if nargin > 1
                 lgeom = 1;
                 i=i+1;
                 channel = varargin{i};
-                case{'los3d', 'lostor','los2d'}
-                                plot_type{end+1}=varargin{i}; %Make multiple plots possible
+            case{'los3d', 'lostor','los2d'}
+                plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 lspec = 1;
                 lgeom = 1;
                 i=i+1;
@@ -202,17 +202,30 @@ end
 
 if ischar(channel)
     if ~isempty(sim_data)
-    channel = find(strcmp(channel,cellstr(deblank(sim_data.names'))));
-    channel = I(channel);%-1;
+        channel = find(strcmp(channel,cellstr(deblank(sim_data.names'))));
+        channel = I(channel);%-1;
     elseif strcmp(channel,'all')
         channel = true(size(deblank(geom.spec.id)));
     else
         channel = contains(deblank(geom.spec.id),channel);
     end
+elseif iscell(channel)
+    if ~isempty(sim_data)
+        channel_tmp = [];
+        for i=1:numel(channel)
+            channel_tmp =[channel_tmp, find(strcmp(channel{i},cellstr(deblank(sim_data.names'))))];
+        end
+        channel=sort(channel_tmp);
+        channel = I(channel);%-1;
+    else
+        channel_tmp = false(geom.spec.nchan,1);
+        for i=1:numel(channel)
+            channel_tmp = or(channel_tmp,contains(deblank(geom.spec.id),channel{i}));
+        end
+        channel = channel_tmp;
+    end
+
 end
-geomid=[geom.spec.id(I)];
-
-
 
 for i = 1:size(plot_type,2)
     if i>numel(figs)
@@ -229,10 +242,6 @@ for i = 1:size(plot_type,2)
             if ndims(dist.f) == 5
                 tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.pitch,dist.f,2),4));
                 tmp =squeeze(trapz(dr*nr/(nr-1),trapz(dphi*nphi/(nphi-1),repmat(dist.r',size(dist.f,1),1,size(dist.f,5)).*tmp,3),2));
-                %                                h = repmat(vol2d,1,1,1,size(dist.f,1));
-                %                 h = permute(h,[4, 1, 2,3]);
-                %                 tmp  = sum(squeeze(trapz(dist.pitch,dist.f,2)).*h,[2,3,4]);
-
             else
                 tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.pitch,dist.f,2),4))*2*pi;
                 tmp=squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,1),1).*tmp,2));
@@ -249,9 +258,6 @@ for i = 1:size(plot_type,2)
             if ndims(dist.f) == 5
                 tmp = squeeze(trapz(dphi*nphi/(nphi-1),trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4),5));
                 tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2));
-                %                 h = repmat(vol2d,1,1,1,size(dist.f,2));
-                %                 h = permute(h,[4, 1, 2,3]);
-                %                 tmp  = sum(squeeze(trapz(dist.energy,dist.f,1)).*h,[2,3,4]);
             else
                 tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4))*2*pi;
                 tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2));
@@ -338,7 +344,6 @@ for i = 1:size(plot_type,2)
             xlabel('R [m]')
             ylabel('Fast ion density [m^{-3}]')
             title('Fast ion density profile at z=0')
-
         case 'denf2d'
             tmp = dist.denf;
             cstring = 'Fast ion density [m^{-3}]';
@@ -383,7 +388,6 @@ for i = 1:size(plot_type,2)
             cstring = 'Beam neutral density [1/cm^3]';
             c = colorbar;
             c.Label.String = cstring;
-
         case 'ndenscross'
             pixplot(neut.grid.y, neut.grid.z, squeeze(sum(neut.tdens(:,40,:,:) + neut.hdens(:,40,:,:)+ neut.fdens(:,40,:,:), 1)))
             xlabel('Beam Grid Y [cm]')
@@ -399,11 +403,7 @@ for i = 1:size(plot_type,2)
                 k = 12;
                 specr = movmean(specr,k);
                 disp(['Applying moving mean with length ', num2str(k), ' to FIDASIM data: ', filename]);
-            else
-                %cwav_mid=interpol
-
             end
-
             if ~isempty(sim_data)
                 for j = 1:size(sim_data.lambda,2)
                     spectmp(:,j) = interp1(spec.lambda, specr(:,j), sim_data.lambda(:,j),'spline');
@@ -420,7 +420,6 @@ for i = 1:size(plot_type,2)
                 disp('Supply in_data from e.g. get_bes_fida_aug_data for more plots!')
             end
             hold on
-
             xlabel('Wavelength [nm]')
             ylabel(' Intensity [Ph/(s nm m^2 sr)]')
             set(gca,'YScale','log')
@@ -432,37 +431,34 @@ for i = 1:size(plot_type,2)
             legend(ax,'Location','best');
         case 'los3d'
             vec = [0, 0, -1];
-            lens = rotate_points(geom.spec.lens,vec,deg2rad(67.5));     
+            lens = rotate_points(geom.spec.lens,vec,deg2rad(67.5));
             axi = rotate_points(geom.spec.axis,vec,deg2rad(67.5));
-            los = [lens, lens + axi.*max(geom.spec.radius)*2.1];
+            los = [lens, lens + axi.*max(geom.spec.radius)*1.1];
             los = reshape(los,3,geom.spec.nchan,2);
             h=plot3(ax,squeeze(los(1,channel,:))'*fac,squeeze(los(2,channel,:))'*fac,squeeze(los(3,channel,:))'*fac);
             set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))))
             legend(h,'Location','bestoutside');
         case 'lostor'
             vec = [0, 0, -1];
-            lens = rotate_points(geom.spec.lens',vec,deg2rad(67.5))';     
-            axi = rotate_points((geom.spec.lens + geom.spec.axis.*max(geom.spec.radius)*2.1)',vec,deg2rad(67.5))';
-            %los = [lens; axi];
+            lens = rotate_points(geom.spec.lens',vec,deg2rad(67.5))';
+            axi = rotate_points((geom.spec.lens + geom.spec.axis.*max(geom.spec.radius)*1.1)',vec,deg2rad(67.5))';
             los = [lens, axi];
-            %los = rotate_points(los,vec,deg2rad(67.5));
-            %los = [geom.spec.lens, geom.spec.lens + geom.spec.axis.*max(geom.spec.radius)*2.1];
             los = reshape(los,3,geom.spec.nchan,2);
-            h=plot(ax,squeeze(los(1,channel,:))'*fac,squeeze(los(2,channel,:))'*fac);
+            h=plot(ax,squeeze(los(1,channel,:))'*fac,squeeze(los(2,channel,:))'*fac, 'k');
             set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))));
-            %legend(h,'Location','bestoutside');
+            legend(h,'Location','bestoutside');
         case 'los2d'
             vec = [0, 0, -1];
-            lens = rotate_points(geom.spec.lens',vec,deg2rad(67.5))';     
+            lens = rotate_points(geom.spec.lens',vec,deg2rad(67.5))';
             axi = rotate_points(geom.spec.axis',vec,deg2rad(67.5))';
-            los = [lens, lens + axi.*max(geom.spec.radius)*2.1];
+            los = [lens, lens + axi.*max(geom.spec.radius)*1.1];
             los = reshape(los,3,geom.spec.nchan,2);
             lost = permute(los,[3,2,1]);
             los2 = reshape(lost,2,geom.spec.nchan*3);
             losre=interp1([0,1],los2,linspace(0,1,200));
             los= reshape(losre,[],size(lost,2),size(lost,3));
             r = sqrt(los(:,channel,1).^2 + los(:,channel,2).^2);
-            h=plot(ax,r*fac,squeeze(los(:,channel,3))*fac);
+            h=plot(ax,r*fac,squeeze(los(:,channel,3))*fac, 'k');
             set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))));
             legend(h,'Location','bestoutside');
 
@@ -471,13 +467,13 @@ for i = 1:size(plot_type,2)
     if numel(plot_type{i}) > 2
         if strcmp(plot_type{i}(end-1:end),'2d')
             if ldist
-            pixplot(dist.r,dist.z,tmp(:,:,1))
-            c = colorbar;
-            c.Label.String = cstring;
-            xlim([dist.r(1) dist.r(end)])
-            ylim([dist.z(1) dist.z(end)])
+                pixplot(dist.r,dist.z,tmp(:,:,1))
+                c = colorbar;
+                c.Label.String = cstring;
+                xlim([dist.r(1) dist.r(end)])
+                ylim([dist.z(1) dist.z(end)])
             end
-                        xlabel('R [cm]')
+            xlabel('R [cm]')
             ylabel('Z [cm]')
         elseif strcmp(plot_type{i}(end-2:end),'tor') && ldist
             if ndims(dist.f) == 5
