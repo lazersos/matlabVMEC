@@ -91,6 +91,12 @@ if nargin > 1
                 lgeom = 1;
                 i=i+1;
                 channel = varargin{i};
+                case{'los3d', 'lostor','los2d'}
+                                plot_type{end+1}=varargin{i}; %Make multiple plots possible
+                lspec = 1;
+                lgeom = 1;
+                i=i+1;
+                channel = varargin{i};
             case {'fida', 'bes', 'fidabes'}
                 i=i+1;
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
@@ -194,6 +200,19 @@ if lgeom
 end
 
 
+if ischar(channel)
+    if ~isempty(sim_data)
+    channel = find(strcmp(channel,cellstr(deblank(sim_data.names'))));
+    channel = I(channel);%-1;
+    elseif strcmp(channel,'all')
+        channel = true(size(deblank(geom.spec.id)));
+    else
+        channel = contains(deblank(geom.spec.id),channel);
+    end
+end
+geomid=[geom.spec.id(I)];
+
+
 
 for i = 1:size(plot_type,2)
     if i>numel(figs)
@@ -219,7 +238,7 @@ for i = 1:size(plot_type,2)
                 tmp=squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,1),1).*tmp,2));
             end
             if fac == 1
-               % plot(ax,dist.energy(2:end), tmp(1:end-1),'DisplayName',['Energy - ' name] );
+                % plot(ax,dist.energy(2:end), tmp(1:end-1),'DisplayName',['Energy - ' name] );
                 plot(ax,dist.energy, tmp,'DisplayName',['Energy - ' name] );
             else
                 plot(ax,dist.energy, fac*tmp,'DisplayName',['Energy - ' name ', scaling factor: ' num2str(fac)]);
@@ -375,17 +394,6 @@ for i = 1:size(plot_type,2)
         case 'fida'
 
         case 'spectrum'
-            %[R_data, bes_data, fida_data,spec_data, lambda_data, names,bes_err,fida_err,fida_bes_err,dispersion_data] = get_bes_fida_aug_data(filename_cfr,time(tim),bes_range,fida_range);
-            %[R, bes, fida, spec_sim, lambda_sim] = get_bes_fida(spec_name, bes_range(:,:),fida_range,dispersion_data,lambda_data);
-
-            %[~,I2] = sort(sim_data.R);
-            if ischar(channel)
-                channel = find(strcmp(channel,cellstr(deblank(sim_data.names'))));
-                %channel = find(strcmp(channel,cellstr(deblank(geom.spec.id'))));
-                channel = I(channel);%-1;
-            end
-            geomid=[geom.spec.id(I)];
-            %disp(geom.spec.id(I(any(sim_data.dex,2))));
             specr = spec.full + spec.half + spec.third + spec.halo + spec.dcx + spec.fida;% + spec.brems;
             if lmean
                 k = 12;
@@ -393,20 +401,20 @@ for i = 1:size(plot_type,2)
                 disp(['Applying moving mean with length ', num2str(k), ' to FIDASIM data: ', filename]);
             else
                 %cwav_mid=interpol
-                
+
             end
 
             if ~isempty(sim_data)
-            for j = 1:size(sim_data.lambda,2)
-                spectmp(:,j) = interp1(spec.lambda, specr(:,j), sim_data.lambda(:,j),'spline');
-            end
-            disp('Interpolated wavelength to match data');
-            plot(sim_data.lambda(:,channel),conv(spectmp(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
-            %plot(spec.lambda, conv(spec.full(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
-            %plot(spec.lambda, spec.half(:,channel), 'DisplayName',['Half - ' name] );
-            %plot(spec.lambda, spec.third(:,channel), 'DisplayName',['Third - ' name] );
-            %plot(spec.lambda, conv((spec.halo(:,channel)+spec.dcx(:,channel)),sim_data.instfu(:,channel),'same'), 'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
-            %plot(spec.lambda, conv(spec.fida(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName',['FIDA - ' name] );
+                for j = 1:size(sim_data.lambda,2)
+                    spectmp(:,j) = interp1(spec.lambda, specr(:,j), sim_data.lambda(:,j),'spline');
+                end
+                disp('Interpolated wavelength to match data');
+                plot(sim_data.lambda(:,channel),conv(spectmp(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
+                %plot(spec.lambda, conv(spec.full(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
+                %plot(spec.lambda, spec.half(:,channel), 'DisplayName',['Half - ' name] );
+                %plot(spec.lambda, spec.third(:,channel), 'DisplayName',['Third - ' name] );
+                %plot(spec.lambda, conv((spec.halo(:,channel)+spec.dcx(:,channel)),sim_data.instfu(:,channel),'same'), 'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
+                %plot(spec.lambda, conv(spec.fida(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName',['FIDA - ' name] );
             else
                 plot(spec.lambda,specr(:,channel), 'DisplayName', ['Spectrum - ' name] );
                 disp('Supply in_data from e.g. get_bes_fida_aug_data for more plots!')
@@ -422,29 +430,67 @@ for i = 1:size(plot_type,2)
                 title(['Channel: ' geom.spec.id(channel)])
             end
             legend(ax,'Location','best');
+        case 'los3d'
+            vec = [0, 0, -1];
+            lens = rotate_points(geom.spec.lens,vec,deg2rad(67.5));     
+            axi = rotate_points(geom.spec.axis,vec,deg2rad(67.5));
+            los = [lens, lens + axi.*max(geom.spec.radius)*2.1];
+            los = reshape(los,3,geom.spec.nchan,2);
+            h=plot3(ax,squeeze(los(1,channel,:))'*fac,squeeze(los(2,channel,:))'*fac,squeeze(los(3,channel,:))'*fac);
+            set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))))
+            legend(h,'Location','bestoutside');
+        case 'lostor'
+            vec = [0, 0, -1];
+            lens = rotate_points(geom.spec.lens',vec,deg2rad(67.5))';     
+            axi = rotate_points((geom.spec.lens + geom.spec.axis.*max(geom.spec.radius)*2.1)',vec,deg2rad(67.5))';
+            %los = [lens; axi];
+            los = [lens, axi];
+            %los = rotate_points(los,vec,deg2rad(67.5));
+            %los = [geom.spec.lens, geom.spec.lens + geom.spec.axis.*max(geom.spec.radius)*2.1];
+            los = reshape(los,3,geom.spec.nchan,2);
+            h=plot(ax,squeeze(los(1,channel,:))'*fac,squeeze(los(2,channel,:))'*fac);
+            set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))));
+            %legend(h,'Location','bestoutside');
+        case 'los2d'
+            vec = [0, 0, -1];
+            lens = rotate_points(geom.spec.lens',vec,deg2rad(67.5))';     
+            axi = rotate_points(geom.spec.axis',vec,deg2rad(67.5))';
+            los = [lens, lens + axi.*max(geom.spec.radius)*2.1];
+            los = reshape(los,3,geom.spec.nchan,2);
+            lost = permute(los,[3,2,1]);
+            los2 = reshape(lost,2,geom.spec.nchan*3);
+            losre=interp1([0,1],los2,linspace(0,1,200));
+            los= reshape(losre,[],size(lost,2),size(lost,3));
+            r = sqrt(los(:,channel,1).^2 + los(:,channel,2).^2);
+            h=plot(ax,r*fac,squeeze(los(:,channel,3))*fac);
+            set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))));
+            legend(h,'Location','bestoutside');
+
     end
     %disp(plot_type{i});
     if numel(plot_type{i}) > 2
-    if strcmp(plot_type{i}(end-1:end),'2d')
-        pixplot(dist.r,dist.z,tmp(:,:,1))
-        xlabel('R [cm]')
-        ylabel('Z [cm]')
-        c = colorbar;
-        c.Label.String = cstring;
-        xlim([dist.r(1) dist.r(end)])
-        ylim([dist.z(1) dist.z(end)])
-    elseif strcmp(plot_type{i}(end-2:end),'tor')
-        if ndims(dist.f) == 5
-            pixplot(dist.r,dist.phi,squeeze(tmp(:,z0_ind,:)))
-            xlabel('R [cm]')
-            ylabel('Phi [rad]')
+        if strcmp(plot_type{i}(end-1:end),'2d')
+            if ldist
+            pixplot(dist.r,dist.z,tmp(:,:,1))
             c = colorbar;
             c.Label.String = cstring;
             xlim([dist.r(1) dist.r(end)])
-        else
-            disp('4D Distribution has no toroidal information')
+            ylim([dist.z(1) dist.z(end)])
+            end
+                        xlabel('R [cm]')
+            ylabel('Z [cm]')
+        elseif strcmp(plot_type{i}(end-2:end),'tor') && ldist
+            if ndims(dist.f) == 5
+                pixplot(dist.r,dist.phi,squeeze(tmp(:,z0_ind,:)))
+                xlabel('R [cm]')
+                ylabel('Phi [rad]')
+                c = colorbar;
+                c.Label.String = cstring;
+                xlim([dist.r(1) dist.r(end)])
+            else
+                disp('4D Distribution has no toroidal information')
+            end
         end
-    end
     end
     if lsave
         legend(ax,'Location','best');
