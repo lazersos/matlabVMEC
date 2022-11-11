@@ -36,6 +36,7 @@ plot_type = {};
 figs = {};
 lsave = 0;
 avg_time=0;
+lmovie=0;
 t_passive =0;
 t_point = 0;
 fida_range = [660, 661];
@@ -110,6 +111,10 @@ if nargin > 2
             case 'avg_time'
                 i = i+1;
                 avg_time = varargin{i};
+            case 'movie'
+                lmovie=1;
+                i = i+1;
+                t = varargin{i};
             otherwise
                 disp(['ERROR: Option ', varargin{i}, ' not found!']);
 
@@ -287,7 +292,7 @@ for i = 1:size(plot_type,2)
         case 'bes'
             plot(ax,R_pts(time_dex),bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),'-',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             %plot(ax,R_pts(time_dex_passive),bes(time_dex_passive),'o','DisplayName',['Data Passive ', num2str(t_passive- avg_time/2),'-',num2str(t_passive+ avg_time/2), 's'], 'LineWidth',2.0);
-            tmp = sum(bes.*time_dex,2)./sum(time_dex,2);;
+            tmp = sum(bes.*time_dex,2)./sum(time_dex,2);
             tmp_err = bes.*dex.*time_dex;%bes_err_out;
             tmp_err(tmp_err==0) = NaN;
             tmp_err = std(tmp_err,0,2,'omitnan');
@@ -296,7 +301,7 @@ for i = 1:size(plot_type,2)
         case 'fida'
             plot(ax,R_pts(time_dex),fida(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             %plot(ax,R_pts(time_dex_passive),fida(time_dex_passive),'o','DisplayName',['Data Passive ', num2str(t_passive- avg_time/2),'-',num2str(t_passive+ avg_time/2), 's'], 'LineWidth',2.0);
-            tmp = sum(fida.*time_dex,2)./sum(time_dex,2);;
+            tmp = sum(fida.*time_dex,2)./sum(time_dex,2);
             tmp_err = fida.*dex.*time_dex;%fida_err_out;
             tmp_err(tmp_err==0) = NaN;
             tmp_err = std(tmp_err,0,2,'omitnan');
@@ -323,7 +328,8 @@ for i = 1:size(plot_type,2)
             legend(ax,deblank(names(channel)'))
         case 'timetrace_fidabes'
             %plot(ax,time(2:end),fida(channel,2:end)./bes(channel,2:end), 'DisplayName', ['FIDA/BES Chan: ', names{channel}])
-            plot(ax,repmat(time(2:end),1,numel(channel)),movmean(fida(channel,2:end)./bes(channel,2:end),8,2)') %['FIDA/BES smoothed ',
+            %plot(ax,repmat(time(2:end),1,numel(channel)),movmean(fida(channel,2:end)./bes(channel,2:end),8,2)') %['FIDA/BES smoothed ',
+            plot(ax,repmat(time(2:end),1,numel(channel)),(fida(channel,2:end)./bes(channel,2:end))') %['FIDA/BES smoothed ',
             xlabel(ax,'Time [s]')
             ylabel(ax,['Integrated FIDA/BES: ', num2str(fida_range(1)), '-',num2str(fida_range(end)), 'nm']);
             ylim([0,0.16])
@@ -337,6 +343,16 @@ for i = 1:size(plot_type,2)
             %plot(ax,lambda(:,channel),tmp_in(:,channel), 'DisplayName',['Data, bo BG sub ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             xline(bes_range(channel,:),'DisplayName', 'BES Range')
             set(ax,'YScale','log');
+        case 'movie'
+            v = VideoWriter([num2str(shotid), '_fidabes_movie','.mp4'], 'MPEG-4');
+            open(v);
+            for j=1:numel(t)
+                plot(ax,R_pts(time_dex),fida(time_dex)./bes(time_dex),'o')
+                ylim([0 0.24])
+                frame = getframe(figs{1}); %for writing
+                writeVideo(v,frame);
+            end
+            close(v);
     end
 
     if ~strcmp(plot_type{i},'spectrum') && ~strcmp(plot_type{i}(1:3),'tim')
@@ -387,14 +403,14 @@ end
 
 %instfu = box_gauss_funct(lambda,0.,1.,cwav_mid,instfu_gamma,instfu_box_nm);
 function F = box_gauss_funct(X,A,B,C,D,E) % From /afs/ipp/home/s/sprd/XXX_DIAG/LIB
-  gam   = double(D);
-  width = double(E);
-  %b     = 0.5d0*width;
-  rl    = abs(0.5d0*width./gam);
-  Z     = abs((double(X)-double(C))./gam);
-  F     = double(B)*(0.5d0./width.*(erf((Z+rl)) - erf((Z-rl))))+double(A);
+gam   = double(D);
+width = double(E);
+%b     = 0.5d0*width;
+rl    = abs(0.5d0*width./gam);
+Z     = abs((double(X)-double(C))./gam);
+F     = double(B)*(0.5d0./width.*(erf((Z+rl)) - erf((Z-rl))))+double(A);
 
-  % Normalization and cutoff
-  F = F./sum(F,1);  
-  F(F<1e-5) = 0;
+% Normalization and cutoff
+F = F./sum(F,1);
+F(F<1e-5) = 0;
 end
