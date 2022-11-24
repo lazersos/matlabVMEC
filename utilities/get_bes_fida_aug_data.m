@@ -47,7 +47,7 @@ R = h5read(filename,'/r_pos');
 spec_in= h5read(filename,'/intens');
 spec_err_in= h5read(filename,'/intenserr');
 lambdatmp = h5read(filename,'/cor_wavel');
-lambda = lambdatmp-0.15;
+lambda = lambdatmp-0.15;%-0.15;
 names_unsorted = h5read(filename,'/los_name');
 dispersion_in=h5read(filename,'/dispersion');
 time = h5read(filename,'/time_arr');
@@ -58,13 +58,13 @@ instfu_gauss_nm = h5read(filename,'/instfu_gauss_nm')';
 cwav_mid = interp1(1:size(lambda,1),lambda,[size(lambda,1)/2.]);
 instfu = box_gauss_funct(lambda,0.,1.,cwav_mid,instfu_gamma,instfu_box_nm);
 
-[R,I] = sort(R);
-spec_in = spec_in(:,I,:);
-spec_err_in = spec_err_in(:,I,:);
-lambda = lambda(:,I);
-lambdatmp = lambdatmp(:,I);
-dispersion_in = dispersion_in(:,I);
-names = names_unsorted(I);
+% [R,I] = sort(R);
+% spec_in = spec_in(:,I,:);
+% spec_err_in = spec_err_in(:,I,:);
+% lambda = lambda(:,I);
+% lambdatmp = lambdatmp(:,I);
+% dispersion_in = dispersion_in(:,I);
+names = names_unsorted;%(I);
 tmp = cell2mat(names);
 dex_in = true(size(names));%strcmp(tmp(:,1:3),"CER");
 
@@ -92,7 +92,8 @@ if nargin > 2
                         channel(j) = find(strcmp(varargin{i}{j},cellstr(deblank(names'))));
                     end
                 else
-                    channel =find(~(I-varargin{i}));% I(varargin{i}); %Inverse lookup,
+                    %channel =find(~(I-varargin{i}));% I(varargin{i}); %Inverse lookup,
+                    channel = varargin{i};
                 end
             case 't_point'
                 i=i+1;
@@ -181,7 +182,7 @@ if shotid < 32000
 end
 
 
-bes_range=bes_range(I,:);
+%bes_range=bes_range(I,:);
 if avg_time==0
     avg_time=time(2)-time(1);
 end

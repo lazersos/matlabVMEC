@@ -68,6 +68,7 @@ lmean=0;
 lgeom =0;
 n_fida=-1;
 sim_data = {};
+channel = 0;
 if nargin > 1
     i = 1;
     while i < nargin
@@ -187,7 +188,7 @@ if lspec
         disp('ERROR: Spectra file not found, check filename!');
         disp(['       Filename: ' filename]);
     end
-    [~,I] = sort(spec.radius);
+    %[~,I] = sort(spec.radius);
 
 end
 if lgeom
@@ -203,7 +204,7 @@ end
 if ischar(channel)
     if ~isempty(sim_data)
         channel = find(strcmp(channel,cellstr(deblank(sim_data.names'))));
-        channel = I(channel);%-1;
+        %channel = I(channel);%-1;
     elseif strcmp(channel,'all')
         channel = true(size(deblank(geom.spec.id)));
     else
@@ -216,7 +217,7 @@ elseif iscell(channel)
             channel_tmp =[channel_tmp, find(strcmp(channel{i},cellstr(deblank(sim_data.names'))))];
         end
         channel=sort(channel_tmp);
-        channel = I(channel);%-1;
+        %channel = I(channel);%-1;
     else
         channel_tmp = false(geom.spec.nchan,1);
         for i=1:numel(channel)
@@ -399,6 +400,7 @@ for i = 1:size(plot_type,2)
 
         case 'spectrum'
             specr = spec.full + spec.half + spec.third + spec.halo + spec.dcx + spec.fida;% + spec.brems;
+            specr = specr.*fac;
             if lmean
                 k = 12;
                 specr = movmean(specr,k);
@@ -409,12 +411,15 @@ for i = 1:size(plot_type,2)
                     spectmp(:,j) = interp1(spec.lambda, specr(:,j), sim_data.lambda(:,j),'spline');
                 end
                 disp('Interpolated wavelength to match data');
+                if fac~=1.0
+                    name = [name,', scale=',num2str(fac)];
+                end
                 plot(sim_data.lambda(:,channel),conv(spectmp(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
-                %plot(spec.lambda, conv(spec.full(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
-                %plot(spec.lambda, spec.half(:,channel), 'DisplayName',['Half - ' name] );
-                %plot(spec.lambda, spec.third(:,channel), 'DisplayName',['Third - ' name] );
-                %plot(spec.lambda, conv((spec.halo(:,channel)+spec.dcx(:,channel)),sim_data.instfu(:,channel),'same'), 'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
-                %plot(spec.lambda, conv(spec.fida(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName',['FIDA - ' name] );
+                plot(spec.lambda, conv(spec.full(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
+                plot(spec.lambda, spec.half(:,channel), 'DisplayName',['Half - ' name] );
+                plot(spec.lambda, spec.third(:,channel), 'DisplayName',['Third - ' name] );
+                plot(spec.lambda, conv((spec.halo(:,channel)+spec.dcx(:,channel)),sim_data.instfu(:,channel),'same'), 'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
+                plot(spec.lambda, conv(spec.fida(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName',['FIDA - ' name] );
             else
                 plot(spec.lambda,specr(:,channel), 'DisplayName', ['Spectrum - ' name] );
                 disp('Supply in_data from e.g. get_bes_fida_aug_data for more plots!')

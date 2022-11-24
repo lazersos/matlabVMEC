@@ -80,13 +80,13 @@ dcx= h5read(filename,'/dcx');
 fida= h5read(filename,'/fida');
 brems= h5read(filename,'/brems');
 lambda = h5read(filename,'/lambda');
-[R,I] = sort(R);
-full = full(:,I);
-half = half(:,I);
-third = third(:,I);
-dcx = dcx(:,I);
-fida = fida(:,I);
-brems = brems(:,I);
+% [R,I] = sort(R);
+% full = full(:,I);
+% half = half(:,I);
+% third = third(:,I);
+% dcx = dcx(:,I);
+% fida = fida(:,I);
+% brems = brems(:,I);
 
 spec = full + half + third + halo + dcx + fida;% + brems;
 
