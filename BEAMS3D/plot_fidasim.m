@@ -75,7 +75,7 @@ if nargin > 1
         switch varargin{i}
             case {'overview','profiles',...
                     'ba','br2d','bt2d','bz2d',...
-                    'brtor','bttor','bztor'}
+                    'brtor','bttor','bztor','q2d'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 leq = 1;
             case {'fslice','denf2d','denf','fdenf','fdenf2d',...
@@ -99,9 +99,8 @@ if nargin > 1
                 i=i+1;
                 channel = varargin{i};
             case {'fida', 'bes', 'fidabes'}
-                i=i+1;
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
-                %disp(['ERROR: Option ', varargin{i}, ' not implemented here. Use plot_fidasim_profiles instead.']);
+                disp(['ERROR: Option ', varargin{i}, ' not implemented here. Use plot_fidasim_profiles instead.']);
                 lspec = 1;
                 lgeom = 1;
             case 'mean'
@@ -359,6 +358,9 @@ for i = 1:size(plot_type,2)
             cstring = 'Magnetic Field B_t [T]';
         case 'bz2d'
             tmp = eq.fields.bz;
+            cstring = 'Magnetic Field B_z [T]';
+        case 'q2d'
+            tmp = (eq.fields.bt(:,:,1) .* eq.fields.r2d) ./ sqrt(eq.fields.bz(:,:,1).^2 + eq.fields.br(:,:,1).^2);
             cstring = 'Magnetic Field B_z [T]';
         case 'denftor'
             tmp = dist.denf;
