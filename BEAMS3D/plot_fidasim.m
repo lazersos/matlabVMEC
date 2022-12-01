@@ -496,6 +496,7 @@ for i = 1:size(plot_type,2)
         end
     end
     if lsave
+         caxis([0 3e11])
         legend(ax,'Location','best');
         sname = [filename, '_', plot_type{i}];
         savefig(figs{i},sname)

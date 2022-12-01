@@ -106,10 +106,10 @@ switch plottype
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
             caxis([0 data.rho(end-1)]);
         else
-            %plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
-            colorder = parula(numel(line_dex));
-            colororder(colorder)
-            plot(x,y,'.','MarkerSize',4.9);
+            plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
+            %colorder = parula(numel(line_dex));
+            %colororder(colorder)
+            %plot(x,y,'.','MarkerSize',4.9);
         end
         if isfield(data,'Rhc_lines')
             line_dex = nphi:npoinc:size(data.Rhc_lines,2);
@@ -123,6 +123,8 @@ switch plottype
             hold off
         end
         axis equal
+        xlabel('R [m]')
+        ylabel('Z [m]')
     case{101}
         line_dex = nphi:npoinc:nsteps;
         R = data.R_lines(1:skip:nlines,line_dex);
