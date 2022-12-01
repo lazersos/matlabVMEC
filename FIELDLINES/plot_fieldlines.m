@@ -6,6 +6,7 @@ function [ output_args ] = plot_fieldlines(data,varargin)
 %       'basic':        Poincare plot on the first cutplane.
 %       '3D':           Same as 'basic' but in 3D space.
 %       'color':        Specify color ('color','r')
+%       'iota':         Color according to local iota value
 %       'cutplane':     Poincare plot on specific cutplane ('cutplane',5)
 %       'camera':       Make a camera image by binning poincare points.
 %       'camera_AEV30': W7-X AEV30 view (from AEQ21)
@@ -38,6 +39,7 @@ nlines = data.nlines;
 line_color='k';
 camera = [];
 skip=1;
+liota=0;
 
 % Handle varargin
 if nargin > 1
@@ -90,6 +92,21 @@ if nargin > 1
             case 'skip'
                 i=i+1;
                 skip=varargin{i};
+            case 'iota'
+                liota = 1;
+                x = data.R_lines - data.R_lines(1,:);
+                y = data.Z_lines - data.Z_lines(1,:);
+                theta = atan2(y,x);
+                dtheta = diff(theta,[],2); %axis=0?
+                dtheta(dtheta<-pi) = dtheta(dtheta<-pi)+2*pi;
+                dtheta(dtheta>pi) = dtheta(dtheta>pi)-2*pi;
+                theta = abs(cumsum(dtheta,2));
+                iota = zeros(size(x,1),1);
+                for i = 1:data.nlines
+                    p = polyfit(data.PHI_lines(i,1:data.nsteps-1),theta(i,:),1);
+                    iota(i) = p(1);
+                end
+                iota(1) = 2*iota(2)-iota(3);
         end
         i=i+1;
     end
@@ -106,10 +123,15 @@ switch plottype
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
             caxis([0 data.rho(end-1)]);
         else
-            plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
-            %colorder = parula(numel(line_dex));
-            %colororder(colorder)
-            %plot(x,y,'.','MarkerSize',4.9);
+            if liota
+                t = repmat(iota,size(x,2),1);
+                scatter(reshape(x,[],1),reshape(y,[],1),1.0,t);
+            else
+                plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
+                %colorder = parula(numel(line_dex));
+                %colororder(colorder)
+                %plot(x,y,'.','MarkerSize',4.9);
+            end
         end
         if isfield(data,'Rhc_lines')
             line_dex = nphi:npoinc:size(data.Rhc_lines,2);
@@ -537,12 +559,12 @@ switch plottype
         open(v);
         f=figure;
         set(gcf,'position',get(0,'ScreenSize'));
-        axis equal
         for nphi = 1:npoinc
             line_dex = nphi:npoinc:nsteps;
             x=data.R_lines(1:skip:nlines,line_dex);
             y=data.Z_lines(1:skip:nlines,line_dex);
             plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
+            axis equal
             title('Poicare plot')
             xlabel('R [m]')
             ylabel('Z [m]')

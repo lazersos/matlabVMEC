@@ -194,9 +194,10 @@ if t_point ~=0
     disp(['Frames used for averaging of ', filename,': ', num2str(max(sum(time_dex(1,:,:),3)))]);
 end
 if t_passive~=0
-    time_dex_passive = and(((t_passive + avg_time/2) >= time),((t_passive -avg_time/2) < time));
+    dt = time(2)-time(1);
+    time_dex_passive = and(((t_passive +dt/2) >= time),((t_passive-dt/2) < time));%and(((t_passive + avg_time/2) >= time),((t_passive -avg_time/2) < time));
     time_dex_passive = permute(repmat(time_dex_passive,1,1,size(spec_in,2),size(spec_in,1)),[4,3,1,2]);
-    disp(['Frames used for averaging of ', filename,': ', num2str(max(sum(time_dex_passive(1,:,:),3)))]);
+    disp(['Frames used for averaging passive sig. of ', filename,': ', num2str(max(sum(time_dex_passive(1,:,:),3)))]);
     if numel(t_passive) > 1
         closest_to_passive = interp1(t_passive,t_passive,time,'nearest','extrap');
         closest_to_passive = (closest_to_passive-t_passive);
