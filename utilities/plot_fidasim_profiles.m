@@ -158,7 +158,7 @@ for i = 1:size(plot_type,2)
         legend(ax,'Location','best');
         sname = [name, '_', plot_type{i}];
         savefig(figs{i},sname)
-        exportgraphics(figs{i},[sname,'.png'],'Resolution',300);
+        exportgraphics(figs{i},[sname,'.eps'],'Resolution',300);
     end
 end
 plot_data.R = R;

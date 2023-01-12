@@ -152,6 +152,8 @@ switch plottype
             hold off
         end
         axis equal
+        xlabel('R [m]')
+        ylabel('Z [m]')
     case{101}
         line_dex = nphi:npoinc:nsteps;
         R = data.R_lines(1:skip:nlines,line_dex);
