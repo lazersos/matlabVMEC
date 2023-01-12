@@ -127,10 +127,10 @@ switch plottype
                 t = repmat(iota,size(x,2),1);
                 scatter(reshape(x,[],1),reshape(y,[],1),1.0,t);
             else
-                plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
-                %colorder = parula(numel(line_dex));
+                %plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
+                %colorder = jet(numel(line_dex));
                 %colororder(colorder)
-                %plot(x,y,'.','MarkerSize',4.9);
+                plot(x,y,'k.','MarkerSize',4.9);
             end
         end
         if isfield(data,'Rhc_lines')

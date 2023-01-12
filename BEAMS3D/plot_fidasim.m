@@ -474,7 +474,7 @@ for i = 1:size(plot_type,2)
     if numel(plot_type{i}) > 2
         if strcmp(plot_type{i}(end-1:end),'2d')
             if ldist
-                pixplot(dist.r,dist.z,tmp(:,:,1))
+                pixplot(dist.r,dist.z,tmp(:,:,2))
                 c = colorbar;
                 c.Label.String = cstring;
                 xlim([dist.r(1) dist.r(end)])
@@ -496,7 +496,7 @@ for i = 1:size(plot_type,2)
         end
     end
     if lsave
-         caxis([0 3e11])
+         %caxis([0 3e11])
         legend(ax,'Location','best');
         sname = [filename, '_', plot_type{i}];
         savefig(figs{i},sname)
