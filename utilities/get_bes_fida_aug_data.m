@@ -47,7 +47,7 @@ R = h5read(filename,'/r_pos');
 spec_in= h5read(filename,'/intens');
 spec_err_in= h5read(filename,'/intenserr');
 lambdatmp = h5read(filename,'/cor_wavel');
-lambda = lambdatmp-0.15;%-0.15;
+lambda = lambdatmp-0.08;%-0.15;
 names_unsorted = h5read(filename,'/los_name');
 dispersion_in=h5read(filename,'/dispersion');
 time = h5read(filename,'/time_arr');
@@ -190,12 +190,17 @@ end
 
 if t_point ~=0
     time_dex = (t_point + avg_time/2 >= time) & (t_point -avg_time/2 <= time);
-    time_dex = permute(repmat(time_dex',size(spec_in,2),1,size(spec_in,1)),[3,1,2]);
+    time_dex_vec = logical(sum(time_dex,2));
+    time_dex = permute(repmat(time_dex_vec',size(spec_in,2),1,size(spec_in,1)),[3,1,2]);
     disp(['Frames used for averaging of ', filename,': ', num2str(max(sum(time_dex(1,:,:),3)))]);
 end
 if t_passive~=0
-    dt = time(2)-time(1);
-    time_dex_passive = and(((t_passive +dt/2) >= time),((t_passive-dt/2) < time));%and(((t_passive + avg_time/2) >= time),((t_passive -avg_time/2) < time));
+    if numel(t_passive)==1
+        dt = time(2)-time(1);
+        time_dex_passive = and(((t_passive +dt/2) >= time),((t_passive-dt/2) < time));%and(((t_passive + avg_time/2) >= time),((t_passive -avg_time/2) < time));
+    elseif numel(t_passive)==2
+        time_dex_passive = and((t_passive(2) >= time),(t_passive(1) < time));%and(((t_passive + avg_time/2) >= time),((t_passive -avg_time/2) < time));
+    end
     time_dex_passive = permute(repmat(time_dex_passive,1,1,size(spec_in,2),size(spec_in,1)),[4,3,1,2]);
     disp(['Frames used for averaging passive sig. of ', filename,': ', num2str(max(sum(time_dex_passive(1,:,:),3)))]);
     if numel(t_passive) > 1
@@ -227,7 +232,7 @@ dispersion = repmat(dispersion_in,1,1,numel(time));
 spec = spec_in - repmat(sum(spec_in.*bg_dex,1)./sum(bg_dex,1),size(spec_in,1),1); %Background subtraction
 
 if t_passive~=0
-    for k = 1:numel(t_passive)
+    for k = 1:size(time_dex_passive,4)
         spec_passive(:,:,k) = sum(spec.*dex.*squeeze(time_dex_passive(:,:,:,k)),3)./sum(dex.*squeeze(time_dex_passive(:,:,:,k)),3);
     end
     spec_passive(:,:,k+1) = zeros(size(lambda));
@@ -264,6 +269,7 @@ end
 if t_point ~=0
     time_dex = squeeze(time_dex(1,:,:));
     time_dex = and(dex,time_dex);
+    time_dex_inds = find(time_dex_vec);
 end
 
 R_pts = repmat(R,1,size(spec_in,3))*100;
@@ -295,7 +301,10 @@ for i = 1:size(plot_type,2)
             t = annotation('textbox',[0.15 0.61 0.3 0.3],'String',['FIDA Int. Range: [', num2str(fida_range),'] nm'],'FitBoxToText','on');
             t.LineWidth = 0.01;
         case 'fidabes'
-            plot(ax,R_pts(time_dex),fida(time_dex)./bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            %compose('Data %.3f - %.3f s', (t_point - avg_time/2)',(t_point + avg_time/2)')
+            for j = 1:sum(time_dex_vec)
+                plot(ax,R_pts(dex_in,time_dex_inds(j)),fida(dex_in,time_dex_inds(j))./bes(dex_in,time_dex_inds(j)),'o', 'DisplayName',sprintf('Data %.3f s', time(time_dex_inds(j))),'LineWidth',2.0);
+            end
             tmp = sum(fida./bes.*time_dex,2)./sum(time_dex,2);
             tmp_err=sqrt(sum(fida_bes_err.*time_dex,2).^2)./sum(time_dex,2);
             %             tmp_err = (fida./bes).*dex.*time_dex;
@@ -348,7 +357,7 @@ for i = 1:size(plot_type,2)
     end
 
     if ~strcmp(plot_type{i},'spectrum') && ~strcmp(plot_type{i}(1:3),'tim')
-        errorbar(ax,R(dex_in)*100, tmp(dex_in),tmp_err(dex_in),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
+        errorbar(ax,R(dex_in)*100, tmp(dex_in),tmp_err(dex_in),'--','DisplayName',['Avg. ', num2str(t_point(1)), 's'], 'LineWidth',2.0);
         xlabel(ax,'R [cm]')
         ylabel(ax,ystr);
     end

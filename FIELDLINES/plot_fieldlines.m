@@ -117,6 +117,13 @@ switch plottype
         line_dex = nphi:npoinc:nsteps;
         x=data.R_lines(1:skip:nlines,line_dex);
         y=data.Z_lines(1:skip:nlines,line_dex);
+        %         if isfield(data,'iota')
+        %             s=ones(size(x,1),size(x,2));
+        %             c=repmat(data.iota(1:skip:nlines),[1 size(x,2)]);
+        %             c(c>0.91) = 0.0;
+        %             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
+        %             caxis([0 max(data.iota)]);
+        %         else
         if isfield(data,'rho')
             s=ones(size(x,1),size(x,2));
             c=repmat(data.rho(1:skip:nlines),[1 size(x,2)]);
@@ -127,10 +134,10 @@ switch plottype
                 t = repmat(iota,size(x,2),1);
                 scatter(reshape(x,[],1),reshape(y,[],1),1.0,t);
             else
-                plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
-                %colorder = parula(numel(line_dex));
-                %colororder(colorder)
-                %plot(x,y,'.','MarkerSize',4.9);
+                %plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
+                colorder = parula(nlines); %numel(line_dex)
+                colororder(colorder)
+                plot(x,y,'.','MarkerSize',4.9);
             end
         end
         if isfield(data,'Rhc_lines')

@@ -69,6 +69,7 @@ lgeom =0;
 n_fida=-1;
 sim_data = {};
 channel = 0;
+color='k';
 if nargin > 1
     i = 1;
     while i < nargin
@@ -98,6 +99,10 @@ if nargin > 1
                 lgeom = 1;
                 i=i+1;
                 channel = varargin{i};
+                i=i+1;
+                length=varargin{i};
+                i=i+1;
+                color=varargin{i};
             case {'fida', 'bes', 'fidabes'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 disp(['ERROR: Option ', varargin{i}, ' not implemented here. Use plot_fidasim_profiles instead.']);
@@ -447,27 +452,38 @@ for i = 1:size(plot_type,2)
             legend(h,'Location','bestoutside');
         case 'lostor'
             vec = [0, 0, -1];
-            lens = rotate_points(geom.spec.lens',vec,deg2rad(67.5))';
-            axi = rotate_points((geom.spec.lens + geom.spec.axis.*max(geom.spec.radius)*1.1)',vec,deg2rad(67.5))';
+            %lens =geom.spec.lens';
+            %axi = (geom.spec.lens + geom.spec.axis.*max(geom.spec.radius)*1.1)';
+            lens = rotate_points(geom.spec.lens',vec,deg2rad(0))'; %AUG: 67.5
+            axi = rotate_points((geom.spec.lens + geom.spec.axis.*max(geom.spec.radius)*length)',vec,deg2rad(0))';
             los = [lens, axi];
             los = reshape(los,3,geom.spec.nchan,2);
-            h=plot(ax,squeeze(los(1,channel,:))'*fac,squeeze(los(2,channel,:))'*fac, 'k');
-            set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))));
-            legend(h,'Location','bestoutside');
+            %for chan = channel
+            h=plot(ax,squeeze(los(1,channel,:))'*fac,squeeze(los(2,channel,:))'*fac,color);
+            %tmp = cellstr(deblank(geom.spec.id(channel)));
+%             tmp = char(geom.spec.id(channel));
+%             tmp = cellstr(tmp(1,1:3));
+%             set(h(1), 'DisplayName', tmp{1});
+%             legend(h(1),'Location','bestoutside');
         case 'los2d'
             vec = [0, 0, -1];
-            lens = rotate_points(geom.spec.lens',vec,deg2rad(67.5))';
-            axi = rotate_points(geom.spec.axis',vec,deg2rad(67.5))';
-            los = [lens, lens + axi.*max(geom.spec.radius)*1.1];
+            %lens = rotate_points(geom.spec.lens',vec,deg2rad(67.5))';
+            %axi = rotate_points(geom.spec.axis',vec,deg2rad(67.5))';
+            lens = rotate_points(geom.spec.lens',vec,deg2rad(0))';
+            axi = rotate_points(geom.spec.axis',vec,deg2rad(0))';
+            los = [lens, lens + axi.*max(geom.spec.radius)*length];
             los = reshape(los,3,geom.spec.nchan,2);
             lost = permute(los,[3,2,1]);
             los2 = reshape(lost,2,geom.spec.nchan*3);
             losre=interp1([0,1],los2,linspace(0,1,200));
             los= reshape(losre,[],size(lost,2),size(lost,3));
             r = sqrt(los(:,channel,1).^2 + los(:,channel,2).^2);
-            h=plot(ax,r*fac,squeeze(los(:,channel,3))*fac, 'k');
-            set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))));
-            legend(h,'Location','bestoutside');
+            h=plot(ax,r*fac,squeeze(los(:,channel,3))*fac, color);
+            %tmp = cellstr(deblank(geom.spec.id(channel)));
+            %             tmp = char(geom.spec.id(channel));
+            %             tmp = cellstr(tmp(1,1:3));
+            %             set(h(1), 'DisplayName', tmp{1});
+            %             legend(h(1),'Location','bestoutside');
 
     end
     %disp(plot_type{i});
