@@ -38,8 +38,10 @@ if ~isempty(vmec_data)
     h_vmec = 1./(vmec_data.ns-1);
     s_vmec = 0:h_vmec:1;
     vp_vmec = vmec_data.vp.*4.*pi.*pi;
+    Rmajor  = vmec_data.Rmajor;
 else
     [s_vmec, ~, vp_vmec] = beams3d_volume(beam_data);
+    Rmajor = beams3d_calc_Rmajor(beam_data);
 end
 rho_vmec = sqrt(s_vmec);
 dVdrho_spl = pchip(rho_vmec,2.*rho_vmec.*vp_vmec);
@@ -118,6 +120,7 @@ for i=1:beam_data.nbeams
     P_WALL(i)    = sum(beam_data.wall_load(i,:).*A');
     P_ORBIT(i)   = sum(P_orbit(1,beam_dex));
     P_THERM(i)   = sum(P_therm(1,beam_dex));
+    J_TOTAL(i)   = sum(beam_data.j_prof(i,:).*dVdrho./Rmajor)./(double(beam_data.ns_prof1).*2.*pi);
 end
 
 P = [P_INITIAL; P_PORTS; P_SHINE; P_IDEPO; P_EDEPO; P_WALL; P_ORBIT; P_THERM];
@@ -125,6 +128,8 @@ P = [P_INITIAL; P_PORTS; P_SHINE; P_IDEPO; P_EDEPO; P_WALL; P_ORBIT; P_THERM];
 % Handle units
 units = ' W';
 unit_factor = 1E0;
+unitsj = ' A';
+unitj_factor = 1E0;
 if any(P_INITIAL > 10E6)
     units = ' MW';
     unit_factor = 1E-6;
@@ -132,13 +137,20 @@ elseif any(P_INITIAL > 10E3)
     units = ' kW';
     unit_factor = 1E-3;
 end
+if any(J_TOTAL > 10E6)
+    unitsj = ' MA';
+    unitj_factor = 1E-6;
+elseif any(J_TOTAL > 10E3)
+    unitsj = ' kA';
+    unitj_factor = 1E-3;
+end
 
 if lverb
-    disp('POWER TOTAL   PORTS   SHINE    IONS    ELEC    WALL   ORBIT   THERM');
+    disp('POWER TOTAL    PORTS   SHINE    IONS    ELEC    WALL   ORBIT   THERM        I_TOTAL');
     for i=1:size(P,2)
-        disp(['BEAM' num2str(i,'%i') ':  ' num2str(round(P(:,i).*unit_factor)',' %6i ') units]);
+        disp(['BEAM' num2str(i,'%2.2i') ':  ' num2str(round(P(:,i).*unit_factor)',' %6i ') units '  |  '  num2str(round(J_TOTAL(i).*unitj_factor)',' %6i ') unitsj ]);
     end
-    disp(['TOTAL:  ' num2str(round(sum(P,2).*unit_factor)',' %6i ') units]);
+    disp(['TOTAL:  ' num2str(round(sum(P,2).*unit_factor)',' %6i ') units '  |  ' num2str(round(sum(J_TOTAL).*unitj_factor)',' %6i ') unitsj]);
 end
 return;
 end
