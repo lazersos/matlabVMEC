@@ -324,7 +324,7 @@ switch datatype
         for i=1:nfiles
             if ~isfield(vmec_data{i},'jcurv'), continue; end
             ns=vmec_data{i}.ns;
-            jcurv=vmec_data{i}.jcurv;
+            jcurv=vmec_data{i}.jcurv.*2.*pi;
             if (i == 1)
                 plot3(0:1/(ns-1):1,i.*ones(1,ns),jcurv,'b','LineWidth',2.0);
             elseif (i == nfiles)
@@ -336,7 +336,7 @@ switch datatype
         xlabel('Normalized Flux');
         set(gca,'YTick',1:nfiles);
         set(gca,'YTickLabel',filename);
-        zlabel('Toroidal Current');
+        zlabel('dI/ds [A]');
         view(3);
         output=gca;
     case 'iota_press'
