@@ -828,8 +828,8 @@ f.xn=data1(2,:);
 f.rmnc=[data1(3,:)' reshape(data(1,:),f.mnmax,f.ns-1)];
 f.zmns=[data1(4,:)' reshape(data(2,:),f.mnmax,f.ns-1)];
 f.lmns=[data1(5,:)' reshape(data(3,:),f.mnmax,f.ns-1)];
-f.bmn=[data1(6,:)' reshape(data(4,:),f.mnmax,f.ns-1)];
-f.gmn=[data1(7,:)' reshape(data(5,:),f.mnmax,f.ns-1)];
+f.bmnc=[data1(6,:)' reshape(data(4,:),f.mnmax,f.ns-1)];
+f.gmnc=[data1(7,:)' reshape(data(5,:),f.mnmax,f.ns-1)];
 f.bsubumnc=[data1(8,:)' reshape(data(6,:),f.mnmax,f.ns-1)];
 f.bsubvmnc=[data1(9,:)' reshape(data(7,:),f.mnmax,f.ns-1)];
 f.bsubsmns=[data1(10,:)' reshape(data(8,:),f.mnmax,f.ns-1)];
@@ -837,11 +837,11 @@ f.bsupumnc=[data1(11,:)' reshape(data(9,:),f.mnmax,f.ns-1)];
 f.bsupvmnc=[data1(12,:)' reshape(data(10,:),f.mnmax,f.ns-1)];
 f.currvmnc=[data1(13,:)' reshape(data(11,:),f.mnmax,f.ns-1)];
 % Read the half-mesh quantities
-data=fscanf(fid,'%g%g%g%g%g%g%g%g%g%g%g%g%g',[13 f.ns/2]);
+data=fscanf(fid,'%g%g%g%g%g%g%g%g%g%g%g%g%g',[13 f.ns-1]);
 f.iotas=data(1,:);
 f.mass=data(2,:);
 f.pres=data(3,:);
-f.beta_vol(4,:);
+f.beta_vol=data(4,:);
 f.phip=data(5,:);
 f.buco=data(6,:);
 f.bvco=data(7,:);
@@ -2194,24 +2194,40 @@ if ~isfield(f,'iasym'), f.iasym=0; end
 % Now do the 2D array values
 % Need to handle odd/even differently
 ns1 = f.ns-1;
-stemp = 0:1./ns1:1;
-shalf = zeros(1,f.ns);
-shalf(2:end) = 0.5.*(stemp(1:end-1) + stemp(2:end));
-i1h = max(min(1:f.ns,ns1),2);
-i2h = i1h + 1;
-x = stemp - shalf(i1h);
-x1 = (1-x);
-x2 = x;
-f1 = x1.*sqrt(stemp./shalf(i1h));
-f2 = x2.*sqrt(stemp./shalf(i2h));
+% Do main points
+% This is the Samantha Lazerson bugfix 2023.01.29
+ivals = 2:ns1;
+ivals2 = 3:f.ns;
+x1 = 0.5; x2 = 0.5;
+f1 = 0.5.*sqrt((ivals-1.0)./(ivals-1.5));
+f2 = 0.5.*sqrt((ivals-1.0)./(ivals-0.5));
 % First lmns on mnmax grid
 dexe = mod(f.xm,2)==0;
 dexo = ~dexe;
-f.lmns(dexe,1:f.ns) = f.lmns(dexe,i1h).*x1+f.lmns(dexe,i2h).*x2;
-f.lmns(dexo,1:f.ns) = f.lmns(dexo,i1h).*f2+f.lmns(dexo,i2h).*f2;
-if f.iasym>0
-    f.lmnc(dexe,1:f.ns) = f.lmnc(dexe,i1h).*x1+f.lmnc(dexe,i2h).*x2;
-    f.lmnc(dexo,1:f.ns) = f.lmnc(dexo,i1h).*f2+f.lmnc(dexo,i2h).*f2;
+f.lmns(dexe,ivals) = x1.*f.lmns(dexe,ivals) + x2.*f.lmns(dexe,ivals2);
+f.lmns(dexo,ivals) = f1.*f.lmns(dexo,ivals) + f2.*f.lmns(dexo,ivals2);
+if f.iasym > 0
+    f.lmnc(dexe,ivals) = x1.*f.lmnc(dexe,ivals) + x2.*f.lmnc(dexe,ivals2);
+    f.lmnc(dexo,ivals) = f1.*f.lmnc(dexo,ivals) + f2.*f.lmnc(dexo,ivals2);
+end
+% Extrapolate to edge
+x1 = 2.0; x2 =-1.0;
+f1 = 2.0.*sqrt((ns1-1.0)./(f.ns-1.5));
+f2 =-1.0.*sqrt((ns1-1.0)./(f.ns-2.0));
+f.lmns(dexe,f.ns) = x1.*f.lmns(dexe,f.ns) + x2.*f.lmns(dexe,f.ns-1);
+f.lmns(dexo,f.ns) = f1.*f.lmns(dexo,f.ns) + f2.*f.lmns(dexo,f.ns-1);
+if f.iasym > 0
+    f.lmnc(dexe,f.ns) = x1.*f.lmnc(dexe,f.ns) + x2.*f.lmnc(dexe,f.ns-1);
+    f.lmnc(dexo,f.ns) = f1.*f.lmnc(dexo,f.ns) + f2.*f.lmnc(dexo,f.ns-1);
+end
+% Do Axis
+x1 = 2.0; x2 = -1.0;
+f1 = 0.0; f2 = 0.0;
+f.lmns(dexe,1) = x1.*f.lmns(dexe,2) + x2.*f.lmns(dexe,3);
+f.lmns(dexo,1) = f1.*f.lmns(dexo,2) + f2.*f.lmns(dexo,3);
+if f.iasym > 0
+    f.lmnc(dexe,1) = x1.*f.lmnc(dexe,2) + x2.*f.lmnc(dexe,3);
+    f.lmnc(dexo,1) = f1.*f.lmnc(dexo,2) + f2.*f.lmnc(dexo,3);
 end
 % Now mnmax_nyq sized arrays
 dexe = mod(f.xm_nyq,2)==0;
@@ -2230,8 +2246,23 @@ if f.iasym>0
 end
 for temp=fields
     fieldname=temp{1};
-    f.(fieldname)(dexe,1:f.ns)=f.(fieldname)(dexe,i1h).*x1+f.(fieldname)(dexe,i2h).*x2;
-    f.(fieldname)(dexo,1:f.ns)=f.(fieldname)(dexo,i1h).*f1+f.(fieldname)(dexo,i2h).*f2;
+    % Main grid
+    x1 = 0.5; x2 = 0.5;
+    f1 = 0.5.*sqrt(((2:ns1)-1.0)./((2:ns1)-1.5));
+    f2 = 0.5.*sqrt(((2:ns1)-1.0)./((2:ns1)-0.5));
+    f.(fieldname)(dexe,ivals)=f.(fieldname)(dexe,ivals).*x1+f.(fieldname)(dexe,ivals2).*x2;
+    f.(fieldname)(dexo,ivals)=f.(fieldname)(dexo,ivals).*f1+f.(fieldname)(dexo,ivals2).*f2;
+    % Edge
+    x1 = 2.0; x2 =-1.0;
+    f1 = 2.0.*sqrt((ns1-1.0)./(f.ns-1.5));
+    f2 =-1.0.*sqrt((ns1-1.0)./(f.ns-2.0));
+    f.(fieldname)(dexe,f.ns)=f.(fieldname)(dexe,f.ns).*x1+f.(fieldname)(dexe,f.ns-1).*x2;
+    f.(fieldname)(dexo,f.ns)=f.(fieldname)(dexo,f.ns).*f1+f.(fieldname)(dexo,f.ns-1).*f2;
+    % Axis
+    x1 = 2.0; x2 = -1.0;
+    f1 = 0.0; f2 = 0.0;
+    f.(fieldname)(dexe,1)=f.(fieldname)(dexe,2).*x1+f.(fieldname)(dexe,3).*x2;
+    f.(fieldname)(dexo,1)=f.(fieldname)(dexo,2).*f1+f.(fieldname)(dexo,3).*f2;
 end
 return;
 end
