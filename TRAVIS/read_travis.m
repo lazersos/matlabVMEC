@@ -1,7 +1,16 @@
 function data = read_travis
-%read_travis Reads a TRAVIS directory
+%read_travis Reads the files in a TRAVIS output directory
 %   The READ_TRAVIS routine reads the files in the current directory into a
-%   a structure for plotting.
+%   a structure for plotting.  For the beamtrace cell arrays are created
+%   which are [nrays,nbeams] in size (nbeams being the number of beamtrace
+%   files in the directory).
+%
+%   Example:
+%       travis_data=read_travis();
+%
+%   Written by:     S.Lazerson (samuel.lazerson@ipp.mpg.de)
+%   Version:        1.0
+%   Date:           2/5/23
 
 files=dir('beamtrace*');
 for i=1:length(files)
