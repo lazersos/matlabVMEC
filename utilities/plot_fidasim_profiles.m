@@ -80,28 +80,20 @@ dcx= h5read(filename,'/dcx');
 fida= h5read(filename,'/fida');
 brems= h5read(filename,'/brems');
 lambda = h5read(filename,'/lambda');
-% [R,I] = sort(R);
-% full = full(:,I);
-% half = half(:,I);
-% third = third(:,I);
-% dcx = dcx(:,I);
-% fida = fida(:,I);
-% brems = brems(:,I);
 
 spec = full + half + third + halo + dcx + fida;% + brems;
+
+cwav_mid=mean(spec.lambda);
+instfu = box_gauss_funct(spec.lambda,0.,1.,cwav_mid,sim_data.instfu_gamma,sim_data.instfu_box_nm);
+
+for i = 1:size(spec,2)
+    spec(:,i) = conv(spec(:,i),instfu(:,channel),'same');
+    disp(['Applying Instrument function to FIDASIM data: ', filename]);
+end
 
 if lmean == 1
     spec = movmean(spec,15);
     disp(['Applying moving mean to FIDASIM data: ', filename]);
-end
-
-%spect = interp1(lambda, (spec').', (lambda_dat').'); %Vectorized interpolation
-for i = 1:size(lambda_dat,2)
-    spectmp(:,i) = interp1(lambda, spec(:,i), lambda_dat(:,i),'spline');
-end
-
-for i = 1:size(spec,2)
-    spectmp(:,i) = conv(spectmp(:,i),in_data.instfu(:,i),'same');
 end
 
 dispersion_tmp = diff(lambda_dat,1);

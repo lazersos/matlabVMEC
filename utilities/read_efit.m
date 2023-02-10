@@ -30,7 +30,7 @@ switch filename_short(1)
     case 'q'
         filetype='qfile'; %For trgui exported eqdsk files (CLISTE)
     otherwise
-        if strcmp(filename_short(end-5:end-1),'eqdsk') || strcmp(filename_short(end-6:end-2),'eqdsk')
+        if strcmp(filename_short(end-4:end),'eqdsk') || strcmp(filename_short(end-5:end-1),'eqdsk') || strcmp(filename_short(end-6:end-2),'eqdsk') 
             filetype='gfile';
         else
         disp(['Unknown filetype: ' filename_short]);

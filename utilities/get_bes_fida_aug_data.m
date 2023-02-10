@@ -44,19 +44,19 @@ fida_range = [660, 661];
 dex_in = '';
 
 R = h5read(filename,'/r_pos');
-spec_in= h5read(filename,'/intens');
+
 spec_err_in= h5read(filename,'/intenserr');
-lambdatmp = h5read(filename,'/cor_wavel');
-lambda = lambdatmp-0.08;%-0.15;
+lambda = h5read(filename,'/cor_wavel');
+spec_in= h5read(filename,'/intens');
 names_unsorted = h5read(filename,'/los_name');
 dispersion_in=h5read(filename,'/dispersion');
 time = h5read(filename,'/time_arr');
-
 instfu_gamma = h5read(filename,'/instfu_gamma')';
 instfu_box_nm = h5read(filename,'/instfu_box_nm')';
 instfu_gauss_nm = h5read(filename,'/instfu_gauss_nm')';
 cwav_mid = interp1(1:size(lambda,1),lambda,[size(lambda,1)/2.]);
 instfu = box_gauss_funct(lambda,0.,1.,cwav_mid,instfu_gamma,instfu_box_nm);
+
 
 % [R,I] = sort(R);
 % spec_in = spec_in(:,I,:);
@@ -330,11 +330,22 @@ for i = 1:size(plot_type,2)
         case 'timetrace_fidabes'
             %plot(ax,time(2:end),fida(channel,2:end)./bes(channel,2:end), 'DisplayName', ['FIDA/BES Chan: ', names{channel}])
             %plot(ax,repmat(time(2:end),1,numel(channel)),movmean(fida(channel,2:end)./bes(channel,2:end),8,2)') %['FIDA/BES smoothed ',
-            plot(ax,repmat(time(2:end),1,numel(channel)),(fida(channel,2:end)./bes(channel,2:end))') %['FIDA/BES smoothed ',
+            tmp = (fida(channel,:)./bes(channel,:))';
+            plot(ax,repmat(time(:),1,numel(channel)),tmp) %['FIDA/BES smoothed ',
             xlabel(ax,'Time [s]')
             ylabel(ax,['Integrated FIDA/BES: ', num2str(fida_range(1)), '-',num2str(fida_range(end)), 'nm']);
             ylim([0,0.16])
             legend(ax,deblank(names(channel)'))
+            sname = [filename(1:end-3), '_', plot_type{i},'.txt'];
+            fid=fopen(sname,'w');
+            fprintf(fid,'%s created on %s\n',plot_type{i}, datestr(now));
+            fprintf(fid,'Time %s\n', strjoin(deblank(names(channel)),' '));
+            format = repmat('%.3f ',1,size(tmp,2)+1);
+            fprintf(fid,[format, '\n'],[time, tmp]');
+            %for l = 1:numel(time)
+                %fprintf(fid,'%.3f %.3f\n',time(l),tmp(l,:));
+            %end
+            fclose(fid);
         case 'spectrum'
             time_dex_spec = permute(repmat(time_dex,1,1,size(spec,1)),[3,1,2]);
             tmp =squeeze(sum(spec.*time_dex_spec,3)./sum(time_dex_spec,3));
@@ -374,7 +385,7 @@ end
 plot_data.R = R;
 plot_data.spec = spec;
 plot_data.names = names;
-plot_data.lambda=lambdatmp;
+plot_data.lambda=lambda;
 if t_point ~=0
     bes_out = sum(bes.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
     fida_out =sum(fida.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
@@ -392,7 +403,7 @@ sim_data.figs = figs;
 sim_data.R = R;
 sim_data.names = names;
 sim_data.names_unsorted = names_unsorted;
-sim_data.lambda=lambdatmp;
+sim_data.lambda=lambda;
 sim_data.dispersion = dispersion_in;
 sim_data.bes_range = bes_range;
 sim_data.fida_range = fida_range;
@@ -400,7 +411,8 @@ if ~(strcmp(dex_in,''))
     sim_data.dex = dex_in;
 end
 sim_data.instfu=instfu;
-
+sim_data.instfu_gamma=instfu_gamma;
+sim_data.instfu_box_nm=instfu_box_nm;
 
 end
 
