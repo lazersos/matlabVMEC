@@ -1,7 +1,7 @@
-function plot_data = plot_fidasim_profiles(filename,in_data,varargin)
+function plot_data = plot_fidasim_profiles(filename,sim_data,varargin)
 %PLOT_FIDASIM_PROFILES plots radial profiles from the FIDASIM code. As
 %these are used to compare to experimental data, the integration range and
-%dispersion is set by variables in the in_data structure generated e.g. by
+%dispersion is set by variables in the sim_data structure generated e.g. by
 %the get_bes_fida_aug_data function. Plots are shared between the
 %two functions.
 %
@@ -17,20 +17,20 @@ function plot_data = plot_fidasim_profiles(filename,in_data,varargin)
 %      plot_fidasim(runid,'name', 'test'); %ID Name for legend
 %      plot_fidasim(runid,'fac', 1.0); %Scaling factor
 %
-bes_range = in_data.bes_range;
-fida_range = in_data.fida_range;
-dispersion = in_data.dispersion;
-lambda_dat = in_data.lambda;
-if isfield(in_data,'dex')
-    dex = in_data.dex;
+bes_range = sim_data.bes_range;
+fida_range = sim_data.fida_range;
+dispersion = sim_data.dispersion;
+lambda_dat = sim_data.lambda;
+if isfield(sim_data,'dex')
+    dex = sim_data.dex;
 else
     dex = [];
 end
 
-if isfield(in_data,'figs')
-    figs=in_data.figs;
+if isfield(sim_data,'ax')
+    ax=sim_data.ax;
 else
-    figs = {};
+    ax = {};
 end
 
 lsave = 0;
@@ -52,9 +52,9 @@ if nargin > 2
             case 'avg_frames'
                 i = i+1;
                 avg_frames = varargin{i};
-            case 'figs'
+            case 'ax'
                 i=i+1;
-                figs = varargin{i};
+                ax = varargin{i};
             case 'fac'
                 i = i+1;
                 fac = varargin{i};
@@ -90,26 +90,28 @@ lambda = h5read(filename,'/lambda');
 
 spec = full + half + third + halo + dcx + fida;% + brems;
 
+cwav_mid=mean(lambda);
+instfu = box_gauss_funct(lambda,0.,1.,cwav_mid,sim_data.instfu_gamma,sim_data.instfu_box_nm);
+disp(['Applying Instrument function to FIDASIM data: ', filename]);
+for i = 1:size(spec,2)
+    spec(:,i) = conv(spec(:,i),instfu(:,i),'same');    
+end
+
 if lmean == 1
     spec = movmean(spec,15);
     disp(['Applying moving mean to FIDASIM data: ', filename]);
 end
 
-%spect = interp1(lambda, (spec').', (lambda_dat').'); %Vectorized interpolation
-for i = 1:size(lambda_dat,2)
-    spectmp(:,i) = interp1(lambda, spec(:,i), lambda_dat(:,i),'spline');
-end
-
-for i = 1:size(spec,2)
-    spectmp(:,i) = conv(spectmp(:,i),in_data.instfu(:,i),'same');
-end
-
-dispersion_tmp = diff(lambda_dat,1);
+% dispersion_tmp = diff(lambda_dat,1);
+dispersion_tmp = diff(lambda,1);
 dispersion_tmp = [dispersion_tmp; dispersion_tmp(end,:)];
+dispersion_tmp = repmat(dispersion_tmp,1,size(spec,2));
 
-bes_dex = (lambda_dat > repmat(bes_range(:,1)',size(lambda_dat,1),1)) & (lambda_dat < repmat(bes_range(:,2)',size(lambda_dat,1),1));
-fida_dex = (lambda_dat > fida_range(1)) & (lambda_dat < fida_range(2));
+% bes_dex = (lambda_dat > repmat(bes_range(:,1)',size(lambda_dat,1),1)) & (lambda_dat < repmat(bes_range(:,2)',size(lambda_dat,1),1));
+% fida_dex = (lambda_dat > fida_range(1)) & (lambda_dat < fida_range(2));
 
+bes_dex = (lambda > repmat(bes_range(:,1)',size(lambda,1),1)) & (lambda < repmat(bes_range(:,2)',size(lambda,1),1));
+fida_dex = (lambda > fida_range(1)) & (lambda < fida_range(2));
 
 % for i = 1:size(lambda_dat,2)
 % dispersion_tmp(:,i) = interp1(lambda_dat(:,i),dispersion(:,i),lambda);
@@ -119,19 +121,16 @@ fida_dex = (lambda_dat > fida_range(1)) & (lambda_dat < fida_range(2));
 % fida = sum(spec.*dispersion_tmp.*fida_dex,1);
 
 
-bes = sum(spectmp.*dispersion_tmp.*bes_dex,1,'omitnan');
-fida = sum(spectmp.*dispersion_tmp.*fida_dex,1,'omitnan');
+bes = sum(spec.*dispersion_tmp.*bes_dex,1,'omitnan');
+fida = sum(spec.*dispersion_tmp.*fida_dex,1,'omitnan');
 
 for i = 1:size(plot_type,2)
-    if i>numel(figs)
-        figs{i}=figure;
-        ax = gca;
+    if i>numel(ax)
+        figure;
+        ax{i} = gca;
         hold on;
-    else
-        allAxesInFigure = findall(figs{i},'type','axes');
-        ax = allAxesInFigure(~ismember(get(allAxesInFigure,'Tag'),{'legend','Colobar'}));
     end
-    legend(ax,'Location','best');
+    legend(ax{i},'Location','best');
     switch lower(plot_type{i})
         case 'bes'
             tmp = bes(dex);
@@ -151,22 +150,35 @@ for i = 1:size(plot_type,2)
     else
         dispname = ['FIDASIM ', name];
     end
-    plot(ax,R(dex), tmp,'+','DisplayName',dispname, 'LineWidth',2.0);
-    xlabel(ax,'R [cm]')
-    ylabel(ax,ystr)
+    plot(ax{i},R(dex), tmp,'+','DisplayName',dispname, 'LineWidth',2.0);
+    xlabel(ax{i},'R [cm]')
+    ylabel(ax{i},ystr)
     if lsave
-        legend(ax,'Location','best');
+        legend(ax{i},'Location','best');
         sname = [name, '_', plot_type{i}];
-        savefig(figs{i},sname)
-        exportgraphics(figs{i},[sname,'.eps'],'Resolution',300);
+        savefig(gcf,sname)
+        exportgraphics(gcf,[sname,'.eps'],'Resolution',300);
     end
 end
 plot_data.R = R;
 plot_data.bes = bes;
 plot_data.fida = fida;
-plot_data.spec = spectmp;
+plot_data.spec = spec;
 plot_data.lambda=lambda;
-plot_data.figs=figs;
+plot_data.ax=ax;
 plot_data.dex = dex;
 
+end
+
+
+function F = box_gauss_funct(X,A,B,C,D,E) % From /afs/ipp/home/s/sprd/XXX_DIAG/LIB
+gam   = double(D);
+width = double(E);
+rl    = abs(0.5d0*width./gam);
+Z     = abs((double(X)-double(C))./gam);
+F     = double(B)*(0.5d0./width.*(erf((Z+rl)) - erf((Z-rl))))+double(A);
+
+% Normalization and cutoff
+F = F./sum(F,1);
+F(F<1e-5) = 0;
 end
