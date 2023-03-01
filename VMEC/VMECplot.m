@@ -110,10 +110,12 @@ function varargout = VMECplot(varargin)
 %
 % SAL-03/07/20
 % Added support for SIESTA Plotting
+% DK-03/01/23
+% STL Export Button added
 
 % Edit the above text to modify the response to help VMECplot
 
-% Last Modified by GUIDE v2.5 06-Aug-2010 15:40:57
+% Last Modified by GUIDE v2.5 01-Mar-2023 12:00:31
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -183,6 +185,7 @@ if isempty(filelist) && (nargin ==3)
     set(handles.threedcut,'Enable','off');
     set(handles.filename,'Enable','off');
     set(handles.plottype,'Enable','off');
+    set(handles.pushbutton2,'Enable','off');
     guiupdate(handles);
     return
 end
@@ -790,6 +793,7 @@ temp_theta=handles.theta;
 if (length(size(handles.theta))==3)
     handles.theta=squeeze(handles.theta(handles.rval,:,handles.zetaval));
 end
+delete(findall(handles.figure1,'type','annotation'));
 contents = cellstr(get(handles.plottype,'String'));
 switch contents{get(handles.plottype,'Value')}
 % Test Plot
@@ -1716,6 +1720,7 @@ switch contents{get(handles.plottype,'Value')}
         axis tight;
         
 end
+
 switch handles.cuttype
     case 'text'
         zoom off
@@ -1741,9 +1746,6 @@ switch handles.cuttype
     case {'zeta2','other'}
         set(handles.graph,'XLim',[handles.xmin handles.xmax]);
         set(handles.graph,'YLim',[handles.zmin handles.zmax]);
-        delete(findall(handles.figure1,'type','annotation'));
-        str = ['Min: ', num2str(handles.graph.CLim(1)), ' Max: ', num2str(handles.graph.CLim(2))];
-        handles.text10 = annotation(handles.figure1, 'textbox', [.4 0 .3 .3], 'String', str ,'FitBoxToText','on'); %handles.output
         zoom on
         colorbar('FontSize',16)
         rotate3d off
@@ -1800,12 +1802,22 @@ switch contents{get(handles.plottype,'Value')}
 end
 % Now Fix theta
 handles.theta=temp_theta;
+if handles.checkbox1.Value
+    %str = ['Min: ', num2str(handles.graph.CLim(1)), ' Max: ', num2str(handles.graph.CLim(2))];
+    if handles.graph.CLim(1)==0.0 && handles.graph.CLim(2)==1.0
+        str = sprintf('[%.2e, %.2e]', handles.graph.YLim(1), handles.graph.YLim(2));
+    else
+    str = sprintf('[%.2e, %.2e]', handles.graph.CLim(1), handles.graph.CLim(2));
+    end
+    handles.text10 = annotation(handles.figure1, 'textbox', [.38 0.05 .0 .0], 'String', str ,'FitBoxToText','on');% [.4 0 .3 .3]
+end
 
         
         
 function guiupdate(handles)
 % GUIUPDATE(handles) Updates the GUI
 % This function updates the GUI
+set(handles.pushbutton2,'Enable','off'); 
 switch handles.cuttype
     case 'text'
         set(handles.rslide,'Enable','off');
@@ -1843,6 +1855,7 @@ switch handles.cuttype
         set(handles.rslide,'Enable','on');
         set(handles.theslide,'Enable','off');
         set(handles.torslide,'Enable','off');
+        set(handles.pushbutton2,'Enable','on'); 
 end
 if handles.data.ntor == 0
     set(handles.torslide,'Enable','off');
@@ -2561,6 +2574,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
+
+
 % --- Executes on button press in savebutton.
 function savebutton_Callback(hObject, eventdata, handles)
 % hObject    handle to savebutton (see GCBO)
@@ -2611,3 +2626,28 @@ end
 set(handles.statustext,'String','Ready','ForegroundColor','black');
 drawnow;
 close(h);
+
+% --- Executes on button press in savebutton.
+function stlbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to savebutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+filename=strip(handles.data.input_extension);
+r = repmat(handles.r(:,:,1:end-1),[1 1 handles.data.nfp]);
+z = repmat(handles.z(:,:,1:end-1),[1 1 handles.data.nfp]);
+r(:,:,end+1) = r(:,:,1);
+z(:,:,end+1) = z(:,:,1);
+phi = 0:2*pi/(size(r,3)-1):2*pi;
+set(handles.statustext,'String','Saving to STL file!','ForegroundColor','red');
+isotoro(r,z,phi,handles.rval,'STL',[filename,'_ns',num2str(handles.rval)])
+set(handles.statustext,'String','Ready','ForegroundColor','black');
+
+
+% --- Executes on button press in checkbox1.
+function checkbox1_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox1
+update_plots(handles);
