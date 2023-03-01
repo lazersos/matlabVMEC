@@ -1,4 +1,4 @@
-function [ br,bphi,bz ] = beams3d_apply_bpert(filename_in,filename_out,fluxi0, ni,mi,varargin)
+function [ lines_out ] = beams3d_apply_bpert(filename_in,filename_out,fluxi0, ni,mi,varargin)
 %beams3d_apply_bpert(filename_in,filename_out,fluxi0, ni,mi,varargin)
 %applies a helical perturbation to the magnetic field in filename_in and
 %writes the result to filename_out. Since only the magnetic field
@@ -59,10 +59,14 @@ fluxphi = zeros(size(rhoarr));
 for i = 1:numel(fluxi0)
 %Quadratic/analytical form:
 %fluxir = fluxi0(i) * (rhoarr.^2) .*  (1- rhoarr).^2;
-
 %Strumberger 2008, Perturbation 2:
-fluxir = .1*(rhoarr.^2).^(2/2) .* (1-(rhoarr.^2)).^4;
-plot(.1*linspace(0,1,100).^(2/2) .* (1-linspace(0,1,100)).^4);
+fluxir = fluxi0(i)*(rhoarr.^2).^(2/2) .* (1-(rhoarr.^2)).^4;
+if lplot
+plot(linspace(0,1,100),.1*linspace(0,1,100).^(2/2) .* (1-linspace(0,1,100)).^4);
+%plot(rhoarr,fluxir);
+xlabel('Rho')
+ylabel('Perturbation Amplitude');
+end
 fluxphi = fluxphi + fluxir .* cos(mi.*uarr + ni .* phig);
 end
 
@@ -156,6 +160,16 @@ br = br + curlr;
 bphi = bphi + curlphi;
 bz = bz + curlz;
 
+lines_out.B_R = br;
+lines_out.B_PHI = bphi;
+lines_out.B_Z = bz;
+lines_out.raxis = r;
+lines_out.zaxis=z;
+lines_out.phiaxis=phi;
+lines_out.S_ARR=sarr;
+lines_out.U_ARR=uarr;
+lines_out.RHO_ARR=rhoarr;
+
 if lplot
 subplot(1,2,2)
 modb=sqrt(br.^2+bphi.^2+bz.^2);
@@ -165,8 +179,8 @@ axis equal
 end
 
 if lsave
-rbphi = h5read(filename_out,'/B_PHI');
-if sum(size(rbphi)-size(bphi))~=0
+%rbphi = h5read(filename_out,'/B_PHI');
+%if sum(size(rbphi)-size(bphi))~=0
 delete_hdf5_group(filename_out,'/B_R');
 h5create(filename_out,'/B_R',size(br));
 delete_hdf5_group(filename_out,'/B_PHI');
@@ -185,8 +199,8 @@ delete_hdf5_group(filename_out,'/nphi');
 h5create(filename_out,'/nphi',1);
 delete_hdf5_group(filename_out,'/nz');
 h5create(filename_out,'/nz',1);
-end
-%h5create(filename_out,'/B_R',size(br));
+%end
+
 h5write(filename_out,'/B_R',br)
 h5write(filename_out,'/B_PHI',bphi)
 h5write(filename_out,'/B_Z',bz)

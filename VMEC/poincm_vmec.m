@@ -46,7 +46,7 @@ fieldlines=zeros(ns,npunk,2); % Array of punctures
 % Setup starting points for field line following
 if ~isempty(vmecdata)
     for i=1:ns
-        fieldlines(i,1,1)=cfunct(0,0,vmecdata.rbc(:,:,i),vmecdata.nfp);
+        fieldlines(i,1,1)=cfunct_old(0,0,vmecdata.rbc(:,:,i),vmecdata.nfp);
     end
     fieldlines(:,1,2)=0.0;
 end
@@ -56,20 +56,20 @@ for i=1:ns
     zeta=0.0;
     theta=0.0;
     nhit=1;
-    r=cfunct(theta,zeta,vmecdata.rbc(:,:,i),vmecdata.nfp)-vmecdata.Rmajor;
-    z=sfunct(theta,zeta,vmecdata.zbs(:,:,i),vmecdata.nfp);
+    r=cfunct_old(theta,zeta,vmecdata.rbc(:,:,i),vmecdata.nfp)-vmecdata.Rmajor;
+    z=sfunct_old(theta,zeta,vmecdata.zbs(:,:,i),vmecdata.nfp);
     hold on
     plot(r,z,'xb');
     hold off
     while nhit <= npunk
         nstep=0;
         while nstep < maxiter
-            bu=cfunct(theta,zeta,vmecdata.buc(:,:,i),vmecdata.nfp);
-            bv=cfunct(theta,zeta,vmecdata.bvc(:,:,i),vmecdata.nfp);
-            drdu=sfunct(theta,zeta,vmecdata.rus(:,:,i),vmecdata.nfp);
-            drdv=sfunct(theta,zeta,vmecdata.rvs(:,:,i),vmecdata.nfp);
-            dzdu=cfunct(theta,zeta,vmecdata.zuc(:,:,i),vmecdata.nfp);
-            dzdv=cfunct(theta,zeta,vmecdata.zvc(:,:,i),vmecdata.nfp);
+            bu=cfunct_old(theta,zeta,vmecdata.buc(:,:,i),vmecdata.nfp);
+            bv=cfunct_old(theta,zeta,vmecdata.bvc(:,:,i),vmecdata.nfp);
+            drdu=sfunct_old(theta,zeta,vmecdata.rus(:,:,i),vmecdata.nfp);
+            drdv=sfunct_old(theta,zeta,vmecdata.rvs(:,:,i),vmecdata.nfp);
+            dzdu=cfunct_old(theta,zeta,vmecdata.zuc(:,:,i),vmecdata.nfp);
+            dzdv=cfunct_old(theta,zeta,vmecdata.zvc(:,:,i),vmecdata.nfp);
             br=bu*drdu+bv*drdv;
             bphi=r*bv;
             bz=bu*dzdu+bv*dzdv;
@@ -82,8 +82,8 @@ for i=1:ns
             r=sqrt(x*x+y*y);
             theta=atan(z/r);
             zeta=atan(y/x);
-            r=cfunct(theta,zeta,vmecdata.rbc(:,:,i),vmecdata.nfp)-vmecdata.Rmajor;
-            z=sfunct(theta,zeta,vmecdata.zbs(:,:,i),vmecdata.nfp);
+            r=cfunct_old(theta,zeta,vmecdata.rbc(:,:,i),vmecdata.nfp)-vmecdata.Rmajor;
+            z=sfunct_old(theta,zeta,vmecdata.zbs(:,:,i),vmecdata.nfp);
             hold on
             plot(r,z,'.k');
             pause(.1);

@@ -25,6 +25,7 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      plot_beams(beam_data,'frac_loss'); % Wall Loss fraction
 %      plot_beams(beam_data,'frac_therm'); % Thermalized fraction
 %      plot_beams(beam_data,'distribution'); % 2D vll/vperp distribution
+%      plot_beams(beam_data,'denf2d'); % 2D fast ion density distribution
 %      plot_beams(beam_data,'heating'); % 1D Heating profiles
 %      plot_beams(beam_data,'current'); % 1D Current Density profiles
 %      plot_beams(beam_data,'fueling'); % 1D EP fuelint profiles
@@ -62,7 +63,7 @@ if nargin > 1
                     'rho','rho_therm','rho_birth','rho_total',...
                     'rho_initial','rho_lost_initial','rho_therm_initial',...
                     'frac_loss', 'frac_therm',...
-                    'distribution','heating','current','fueling',...
+                    'distribution','denf2d','heating','current','fueling',...
                     'injection','birth_image',...
                     'wall','wall_loss','wall_heat','wall_shine','benchmarks',...
                     'wall_loss_2d','wall_heat_2d','wall_shine_2d',...
@@ -176,6 +177,7 @@ if isfield(beam_data,'vlldist')
 else
     % Setup indicies
     dex1 = 1;
+    port_dex = beam_data.end_state==4;
     shine_dex = beam_data.end_state==3;
     lost_dex = beam_data.end_state==2;
     therm_dex = beam_data.end_state==1;
@@ -961,6 +963,15 @@ else
                 xlabel(['Parallel Velocity (v_{||}) [' units ']']);
                 ylabel(['Perpendicuarl Velocity (v_\perp) [' units ']']);
                 title('Initial Lost Distribution');
+            case 'denf2d'
+                figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+                dist = squeeze(trapz(beam_data.paxis,trapz(beam_data.Vaxis,trapz(beam_data.Waxis,sum(beam_data.dist_prof,1),6),5),4));
+                pixplot(beam_data.rhoaxis.^2,beam_data.uaxis,dist);
+
+                %pixplot(beam_data.rhoaxis.^2.*cos(beam_data.uaxis),beam_data.rhoaxis.^2.*sin(beam_data.uaxis),dist);
+                ylabel('U bins [-]')
+                xlabel('S bins [-]')
+                title('Fast ion density [m^{-3}]');
             case 'orbit_rz'
                 figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
                 R = beam_data.R_lines(:,beam_dex);
@@ -1123,22 +1134,27 @@ else
                 title('BEAMS3D Fast-Ion Fueling');
             case 'injection'
                 nmax=512;
+                start = 1;
                 x_shine = beam_data.X_lines([1 2],shine_dex);
                 y_shine = beam_data.Y_lines([1 2],shine_dex);
                 z_shine = beam_data.Z_lines([1 2],shine_dex);
                 n = size(x_shine,2);
                 dn = max([round(n/nmax) 1]);
-                dl = 1:dn:n;
+                dl = start:dn:n;
                 x_shine = x_shine(:,dl);
                 y_shine = y_shine(:,dl);
                 z_shine = z_shine(:,dl);
-                temp_dex = and(~shine_dex,beam_dex);
+                temp_dex = and(~port_dex,and(~shine_dex,beam_dex));
                 x = beam_data.X_lines([1 2],temp_dex);
                 y = beam_data.Y_lines([1 2],temp_dex);
                 z = beam_data.Z_lines([1 2],temp_dex);
+                temp_dex =sqrt(diff(x,1,1).^2+diff(z,1,1).^2+diff(z,1,1).^2)<2.0;
+                shortx=x(:,temp_dex);
+                shorty=y(:,temp_dex);
+                shortz=z(:,temp_dex);
                 n = size(x,2);
                 dn = max([round(n/nmax) 1]);
-                dl = 1:dn:n;
+                dl = start:dn:n;
                 x = x(:,dl);
                 y = y(:,dl);
                 z = z(:,dl);
@@ -1146,7 +1162,10 @@ else
                 hold on;
                 if ~isempty(x_shine), plot3(x_shine,y_shine,z_shine,'r'); leg_text=[leg_text; 'Shinethrough']; end
                 if ~isempty(x), plot3(x,y,z,'g'); leg_text=[leg_text; 'Injected'];end
+                if ~isempty(x), plot3(shortx,shorty,shortz,'b'); leg_text=[leg_text; 'Short'];end
                 legend(leg_text);
+%                 figure
+%                 histogram(sqrt(diff(x,1,1).^2+diff(z,1,1).^2+diff(z,1,1).^2));
             case 'birth_image'
                 r_nb = [];
                 z_nb = [];

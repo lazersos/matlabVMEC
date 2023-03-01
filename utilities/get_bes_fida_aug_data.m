@@ -305,10 +305,10 @@ for i = 1:size(plot_type,2)
             for j = 1:sum(time_dex_vec)
                 plot(ax,R_pts(dex_in,time_dex_inds(j)),fida(dex_in,time_dex_inds(j))./bes(dex_in,time_dex_inds(j)),'o', 'DisplayName',sprintf('Data %.3f s', time(time_dex_inds(j))),'LineWidth',2.0);
             end
-            tmp = sum(fida./bes.*time_dex,2)./sum(time_dex,2);
+            tmp = sum(fida./bes.*time_dex,2,'omitnan')./sum(time_dex,2,'omitnan');
             %plot(ax,R_pts(time_dex),fida(time_dex)./bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             %tmp = sum(fida./bes.*time_dex,2,'omitnan')./sum(time_dex,2);
-            tmp_err=sqrt(sum(fida_bes_err.*time_dex,2).^2)./sum(time_dex,2);
+            tmp_err=sqrt(sum(fida_bes_err.*time_dex,2,'omitnan').^2)./sum(time_dex,2,'omitnan');
             %             tmp_err = (fida./bes).*dex.*time_dex;
             %             tmp_err(tmp_err==0) = NaN;
             %             tmp_err = std(tmp_err,0,2,'omitnan');%fida_bes_err_out;

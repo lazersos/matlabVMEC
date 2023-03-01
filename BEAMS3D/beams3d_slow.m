@@ -202,9 +202,29 @@ elseif log_type == 3
     rmax = sqrt(1./(omegae2./uave2 + omegai2./uavi2));
     coulomb_loge = log(rmax./rmine);
     coulomb_logi = log(rmax./rmini);
+    if lplot
+        figure
+        plot(coulomb_loge,'DisplayName','electron log')
+        hold on
+        plot(coulomb_logi,'DisplayName','Ion log')
+    end
+coulomb_loge(coulomb_loge <=1) = 1;
+coulomb_logi(coulomb_logi <=1) = 1;
+ai = plasma_mass/amu;
+zi2_ai = myZ.^2./ai .* coulomb_logi./coulomb_loge;
+zi2 = myZ.^2 .* coulomb_logi./coulomb_loge;
+v_crit = 5.33e4 .* sqrt(TE_BEAM) .* zi2_ai.^(1/3);
+vcrit_cube = v_crit.^3;
+tau_spit = 6.32e8 .* (MASS./amu) ./ (myZ.^2 .* coulomb_loge) .* TE_BEAM.^(3/2) ./ (NE_BEAM.*1E-6);
 end
-coulomb_log(coulomb_log <=1) = 1;
 
+if log_type ~=3
+coulomb_log(coulomb_log <=1) = 1;
+v_crit = ((0.75.*sqrt(pi.*ab./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./ab);
+vcrit_cube = v_crit.^3;
+tau_spit = 3.777183E41.*at.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
+nu0_fe = 6.6E-11 .* NE_BEAM .* myZ.*myZ ./ sqrt(at./9.31E-31) ./ (E_BEAM ./ 1.6022E-19).^(3/2) .* (coulomb_log./17);
+end
 
 
 % omega_p2 = (NE_BEAM .* plasma_charge^2) / (plasma_mass * eps0);
@@ -274,10 +294,6 @@ coulomb_log(coulomb_log <=1) = 1;
 % plot(R_BEAM, cln,'+','DisplayName','NUBEAM Formulation')
 % legend()
 
-v_crit = ((0.75.*sqrt(pi.*ab./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./ab);
-vcrit_cube = v_crit.^3;
-tau_spit = 3.777183E41.*at.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
-nu0_fe = 6.6E-11 .* NE_BEAM .* myZ.*myZ ./ sqrt(at./9.31E-31) ./ (E_BEAM ./ 1.6022E-19).^(3/2) .* (coulomb_log./17);
 
 % Integrate
 C1 = 1./tau_spit;

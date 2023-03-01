@@ -135,12 +135,12 @@ switch plottype
                 scatter(reshape(x,[],1),reshape(y,[],1),1.0,t);
             else
                 %plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
-                colorder = parula(nlines); %numel(line_dex)
-                colororder(colorder)
-                plot(x,y,'.','MarkerSize',4.9);
+                %colorder = parula(nlines); %numel(line_dex)
+                %colororder(colorder)
+                plot(x,y,'.','Color',line_color,'MarkerSize',4.9);
             end
         end
-        if isfield(data,'Rhc_lines')
+        if isfield(data,'Rhc_lines')  && isfield(data,'Zhc_lines')
             line_dex = nphi:npoinc:size(data.Rhc_lines,2);
             for i=1:size(data.Rhc_lines,1)
                 hold on

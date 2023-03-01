@@ -167,7 +167,7 @@ if ldist
         n_fida = 2*pi*dr*dz*sum(dist.r.*sum(squeeze(dist.denf(:,:,1)),2)); %Axisymmetric only.
     end
 
-    [~,z0_ind]=min(abs(dist.z));
+    [~,z0_ind]=min(abs(dist.z-2));
 end
 if leq
     eq = read_hdf5(eq_name);
@@ -175,7 +175,7 @@ if leq
         disp('ERROR: Equilbirium file not found, check filename!');
         disp(['       Filename: ' filename]);
     end
-    [~,z0_ind]=min(abs(eq.fields.z));
+    [~,z0_ind]=min(abs(eq.fields.z-2));
 end
 
 if lneut
@@ -414,19 +414,22 @@ for i = 1:size(plot_type,2)
                 disp(['Applying moving mean with length ', num2str(k), ' to FIDASIM data: ', filename]);
             end
             if ~isempty(sim_data)
-                for j = 1:size(sim_data.lambda,2)
-                    spectmp(:,j) = interp1(spec.lambda, specr(:,j), sim_data.lambda(:,j),'spline');
-                end
-                disp('Interpolated wavelength to match data');
+%                 for j = 1:size(sim_data.lambda,2)
+%                     spectmp(:,j) = interp1(spec.lambda, specr(:,j), sim_data.lambda(:,j),'pchip');
+%                 end
+%                 disp('Interpolated wavelength to match data');
                 if fac~=1.0
                     name = [name,', scale=',num2str(fac)];
                 end
-                plot(sim_data.lambda(:,channel),conv(spectmp(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
-                plot(spec.lambda, conv(spec.full(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
-                plot(spec.lambda, spec.half(:,channel), 'DisplayName',['Half - ' name] );
-                plot(spec.lambda, spec.third(:,channel), 'DisplayName',['Third - ' name] );
-                plot(spec.lambda, conv((spec.halo(:,channel)+spec.dcx(:,channel)),sim_data.instfu(:,channel),'same'), 'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
-                plot(spec.lambda, conv(spec.fida(:,channel),sim_data.instfu(:,channel),'same'), 'DisplayName',['FIDA - ' name] );
+                cwav_mid=mean(spec.lambda);
+                instfu = box_gauss_funct(spec.lambda,0.,1.,cwav_mid,sim_data.instfu_gamma,sim_data.instfu_box_nm);
+                plot(spec.lambda,conv(specr(:,channel),instfu(:,channel),'same'), 'DisplayName', ['Instfu - ' name] );
+                plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
+                plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
+                plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
+                plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
+                fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
+                plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
             else
                 plot(spec.lambda,specr(:,channel), 'DisplayName', ['Spectrum - ' name] );
                 disp('Supply in_data from e.g. get_bes_fida_aug_data for more plots!')
@@ -443,19 +446,30 @@ for i = 1:size(plot_type,2)
             legend(ax,'Location','best');
         case 'los3d'
             vec = [0, 0, -1];
-            lens = rotate_points(geom.spec.lens,vec,deg2rad(67.5));
-            axi = rotate_points(geom.spec.axis,vec,deg2rad(67.5));
-            los = [lens, lens + axi.*max(geom.spec.radius)*1.1];
-            los = reshape(los,3,geom.spec.nchan,2);
-            h=plot3(ax,squeeze(los(1,channel,:))'*fac,squeeze(los(2,channel,:))'*fac,squeeze(los(3,channel,:))'*fac);
+            rotation = 0;% 67.5;
+            lens = rotate_points(geom.spec.lens,vec,deg2rad(rotation));
+            axi = rotate_points(geom.spec.axis,vec,deg2rad(rotation));
+            los = [lens, lens + axi.*max(geom.spec.radius)*length];
+            los = reshape(los,geom.spec.nchan,3,2);
+            h=plot3(ax,squeeze(los(channel,1,:))'*fac,squeeze(los(channel,2,:))'*fac,squeeze(los(channel,3,:))'*fac);
+            src = rotate_points(geom.nbi.src,vec,deg2rad(rotation));
+            axi_nbi = rotate_points(geom.nbi.axis,vec,deg2rad(rotation));
+            los_nbi = [src, src + axi_nbi.*length.*sqrt(sum(src.^2)/2)];
+            los_nbi = reshape(los_nbi,3,2);   
+            plot3(ax,squeeze(los_nbi(1,:))'*fac,squeeze(los_nbi(2,:))'*fac,squeeze(los_nbi(3,:))'*fac,'Color',color);
+            plot3(ax,squeeze(los_nbi(1,1))'*fac,squeeze(los_nbi(2,1))'*fac,squeeze(los_nbi(3,1))'*fac,'+','Color',color);
+            sname = [filename, '_', plot_type{i}];
+            writematrix(los_nbi,sname);
             set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))))
             legend(h,'Location','bestoutside');
+            axis equal
+            rotate3d on
         case 'lostor'
             vec = [0, 0, -1];
             %lens =geom.spec.lens';
             %axi = (geom.spec.lens + geom.spec.axis.*max(geom.spec.radius)*1.1)';
-            lens = rotate_points(geom.spec.lens',vec,deg2rad(0))'; %AUG: 67.5
-            axi = rotate_points((geom.spec.lens + geom.spec.axis.*max(geom.spec.radius)*length)',vec,deg2rad(0))';
+            lens = rotate_points(geom.spec.lens',vec,deg2rad(rotation))'; %AUG: 67.5
+            axi = rotate_points((geom.spec.lens + geom.spec.axis.*max(geom.spec.radius)*length)',vec,deg2rad(rotation))';
             los = [lens, axi];
             los = reshape(los,3,geom.spec.nchan,2);
             %for chan = channel
@@ -469,8 +483,8 @@ for i = 1:size(plot_type,2)
             vec = [0, 0, -1];
             %lens = rotate_points(geom.spec.lens',vec,deg2rad(67.5))';
             %axi = rotate_points(geom.spec.axis',vec,deg2rad(67.5))';
-            lens = rotate_points(geom.spec.lens',vec,deg2rad(0))';
-            axi = rotate_points(geom.spec.axis',vec,deg2rad(0))';
+            lens = rotate_points(geom.spec.lens',vec,deg2rad(rotation))';
+            axi = rotate_points(geom.spec.axis',vec,deg2rad(rotation))';
             los = [lens, lens + axi.*max(geom.spec.radius)*length];
             los = reshape(los,3,geom.spec.nchan,2);
             lost = permute(los,[3,2,1]);
@@ -526,5 +540,15 @@ end
 
 
 
+function F = box_gauss_funct(X,A,B,C,D,E) % From /afs/ipp/home/s/sprd/XXX_DIAG/LIB
+gam   = double(D);
+width = double(E);
+rl    = abs(0.5d0*width./gam);
+Z     = abs((double(X)-double(C))./gam);
+F     = double(B)*(0.5d0./width.*(erf((Z+rl)) - erf((Z-rl))))+double(A);
 
+% Normalization and cutoff
+F = F./sum(F,1);
+F(F<1e-5) = 0;
+end
 

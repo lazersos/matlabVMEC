@@ -1,4 +1,4 @@
-function vmec_spectrum(data,varargin)
+function tmp=vmec_spectrum(data,varargin)
 %VMEC_SPECTRUM Dumps the VMEC spectrum of a wout file to the screen.
 %   The VMEC_SPECTRUM function takes a VMEC wout structure as read by the
 %   READ_VMEC function.  It returns to screen the boundary harmonic
@@ -85,7 +85,9 @@ if (data.iasym == 0)
         disp(['  ZAXIS = ' num2str(zax',' %20.12E ')]);
         for i=1:data.mnmax
             disp(['  RBC(' num2str(-data.xn(i)./data.nfp,'%2.2d') ',' num2str(data.xm(i),'%2.2d') ') = ' num2str(data.rmnc(i,s),'%20.12E') '  ZBS(' num2str(-data.xn(i)./data.nfp,'%2.2d') ',' num2str(data.xm(i),'%2.2d') ') = ' num2str(data.zmns(i,s),'%20.12E') ]);
+            tmp(i,:) = [-data.xn(i)./data.nfp data.xm(i) data.rmnc(i,s) data.zmns(i,s)];
         end
+
     elseif lfocus
         disp('#bmn  bNfp nbf');
         disp([num2str(data.mnmax,'%3i ') ' ' num2str(data.nfp,'%3i ') ' ' num2str(data.mnmax,'%3i ')]);

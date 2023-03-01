@@ -87,7 +87,7 @@ cwav_mid=mean(spec.lambda);
 instfu = box_gauss_funct(spec.lambda,0.,1.,cwav_mid,sim_data.instfu_gamma,sim_data.instfu_box_nm);
 
 for i = 1:size(spec,2)
-    spec(:,i) = conv(spec(:,i),instfu(:,channel),'same');
+    spec(:,i) = conv(spec(:,i),instfu(:,i),'same');
     disp(['Applying Instrument function to FIDASIM data: ', filename]);
 end
 
