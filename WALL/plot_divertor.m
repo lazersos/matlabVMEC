@@ -99,7 +99,7 @@ switch plottype
         end
         r = sqrt(x.*x+y.*y);
         rmax=max(r).*1.2;
-        rmin=min(r)*.8;
+        rmin=min(r)*1.0;
         zmax=max(z).*1.2;
         zmin=min(z).*1.2;
         surf1.vertices = data.coords';
@@ -124,7 +124,7 @@ switch plottype
             return;
         end
         xmax=max(x).*1.2;
-        xmin=min(x)*.8;
+        xmin=min(x).*1.2;
         ymax=max(y).*1.2;
         ymin=min(y).*1.2;
         surf1.vertices = data.coords';

@@ -1,12 +1,13 @@
 function [ output_args ] = plot_fieldlines(data,varargin)
 %PLOT_FIELDLINES(data,[plottype])  Plots the data from read_mgrid
-%   The PLOT_FIELDLINES routine plots data read by READ_FIELDLINES.  There 
+%   The PLOT_FIELDLINES routine plots data read by READ_FIELDLINES.  There
 %   are various plotting options.
 %   Options:
 %       'basic':        Poincare plot on the first cutplane.
 %       '3D':           Same as 'basic' but in 3D space.
 %       'color':        Specify color ('color','r')
-%       'cutplane':     Poincare plot on specific cutplane ('cutplane',5)    
+%       'iota':         Color according to local iota value
+%       'cutplane':     Poincare plot on specific cutplane ('cutplane',5)
 %       'camera':       Make a camera image by binning poincare points.
 %       'camera_AEV30': W7-X AEV30 view (from AEQ21)
 %       'strike_2D':    Strike pattern
@@ -15,6 +16,7 @@ function [ output_args ] = plot_fieldlines(data,varargin)
 %       'camview':      Use current view to construct a camer view
 %       'phi':          Plot on interpolated value of phi 2D ('phi',0.51)
 %       'phi3D':        Plot on interpolated value of phi 3D ('phi3D',0.51)
+%       'movie':        Make cutplane movie (.mp4)
 %
 %   Usage:
 %       line_data=read_fieldlines('fieldlines_test.h5');
@@ -37,7 +39,7 @@ nlines = data.nlines;
 line_color='k';
 camera = [];
 skip=1;
-
+liota=0;
 % Handle varargin
 if nargin > 1
     i = 1;
@@ -60,6 +62,8 @@ if nargin > 1
             case 'cutplane'
                 i=i+1;
                 nphi=varargin{i};
+            case 'movie'
+                plottype=11;
             case 'phi'
                 i=i+1;
                 phi0=varargin{i};
@@ -87,6 +91,12 @@ if nargin > 1
             case 'skip'
                 i=i+1;
                 skip=varargin{i};
+            case 'iota'
+                if isfield(data,'iota')
+                    liota = 1;
+                else
+                    disp('iota not found in data! Plotting normally!')
+                end
         end
         i=i+1;
     end
@@ -97,15 +107,18 @@ switch plottype
         line_dex = nphi:npoinc:nsteps;
         x=data.R_lines(1:skip:nlines,line_dex);
         y=data.Z_lines(1:skip:nlines,line_dex);
-        if isfield(data,'rho')
+        if liota
+            t = repmat(iota,size(x,2),1);
+            scatter(reshape(x,[],1),reshape(y,[],1),1.0,t);
+        elseif isfield(data,'rho')
             s=ones(size(x,1),size(x,2));
             c=repmat(data.rho(1:skip:nlines),[1 size(x,2)]);
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
             caxis([0 data.rho(end-1)]);
         else
-            plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
+            plot(x,y,'.','Color',line_color,'MarkerSize',1.0);
         end
-        if isfield(data,'Rhc_lines')
+        if isfield(data,'Rhc_lines')  && isfield(data,'Zhc_lines')
             line_dex = nphi:npoinc:size(data.Rhc_lines,2);
             for i=1:size(data.Rhc_lines,1)
                 hold on
@@ -117,6 +130,8 @@ switch plottype
             hold off
         end
         axis equal
+        xlabel('R [m]')
+        ylabel('Z [m]')
     case{101}
         line_dex = nphi:npoinc:nsteps;
         R = data.R_lines(1:skip:nlines,line_dex);
@@ -389,9 +404,9 @@ switch plottype
         Y = Y(P<9*pi/10);
         Z = Z(P<9*pi/10);
         [x_im,  y_im] = points_to_camera(X,Y,Z,...
-                'camera',camera,...
-                'fov',a_cam,'camera_pos',c_cam,'camera_normal',n_cam,...
-                'camera_up',u_cam);
+            'camera',camera,...
+            'fov',a_cam,'camera_pos',c_cam,'camera_normal',n_cam,...
+            'camera_up',u_cam);
         dex   = x_im <= camera(1);
         x_im  = x_im(dex);
         y_im  = y_im(dex);
@@ -508,7 +523,7 @@ switch plottype
         xb=linspace(x_min,x_max,size(syn_temp,1));
         yb=linspace(y_min,y_max,size(syn_temp,2));
         syn(round(xb),round(yb))=syn_temp./double(i)+syn(round(xb),round(yb));
-        
+
         % Smooth
         sigma = 1; % set sigma to the value you need
         sz = 2*ceil(2.6 * sigma) + 1; % See note below
@@ -524,5 +539,27 @@ switch plottype
         ylim([1 camera(2)]);
         colormap hot;
         %hold on; plot([333 1336],[376 622],'r','LineWidth',4.0); % plot z=0
+    case{11}
+        v = VideoWriter([data.input_extension(1:end-3),'.avi'], 'Motion JPEG AVI');
+        open(v);
+        f=figure;
+        set(gcf,'position',get(0,'ScreenSize'));
+        for nphi = 1:npoinc
+            line_dex = nphi:npoinc:nsteps;
+            x=data.R_lines(1:skip:nlines,line_dex);
+            y=data.Z_lines(1:skip:nlines,line_dex);
+            plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
+            axis equal
+            title('Poicare plot')
+            xlabel('R [m]')
+            ylabel('Z [m]')
+            %xlim([1.5 1.9])
+            %ylim([-0.2 0.3])
+            xlim([4.5 6.5])
+            ylim([-1.5 1.5])
+            frame = getframe(f); %for writing
+            writeVideo(v,frame);
+        end
+        close(v);
 end
 end

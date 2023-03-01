@@ -115,13 +115,13 @@ switch plottype
             colorbar
             caxis([bmin bmax]);
             axis image
-            % Third plot Verticle Field
+            % Third plot vertical Field
             subplot(2,2,3);
             hplot3=pcolor(raxis2d,zaxis2d,bzt(:,:,i));
             set(hplot3,'EdgeColor','none');
             xlabel('R-Axis');
             ylabel('Z-Axis');
-            title('Verticle Field');
+            title('Vertical Field');    
             colorbar
             caxis([bmin bmax]);
             axis image
@@ -225,13 +225,13 @@ switch plottype
         colorbar
         caxis([bmin bmax]);
         axis image
-        % Third plot Verticle Field
+        % Third plot vertical Field
         subplot(2,2,3);
         hplot3=pcolor(raxis2d,zaxis2d,bzt(:,:,cutplane));
         set(hplot3,'EdgeColor','none');
         xlabel('R-Axis');
         ylabel('Z-Axis');
-        title('Verticle Field');
+        title('Vertical Field');
         colorbar
         caxis([bmin bmax]);
         axis image

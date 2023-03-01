@@ -6,7 +6,9 @@ function dist = beams3d_getdistrpzEpitch(data,r,phi,z,E,pitch)
 %   of points can be passed to the funciton as R [m], PHI (rad), Z [m],
 %   Energy [eV], and pitch (vll/v).  Points which fall outside the
 %   domain return 0.  The function returns a 2D array of size (NBEAMS,
-%   NPTS) where NPTS is the nubmer of requested datapoints.
+%   NPTS) where NPTS is the nubmer of requested datapoints. The
+%   distribution function units are the same as that of FIDASIM:
+%   [1/cm^3/keV/(dOmega/4pi(?))]
 %
 % Example usage
 %      % Return an RPZ shaped array
@@ -48,8 +50,9 @@ dw=data.partvmax;
 
 mass = data.mass(1); % Assume same mass
 V = sqrt(ec.*2.*E./mass);
-Vval = V.*pitch;
-Wval = sqrt(V.^2-Vval.^2);
+Vval = V.*pitch; %Vll
+Wval = sqrt(V.^2-Vval.^2); %Vperp
+%Vval = Vval+vmax;
 
 
 
@@ -64,35 +67,22 @@ uval= interp3(data.raxis,data.phiaxis,data.zaxis,...
 pval = mod(phi,2*pi);
 rhoval = sqrt(sval);
 
-
-% Calculate indexes
-dexr=floor(data.ns_prof1.*rhoval./ds)+1;
-dexu=min(floor(data.ns_prof2.*uval./du)+1,data.ns_prof2);
-dexp=floor(data.ns_prof3.*pval./dp)+1;
-dexv=floor(data.ns_prof4.*(Vval+vmax)./dv)+1;
-dexw=floor(data.ns_prof5.*Wval./dw)+1;
-
-
-mask1=and(dexr>0,dexr<=data.ns_prof1);
-mask3=and(dexp>0,dexp<=data.ns_prof3);
-mask4=and(dexv>0,dexv<=data.ns_prof4);
-mask5=and(dexw>0,dexw<=data.ns_prof5);
-maskt=(mask1 & mask3 & mask4 & mask5);
-
-% Normalize dist_prof by volume
-dist5d_norm=data.dist_prof;
-
 % Jacobian from D. Moseev paper
 % https://doi.org/10.1063/1.5085429
-jac = 1.0./(mass.*sqrt(1-pitch.*pitch));
+%jac = 1.0./(mass.*sqrt(1-pitch.*pitch)); % this is wrong for the current
+%beams3d normalization (f2D_Ep = 2pi v/m f3D_Car)
 
+jac = 2* pi * V ./mass .* ec / 1000;
+dist_norm = squeeze(sum(data.dist_prof,1));
 
-dist=zeros(data.nbeams,length(r));
-for i=1:length(maskt)
-    if maskt(i)
-        dist(:,i) = dist5d_norm(:,dexr(i),dexu(i),dexp(i),dexv(i),dexw(i)).*jac(i);
-    end
+uval(uval<min(data.dist_uaxis))=min(data.dist_uaxis);
+uval(uval>max(data.dist_uaxis))=max(data.dist_uaxis);
+
+pval(pval<min(data.dist_paxis))=min(data.dist_paxis);
+pval(pval>max(data.dist_paxis))=max(data.dist_paxis);
+
+dist=interpn(data.dist_rhoaxis,data.dist_uaxis,data.dist_paxis,data.dist_Vaxis,data.dist_Waxis,dist_norm,rhoval,uval,pval,Vval,Wval,'linear');
+
+dist = dist.*jac;
+
 end
-
-end
-
