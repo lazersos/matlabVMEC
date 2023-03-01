@@ -143,6 +143,7 @@ NE   = permute(beam_data.NE,[2 1 3]);
 TI   = permute(beam_data.TI,[2 1 3]);
 TE   = permute(beam_data.TE,[2 1 3]);
 ZEFF   = permute(beam_data.ZEFF_ARR,[2 1 3]);
+ZEFF(isnan(ZEFF))=1;
 NE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     NE,R_BEAM,P_BEAM,Z_BEAM);
 TE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
