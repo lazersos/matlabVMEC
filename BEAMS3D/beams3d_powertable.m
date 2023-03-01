@@ -152,6 +152,9 @@ if lverb
     end
     disp(['TOTAL:  ' num2str(round(sum(P,2).*unit_factor)',' %6i ') units '  |  ' num2str(round(sum(J_TOTAL).*unitj_factor)',' %6i ') unitsj]);
 end
+
+P = [P; J_TOTAL];
+
 return;
 end
 
