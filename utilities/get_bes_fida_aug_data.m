@@ -21,7 +21,7 @@ function [plot_data,sim_data] = get_bes_fida_aug_data(filename,varargin)
 %      get_bes_fida_aug_data(filename,'timetrace_X'); %Timetrace
 %      !!! 'X' can be 'fida', 'bes', or 'fidabes' and 'spectrum'
 % Miscellaneous Arguments
-%      plot_fidasim(runid,'figs',figs); %Used for overplotting
+%      plot_fidasim(runid,'ax',ax); %Used for overplotting
 %      plot_fidasim(runid,'save'); %Export figures (.fig and .png)
 %      plot_fidasim(runid,'name', 'test'); %ID Name for legend
 %
@@ -33,7 +33,7 @@ function [plot_data,sim_data] = get_bes_fida_aug_data(filename,varargin)
 
 shotid = str2double(filename(1:5));
 plot_type = {};
-figs = {};
+ax = {};
 lsave = 0;
 avg_time=0;
 lmovie=0;
@@ -103,9 +103,9 @@ if nargin > 2
                 t_passive = varargin{i};
             case 'save'
                 lsave = 1;
-            case 'figs'
+            case 'ax'
                 i=i+1;
-                figs = varargin{i};
+                ax = varargin{i};
             case 'name'
                 i = i+1;
                 name = varargin{i};
@@ -276,25 +276,26 @@ R_pts = repmat(R,1,size(spec_in,3))*100;
 
 
 for i = 1:size(plot_type,2)
-    if i>numel(figs)
-        figs{i}=figure;
-        ax = gca;
+    if i>numel(ax)
+        figure;
+        ax{i} = gca;
         hold on;
+        colororder(ax{i},parula(5))
     else
-        allAxesInFigure = findall(figs{i},'type','axes');
-        ax = allAxesInFigure(~ismember(get(allAxesInFigure,'Tag'),{'legend','Colobar'}));
+        %allAxesInFigure = findall(figs{i},'type','axes');
+        %ax = allAxesInFigure(~ismember(get(allAxesInFigure,'Tag'),{'legend','Colobar'}));
     end
-    legend(ax,'Location','best');
+    %legend(ax{i},'Location','best');
     switch lower(plot_type{i})
         case 'bes'
-            plot(ax,R_pts(time_dex),bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),'-',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
-            %plot(ax,R_pts(time_dex_passive),bes(time_dex_passive),'o','DisplayName',['Data Passive ', num2str(t_passive- avg_time/2),'-',num2str(t_passive+ avg_time/2), 's'], 'LineWidth',2.0);
+            plot(ax{i},R_pts(time_dex),bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),'-',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            %plot(ax{i},R_pts(time_dex_passive),bes(time_dex_passive),'o','DisplayName',['Data Passive ', num2str(t_passive- avg_time/2),'-',num2str(t_passive+ avg_time/2), 's'], 'LineWidth',2.0);
             tmp = sum(bes.*time_dex,2)./sum(time_dex,2);
             tmp_err=sqrt(sum(bes_err.*time_dex,2).^2)./sum(time_dex,2);
             ystr = 'BES';
 
         case 'fida'
-            plot(ax,R_pts(time_dex),fida(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            plot(ax{i},R_pts(time_dex),fida(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             tmp = sum(fida.*time_dex,2)./sum(time_dex,2);
             tmp_err=sqrt(sum(fida_err.*time_dex,2).^2)./sum(time_dex,2);
             ystr = 'FIDA';
@@ -303,7 +304,7 @@ for i = 1:size(plot_type,2)
         case 'fidabes'
             %compose('Data %.3f - %.3f s', (t_point - avg_time/2)',(t_point + avg_time/2)')
             for j = 1:sum(time_dex_vec)
-                plot(ax,R_pts(dex_in,time_dex_inds(j)),fida(dex_in,time_dex_inds(j))./bes(dex_in,time_dex_inds(j)),'o', 'DisplayName',sprintf('Data %.3f s', time(time_dex_inds(j))),'LineWidth',2.0);
+                plot(ax{i},R_pts(dex_in,time_dex_inds(j)),fida(dex_in,time_dex_inds(j))./bes(dex_in,time_dex_inds(j)),'o', 'DisplayName',sprintf('Data %.3f s', time(time_dex_inds(j))),'LineWidth',2.0);
             end
             tmp = sum(fida./bes.*time_dex,2,'omitnan')./sum(time_dex,2,'omitnan');
             %plot(ax,R_pts(time_dex),fida(time_dex)./bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
@@ -318,18 +319,19 @@ for i = 1:size(plot_type,2)
             t.LineWidth = 0.01;
 
         case 'timetrace_fida'
-            plot(ax,time(2:end),fida(channel,2:end))
-            xlabel(ax,'Time [s]')
-            ylabel(ax,['Integrated FIDA: ', num2str(fida_range(1)), '-',num2str(fida_range(end)), 'nm']);
-            legend(ax,deblank(names(channel)'))
+            plot(ax{i},time(2:end),fida(channel,2:end))
+            xlabel(ax{i},'Time [s]')
+            ylabel(ax{i},['Integrated FIDA: ', num2str(fida_range(1)), '-',num2str(fida_range(end)), 'nm']);
+            legend(ax{i},deblank(names(channel)'))
         case 'timetrace_bes'
-            plot(ax,time(2:end),fida(channel,2:end))
-            xlabel(ax,'Time [s]')
-            ylabel(ax,['Integrated BES: ', num2str(bes_range(channel,1)), '-',num2str(bes_range(channel,end)), 'nm']);
-            legend(ax,deblank(names(channel)'))
+            plot(ax{i},time(2:end),fida(channel,2:end))
+            xlabel(ax{i},'Time [s]')
+            ylabel(ax{i},['Integrated BES: ', num2str(bes_range(channel,1)), '-',num2str(bes_range(channel,end)), 'nm']);
+            legend(ax{i},deblank(names(channel)'))
         case 'timetrace_fidabes'
             %plot(ax,time(2:end),fida(channel,2:end)./bes(channel,2:end), 'DisplayName', ['FIDA/BES Chan: ', names{channel}])
             %plot(ax,repmat(time(2:end),1,numel(channel)),movmean(fida(channel,2:end)./bes(channel,2:end),8,2)') %['FIDA/BES smoothed ',
+            plot(ax,repmat(time(2:end),1,numel(channel)),(fida(channel,2:end)./bes(channel,2:end))') %['FIDA/BES smoothed ',
             tmp = (fida(channel,:)./bes(channel,:))';
             plot(ax,repmat(time(:),1,numel(channel)),tmp) %['FIDA/BES smoothed ',
             xlabel(ax,'Time [s]')
@@ -349,36 +351,38 @@ for i = 1:size(plot_type,2)
         case 'spectrum'
             time_dex_spec = permute(repmat(time_dex,1,1,size(spec,1)),[3,1,2]);
             tmp =squeeze(sum(spec.*time_dex_spec,3)./sum(time_dex_spec,3));
-            plot(ax,lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
+            plot(ax{i},lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);%, Chan: ', names{channel} 
             tmp_err=sqrt(sum(spec_err.*time_dex_spec,3).^2)./sum(time_dex_spec,3);
-            errorbar(ax,lambda(:,channel),tmp(:,channel),tmp_err(:,channel),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
-            %plot(ax,lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
+            %errorbar(ax{i},lambda(:,channel),tmp(:,channel),tmp_err(:,channel),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
+            %plot(ax{i},lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
             %tmp_in =squeeze(sum(spec_in.*permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3)./sum(permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3));
-            %plot(ax,lambda(:,channel),tmp_in(:,channel), 'DisplayName',['Data, bo BG sub ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            %plot(ax{i},lambda(:,channel),tmp_in(:,channel), 'DisplayName',['Data, bo BG sub ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             xline(bes_range(channel,:),'DisplayName', 'BES Range')
-            set(ax,'YScale','log');
+            legend((ax{i}.Legend.String(1:end-1)))
+            set(ax{i},'YScale','log');
         case 'movie'
             v = VideoWriter([num2str(shotid), '_fidabes_movie','.mp4'], 'MPEG-4');
             open(v);
             for j=1:numel(t)
-                plot(ax,R_pts(time_dex),fida(time_dex)./bes(time_dex),'o')
+                plot(ax{i},R_pts(time_dex),fida(time_dex)./bes(time_dex),'o')
                 ylim([0 0.24])
-                frame = getframe(figs{1}); %for writing
+                frame = getframe(gcf); %for writing
                 writeVideo(v,frame);
             end
             close(v);
     end
 
     if ~strcmp(plot_type{i},'spectrum') && ~strcmp(plot_type{i}(1:3),'tim')
-        errorbar(ax,R(dex_in)*100, tmp(dex_in),tmp_err(dex_in),'--','DisplayName',['Avg. ', num2str(t_point(1)), 's'], 'LineWidth',2.0);
-        xlabel(ax,'R [cm]')
-        ylabel(ax,ystr);
+        errorbar(ax{i},R(dex_in)*100, tmp(dex_in),tmp_err(dex_in),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
+        xlabel(ax{i},'R [cm]')
+        ylabel(ax{i},ystr);
     end
     if lsave
-        legend(ax);
+        legend(ax{i});
         sname = [num2str(shotid), '_', num2str(t_point*1000), '_' plot_type{i}];
-        savefig(figs{i},sname)
-        exportgraphics(figs{i},[sname,'.png'],'Resolution',300);
+        savefig(gcf,sname)
+        %set(gcf,'renderer','Painters');
+        exportgraphics(gcf,[sname,'.eps'],'Resolution',300);
     end
 end
 
@@ -399,7 +403,7 @@ if t_point ~=0
     plot_data.fida_bes_err = fida_bes_err_out;
 end
 
-sim_data.figs = figs;
+sim_data.ax = ax;
 sim_data.R = R;
 sim_data.names = names;
 sim_data.names_unsorted = names_unsorted;
@@ -413,6 +417,7 @@ end
 sim_data.instfu=instfu;
 sim_data.instfu_gamma=instfu_gamma;
 sim_data.instfu_box_nm=instfu_box_nm;
+
 
 end
 

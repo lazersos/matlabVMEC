@@ -1,4 +1,4 @@
-function [ figs, n_fida ] = plot_fidasim(filename,varargin)
+function [ ax, n_fida ] = plot_fidasim(filename,varargin)
 %PLOT_FIDASIM Makes plots of FIDASIM data generated with the BEAMS3D
 %Interface.
 %The PLOT_FIDASIM function creates various canned plots of the files used
@@ -24,7 +24,7 @@ function [ figs, n_fida ] = plot_fidasim(filename,varargin)
 %      !!! '_' can be '2d' (RZ plane) or 'tor' (midplane)
 %      plot_fidasim(runid,'ndensvert'); %Neutral density, vertical
 %      plot_fidasim(runid,'ndenshorz'); %Neutral density, horizontal
-%      plot_fidasim(runid,'figs', figs); %Figure handles for sharing plots
+%      plot_fidasim(runid,'ax', ax); %Figure handles for sharing plots
 %
 % Miscellaneous Arguments
 %      plot_fidasim(runid,'mean'); %Apply moving mean to spectrum
@@ -36,8 +36,8 @@ function [ figs, n_fida ] = plot_fidasim(filename,varargin)
 % Example usage of comparing BEAMS3D and TRANSP results:
 %     filename_b3d = fidasim_b3d
 %     filename_transp = transp
-%     [figs, n_b3d] = plot_fidasim(filename_b3d,'energy','pitch', 'profiles');
-%     [figs, n_transp] = plot_fidasim(filename_transp,'energy','pitch','profiles','figs',figs);
+%     [ax, n_b3d] = plot_fidasim(filename_b3d,'energy','pitch', 'profiles');
+%     [ax, n_transp] = plot_fidasim(filename_transp,'energy','pitch','profiles','ax',ax);
 %
 % Maintained by: David Kulla (david.kulla@ipp.mpg.de)
 % Version:       1.00
@@ -57,7 +57,7 @@ geom_name = [filename,'_geometry.h5'];
 
 lsave = 0;
 plot_type = {};
-figs = {};
+ax = {};
 fac = 1;
 name = filename;
 leq = 0;
@@ -69,6 +69,7 @@ lgeom =0;
 n_fida=-1;
 sim_data = {};
 channel = 0;
+linestyle = '-';
 color='k';
 if nargin > 1
     i = 1;
@@ -84,6 +85,7 @@ if nargin > 1
                     'fdenftor','denftor'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 ldist = 1;
+                leq=1;
             case{'ndensvert', 'ndenshorz', 'ndenscross'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 lneut = 1;
@@ -115,15 +117,18 @@ if nargin > 1
                 sim_data = varargin{i};
             case 'save'
                 lsave = 1;
-            case 'figs'
+            case 'ax'
                 i=i+1;
-                figs = varargin{i};
+                ax = varargin{i};
             case 'fac'
                 i = i+1;
                 fac = varargin{i};
             case 'name'
                 i = i+1;
                 name = varargin{i};
+            case 'style'
+                i = i+1;
+                linestyle = varargin{i};
             otherwise
                 disp(['ERROR: Option ', varargin{i}, ' not found!']);
         end
@@ -206,6 +211,7 @@ end
 
 
 if ischar(channel)
+    chan_description = channel;
     if ~isempty(sim_data)
         channel = find(strcmp(channel,cellstr(deblank(sim_data.names'))));
         %channel = I(channel);%-1;
@@ -215,6 +221,7 @@ if ischar(channel)
         channel = contains(deblank(geom.spec.id),channel);
     end
 elseif iscell(channel)
+    chan_description=channel;
     if ~isempty(sim_data)
         channel_tmp = [];
         for i=1:numel(channel)
@@ -225,7 +232,8 @@ elseif iscell(channel)
     else
         channel_tmp = false(geom.spec.nchan,1);
         for i=1:numel(channel)
-            channel_tmp = or(channel_tmp,contains(deblank(geom.spec.id),channel{i}));
+            %channel_tmp(:,i) = or(channel_tmp,contains(deblank(geom.spec.id),channel{i}));
+            channel_tmp(:,i) = contains(deblank(geom.spec.id),channel{i});
         end
         channel = channel_tmp;
     end
@@ -233,13 +241,16 @@ elseif iscell(channel)
 end
 
 for i = 1:size(plot_type,2)
-    if i>numel(figs)
-        figs{i}=figure;
-        ax = gca;
-        hold(ax,'on');
+    if i>numel(ax)
+        %figs{i}=figure;
+        figure;
+        ax{i} = gca;
+        hold(ax{i},'on');
+        colororder(ax{i},parula(5))
     else
-        allAxesInFigure = findall(figs{i},'type','axes');
-        ax = allAxesInFigure(~ismember(get(allAxesInFigure,'Tag'),{'legend','Colobar'}));
+        %allAxesInFigure = findall(figs{i},'type','axes');
+        %ax{i} = allAxesInFigure(~ismember(get(allAxesInFigure,'Tag'),{'legend','Colobar'}));
+        hold(ax{i},'on');
     end
     %figure('Color','white','Position',[1 -100 1024 768])
     switch lower(plot_type{i})
@@ -253,9 +264,9 @@ for i = 1:size(plot_type,2)
             end
             if fac == 1
                 % plot(ax,dist.energy(2:end), tmp(1:end-1),'DisplayName',['Energy - ' name] );
-                plot(ax,dist.energy, tmp,'DisplayName',['Energy - ' name] );
+                plot(ax{i},dist.energy, tmp,'DisplayName',['Energy - ' name] );
             else
-                plot(ax,dist.energy, fac*tmp,'DisplayName',['Energy - ' name ', scaling factor: ' num2str(fac)]);
+                plot(ax{i},dist.energy, fac*tmp,'DisplayName',['Energy - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('Energy [keV]')
             ylabel('Fast Ion Distribution [1/keV]')
@@ -269,10 +280,10 @@ for i = 1:size(plot_type,2)
             end
             fprintf('Total fast ions in %s: %3.2e\n',filename,n_fida);
             if fac == 1
-                plot(ax,dist.pitch, tmp,'DisplayName',['Pitch - ' name] );
+                plot(ax{i},dist.pitch, tmp,'DisplayName',['Pitch - ' name] );
                 fprintf('Total from pitch: %3.2e\n',trapz(dist.pitch, tmp));
             else
-                plot(ax,dist.pitch, fac*tmp,'DisplayName',['Pitch - ' name ', scaling factor: ' num2str(fac)]);
+                plot(ax{i},dist.pitch, fac*tmp,'DisplayName',['Pitch - ' name ', scaling factor: ' num2str(fac)]);
             end
             %plot(dist.pitch, squeeze(trapz(dist.phi,trapz(dist.z,trapz(dist.r,trapz(dist.energy,dist.f,1),3),4),5)),'DisplayName','Pitch');
             xlabel('Pitch [-]')
@@ -301,50 +312,50 @@ for i = 1:size(plot_type,2)
             end
             return
         case 'profiles'
-            yyaxis(ax,'left')
-            plot(ax,eq.plasma.r, squeeze(eq.plasma.te(:,z0_ind,1)), 'DisplayName',['T_e - ' name] );
+            yyaxis(ax{i},'left')
+            plot(ax{i},eq.plasma.r, squeeze(eq.plasma.te(:,z0_ind,1)), 'DisplayName',['T_e - ' name] );
             hold on
-            plot(ax,eq.plasma.r, squeeze(eq.plasma.ti(:,z0_ind,1)), 'DisplayName',['T_i - ' name] );
-            plot(ax,eq.plasma.r, squeeze(eq.plasma.zeff(:,z0_ind,1)), 'DisplayName',['Zeff [-] - ' name] );
-            ylabel(ax,'T [keV]')
-            legend(ax,'Location','best')
-            yyaxis(ax,'right')
-            plot(ax,eq.plasma.r, squeeze(eq.plasma.dene(:,z0_ind,1)), 'DisplayName',['n_e - ' name] );
-            xlabel(ax,'R [cm]')
-            ylabel(ax,'n_e [cm^{-3}]')
+            plot(ax{i},eq.plasma.r, squeeze(eq.plasma.ti(:,z0_ind,1)), 'DisplayName',['T_i - ' name] );
+            plot(ax{i},eq.plasma.r, squeeze(eq.plasma.zeff(:,z0_ind,1)), 'DisplayName',['Zeff [-] - ' name] );
+            ylabel(ax{i},'T [keV]')
+            legend(ax{i},'Location','best')
+            yyaxis(ax{i},'right')
+            plot(ax{i},eq.plasma.r, squeeze(eq.plasma.dene(:,z0_ind,1)), 'DisplayName',['n_e - ' name] );
+            xlabel(ax{i},'R [cm]')
+            ylabel(ax{i},'n_e [cm^{-3}]')
         case 'ba'
-            plot(ax,eq.plasma.r, squeeze(eq.fields.br(:,z0_ind,1)), 'DisplayName','B_r');
-            plot(ax,eq.plasma.r, squeeze(eq.fields.bt(:,z0_ind,1)), 'DisplayName','B_t');
-            plot(ax,eq.plasma.r, squeeze(eq.fields.bz(:,z0_ind,1)), 'DisplayName','B_z');
-            xlabel(ax,'R [cm]')
-            ylabel(ax,'Magnetic Field [T]')
+            plot(ax{i},eq.plasma.r, squeeze(eq.fields.br(:,z0_ind,1)),linestyle, 'DisplayName','B_r');
+            plot(ax{i},eq.plasma.r, squeeze(eq.fields.bt(:,z0_ind,1)),linestyle, 'DisplayName','B_t');
+            plot(ax{i},eq.plasma.r, squeeze(eq.fields.bz(:,z0_ind,1)),linestyle, 'DisplayName','B_z');
+            xlabel(ax{i},'R [cm]')
+            ylabel(ax{i},'Magnetic Field [T]')
             legend()
         case 'fslice'
             [~,e_ind]=min(abs(dist.energy-20));
             [~,p_ind]=min(abs(dist.pitch));
             if fac ==1
-                plot(ax,dist.r, squeeze(dist.f(e_ind,p_ind,:,z0_ind,1)),'DisplayName',['f slice - ' name] );
+                plot(ax{i},dist.r, squeeze(dist.f(e_ind,p_ind,:,z0_ind,1)),linestyle,'DisplayName',['f slice - ' name] );
             else
-                plot(ax,dist.r, fac*squeeze(dist.f(e_ind,p_ind,:,:,1)),'DisplayName',['f slice - ' name ', scaling factor: ' num2str(fac)]);
+                plot(ax{i},dist.r, fac*squeeze(dist.f(e_ind,p_ind,:,:,1)),linestyle,'DisplayName',['f slice - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [cm]')
             ylabel('Fast ion distribution slice [1/cm^3/keV/dp]')
             legend()
         case 'denf'
             if fac == 1
-                plot(ax,dist.r, squeeze(dist.denf(:,z0_ind,1)), 'DisplayName',['Denf - ' name] );
+                plot(ax{i},dist.r, squeeze(dist.denf(:,z0_ind,1)), 'DisplayName',['Denf - ' name] );
             else
-                plot(ax,dist.r, fac*squeeze(dist.denf(:,z0_ind,1)), 'DisplayName',['Denf - ' name ', scaling factor: ' num2str(fac)]);
+                plot(ax{i},dist.r, fac*squeeze(dist.denf(:,z0_ind,1)), 'DisplayName',['Denf - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [m]')
             ylabel('Fast ion density [m^{-3}]')
-            title(['Fast ion density profile at z=',num2str(dist.z(z0_ind))])
+            %title(sprintf('FI density profile at z= %.2f',dist.z(z0_ind)))
         case 'fdenf'
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
             if fac == 1
-                plot(ax,dist.r, tmp(:,z0_ind,1), 'DisplayName',['Denf from f - ' name] );
+                plot(ax{i},dist.r, tmp(:,z0_ind,1), 'DisplayName',['Denf from f - ' name] );
             else
-                plot(ax,dist.r, fac*tmp(:,z0_ind,1), 'DisplayName',['Denf from f - ' name ', scaling factor: ' num2str(fac)]);
+                plot(ax{i},dist.r, fac*tmp(:,z0_ind,1), 'DisplayName',['Denf from f - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [m]')
             ylabel('Fast ion density [m^{-3}]')
@@ -414,10 +425,10 @@ for i = 1:size(plot_type,2)
                 disp(['Applying moving mean with length ', num2str(k), ' to FIDASIM data: ', filename]);
             end
             if ~isempty(sim_data)
-%                 for j = 1:size(sim_data.lambda,2)
-%                     spectmp(:,j) = interp1(spec.lambda, specr(:,j), sim_data.lambda(:,j),'pchip');
-%                 end
-%                 disp('Interpolated wavelength to match data');
+                %                 for j = 1:size(sim_data.lambda,2)
+                %                     spectmp(:,j) = interp1(spec.lambda, specr(:,j), sim_data.lambda(:,j),'pchip');
+                %                 end
+                %                 disp('Interpolated wavelength to match data');
                 if fac~=1.0
                     name = [name,', scale=',num2str(fac)];
                 end
@@ -439,11 +450,13 @@ for i = 1:size(plot_type,2)
             ylabel(' Intensity [Ph/(s nm m^2 sr)]')
             set(gca,'YScale','log')
             xlim([650 663]);
-            ylim([5e15, 1e19]);
+            ylim([1e15, 1e19]);
             if lgeom
-                title(['Channel: ' geom.spec.id(channel)])
+                %title(['Channel: ' geom.spec.id(channel)])
+                disp(['Channel: ', char(geom.spec.id(channel))])
+                disp(['R= ', num2str(geom.spec.radius(channel))])
             end
-            legend(ax,'Location','best');
+            legend(ax{i},'Location','best');
         case 'los3d'
             vec = [0, 0, -1];
             rotation = 0;% 67.5;
@@ -451,7 +464,7 @@ for i = 1:size(plot_type,2)
             axi = rotate_points(geom.spec.axis,vec,deg2rad(rotation));
             los = [lens, lens + axi.*max(geom.spec.radius)*length];
             los = reshape(los,geom.spec.nchan,3,2);
-            h=plot3(ax,squeeze(los(channel,1,:))'*fac,squeeze(los(channel,2,:))'*fac,squeeze(los(channel,3,:))'*fac);
+            h=plot3(ax{i},squeeze(los(channel,1,:))'*fac,squeeze(los(channel,2,:))'*fac,squeeze(los(channel,3,:))'*fac);
             src = rotate_points(geom.nbi.src,vec,deg2rad(rotation));
             axi_nbi = rotate_points(geom.nbi.axis,vec,deg2rad(rotation));
             los_nbi = [src, src + axi_nbi.*length.*sqrt(sum(src.^2)/2)];
@@ -459,9 +472,9 @@ for i = 1:size(plot_type,2)
             plot3(ax,squeeze(los_nbi(1,:))'*fac,squeeze(los_nbi(2,:))'*fac,squeeze(los_nbi(3,:))'*fac,'Color',color);
             plot3(ax,squeeze(los_nbi(1,1))'*fac,squeeze(los_nbi(2,1))'*fac,squeeze(los_nbi(3,1))'*fac,'+','Color',color);
             sname = [filename, '_', plot_type{i}];
-            writematrix(los_nbi,sname);
+            writematrix(los_nbi,sname,linestyle);
             set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))))
-            legend(h,'Location','bestoutside');
+            %legend(h,'Location','bestoutside');
             axis equal
             rotate3d on
         case 'lostor'
@@ -472,13 +485,21 @@ for i = 1:size(plot_type,2)
             axi = rotate_points((geom.spec.lens + geom.spec.axis.*max(geom.spec.radius)*length)',vec,deg2rad(rotation))';
             los = [lens, axi];
             los = reshape(los,3,geom.spec.nchan,2);
-            %for chan = channel
-            h=plot(ax,squeeze(los(1,channel,:))'*fac,squeeze(los(2,channel,:))'*fac,color);
-            %tmp = cellstr(deblank(geom.spec.id(channel)));
-%             tmp = char(geom.spec.id(channel));
-%             tmp = cellstr(tmp(1,1:3));
-%             set(h(1), 'DisplayName', tmp{1});
-%             legend(h(1),'Location','bestoutside');
+            for k = 1:size(channel,2)
+                %,'Color',ax{i}.ColorOrder(k,:)
+                if iscell(chan_description)
+                    displ=chan_description{k};
+                else
+                    displ=chan_description;
+                end
+                h=plot(ax{i},squeeze(los(1,channel(:,k),:))'*fac,squeeze(los(2,channel(:,k),:))'*fac ,linestyle, 'DisplayName', displ);
+                %set(h, 'DisplayName', chan_description{k});
+            end
+            %h=plot(ax,squeeze(los(1,channel,:))'*fac,squeeze(los(2,channel,:))'*fac, 'k');
+            %set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))));
+            %legend(h,'Location','bestoutside');
+            xlabel('X [cm]')
+            ylabel('Y [cm]')
         case 'los2d'
             vec = [0, 0, -1];
             %lens = rotate_points(geom.spec.lens',vec,deg2rad(67.5))';
@@ -491,13 +512,18 @@ for i = 1:size(plot_type,2)
             los2 = reshape(lost,2,geom.spec.nchan*3);
             losre=interp1([0,1],los2,linspace(0,1,200));
             los= reshape(losre,[],size(lost,2),size(lost,3));
-            r = sqrt(los(:,channel,1).^2 + los(:,channel,2).^2);
-            h=plot(ax,r*fac,squeeze(los(:,channel,3))*fac, color);
-            %tmp = cellstr(deblank(geom.spec.id(channel)));
-            %             tmp = char(geom.spec.id(channel));
-            %             tmp = cellstr(tmp(1,1:3));
-            %             set(h(1), 'DisplayName', tmp{1});
-            %             legend(h(1),'Location','bestoutside');
+            for k = 1:size(channel,2)
+                r = sqrt(los(:,channel(:,k),1).^2 + los(:,channel(:,k),2).^2);
+                %,'Color',ax{i}.ColorOrder(k,:)
+                if iscell(chan_description)
+                    displ=chan_description{k};
+                else
+                    displ=chan_description;
+                end
+                h=plot(ax{i},r*fac,squeeze(los(:,channel(:,k),3))*fac,linestyle, 'DisplayName', displ);
+                %set(h, 'DisplayName', chan_description{k});
+            end
+            %legend(h,'Location','bestoutside');
 
     end
     %disp(plot_type{i});
@@ -526,11 +552,13 @@ for i = 1:size(plot_type,2)
         end
     end
     if lsave
-         %caxis([0 3e11])
+        %caxis([0 3e11])
         legend(ax,'Location','best');
         sname = [filename, '_', plot_type{i}];
-        savefig(figs{i},sname)
-        exportgraphics(figs{i},[sname,'.png'],'Resolution',300);
+        %         savefig(figs{i},sname)
+        %         exportgraphics(figs{i},[sname,'.png'],'Resolution',300);
+        savefig(gcf,sname)
+        exportgraphics(gcf,[sname,'.png'],'Resolution',300);
     end
 
 end

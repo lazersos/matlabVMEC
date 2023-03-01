@@ -137,7 +137,7 @@ switch plottype
                 %plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
                 %colorder = parula(nlines); %numel(line_dex)
                 %colororder(colorder)
-                plot(x,y,'.','Color',line_color,'MarkerSize',4.9);
+                plot(x,y,'.','Color',line_color,'MarkerSize',1.0);
             end
         end
         if isfield(data,'Rhc_lines')  && isfield(data,'Zhc_lines')
@@ -577,6 +577,8 @@ switch plottype
             ylabel('Z [m]')
             %xlim([1.5 1.9])
             %ylim([-0.2 0.3])
+            xlim([4.5 6.5])
+            ylim([-1.5 1.5])
             frame = getframe(f); %for writing
             writeVideo(v,frame);
         end
