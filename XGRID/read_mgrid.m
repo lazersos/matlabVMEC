@@ -30,7 +30,7 @@ isize='int32';
 fsize='float64';
 csize='*char';
 % Check the filetype
-if ~isempty(strfind(filename,'.nc'))
+if contains(filename,'.nc')
     data=read_netcdf(filename,'flipdim');
     % First we rename some fields
     data.nr=data.ir;

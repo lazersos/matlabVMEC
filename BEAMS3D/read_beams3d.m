@@ -74,14 +74,16 @@ if (strcmp(filename(end-1:end),'h5'))
             dVdrho=pchip(sqrt(s),2.*sqrt(s).*Vp,data.rho);
             data.dense_prof  = data.dense_prof./repmat(dVdrho,[data.nbeams 1]);
         end
-        % Make the 5D Axis variables
-        data.dist_rhoaxis=(double(1:data.ns_prof1)-0.5)./(data.ns_prof1);
-        data.dist_uaxis=2.*pi.*(double(1:data.ns_prof2)-0.5)./(data.ns_prof2);
-        data.dist_paxis=2.*pi.*(double(1:data.ns_prof3)-0.5)./(data.ns_prof3);
-        d4=data.partvmax.*2./(data.ns_prof4);
-        d5=data.partvmax./data.ns_prof5;
-        data.dist_Vaxis= (-data.partvmax+d4.*0.5):d4:(data.partvmax-d4.*0.5);
-        data.dist_Waxis=data.partvmax.*(double(1:data.ns_prof5)-0.5)./(data.ns_prof5);
+        if ~isfield(data,'rhoaxis')
+            % Make the 5D Axis variables
+            data.dist_rhoaxis=(double(1:data.ns_prof1)-0.5)./(data.ns_prof1);
+            data.dist_uaxis=2.*pi.*(double(1:data.ns_prof2)-0.5)./(data.ns_prof2);
+            data.dist_paxis=2.*pi.*(double(1:data.ns_prof3)-0.5)./(data.ns_prof3);
+            d4=data.partvmax.*2./(data.ns_prof4);
+            d5=data.partvmax./data.ns_prof5;
+            data.dist_Vaxis= (-data.partvmax+d4.*0.5):d4:(data.partvmax-d4.*0.5);
+            data.dist_Waxis=data.partvmax.*(double(1:data.ns_prof5)-0.5)./(data.ns_prof5);
+        end
         % Add anything missing
         data.lfusion=0;
     else

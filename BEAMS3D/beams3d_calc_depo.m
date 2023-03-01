@@ -1,7 +1,7 @@
 function birth = beams3d_calc_depo(beam_data)
 %BEAMS3D_CALC_DEPO Calculated deposition
 %   The BEAMS3D_CALC_DEPO routine calculates the radial birth profile for a
-%   given BEAMS3D run.  Outputs in units of [part/m^3].
+%   given BEAMS3D run.  Outputs in units of [part/m^3/s].
 %
 %
 %   Example:
@@ -28,14 +28,16 @@ end
 
 % Calc births
 birth = zeros(beam_data.nbeams,length(rho_out));
+rho_lines = ones(1,beam_data.nparticles);
 for i=1:beam_data.nbeams
     dexb = beam_data.Beam == i;
-    rho_lines = sqrt(beam_data.S_lines(dexs,dexb));
+    rho_lines(:) = 1.5;
+    rho_lines(dexb) = sqrt(beam_data.S_lines(dexs,dexb));
     for j=1:nrho
         dexi = and(rho_lines(:)>=edges(j),rho_lines(:)<edges(j+1));
         birth(i,j) = sum(beam_data.Weight(dexi));
     end
-    birth(i,:) = nrho.*birth(i,:)./dVdrho;
+    birth(i,:) = nrho*birth(i,:)./dVdrho;
 end
 
 end
