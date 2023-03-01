@@ -40,7 +40,6 @@ line_color='k';
 camera = [];
 skip=1;
 liota=0;
-
 % Handle varargin
 if nargin > 1
     i = 1;
@@ -93,20 +92,11 @@ if nargin > 1
                 i=i+1;
                 skip=varargin{i};
             case 'iota'
-                liota = 1;
-                x = data.R_lines - data.R_lines(1,:);
-                y = data.Z_lines - data.Z_lines(1,:);
-                theta = atan2(y,x);
-                dtheta = diff(theta,[],2); %axis=0?
-                dtheta(dtheta<-pi) = dtheta(dtheta<-pi)+2*pi;
-                dtheta(dtheta>pi) = dtheta(dtheta>pi)-2*pi;
-                theta = abs(cumsum(dtheta,2));
-                iota = zeros(size(x,1),1);
-                for i = 1:data.nlines
-                    p = polyfit(data.PHI_lines(i,1:data.nsteps-1),theta(i,:),1);
-                    iota(i) = p(1);
+                if isfield(data,'iota')
+                    liota = 1;
+                else
+                    disp('iota not found in data! Plotting normally!')
                 end
-                iota(1) = 2*iota(2)-iota(3);
         end
         i=i+1;
     end
@@ -117,28 +107,16 @@ switch plottype
         line_dex = nphi:npoinc:nsteps;
         x=data.R_lines(1:skip:nlines,line_dex);
         y=data.Z_lines(1:skip:nlines,line_dex);
-        %         if isfield(data,'iota')
-        %             s=ones(size(x,1),size(x,2));
-        %             c=repmat(data.iota(1:skip:nlines),[1 size(x,2)]);
-        %             c(c>0.91) = 0.0;
-        %             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
-        %             caxis([0 max(data.iota)]);
-        %         else
-        if isfield(data,'rho')
+        if liota
+            t = repmat(iota,size(x,2),1);
+            scatter(reshape(x,[],1),reshape(y,[],1),1.0,t);
+        elseif isfield(data,'rho')
             s=ones(size(x,1),size(x,2));
             c=repmat(data.rho(1:skip:nlines),[1 size(x,2)]);
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
             caxis([0 data.rho(end-1)]);
         else
-            if liota
-                t = repmat(iota,size(x,2),1);
-                scatter(reshape(x,[],1),reshape(y,[],1),1.0,t);
-            else
-                %plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
-                %colorder = parula(nlines); %numel(line_dex)
-                %colororder(colorder)
-                plot(x,y,'.','Color',line_color,'MarkerSize',1.0);
-            end
+            plot(x,y,'.','Color',line_color,'MarkerSize',1.0);
         end
         if isfield(data,'Rhc_lines')  && isfield(data,'Zhc_lines')
             line_dex = nphi:npoinc:size(data.Rhc_lines,2);
