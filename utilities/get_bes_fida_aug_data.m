@@ -67,7 +67,7 @@ instfu = box_gauss_funct(lambda,0.,1.,cwav_mid,instfu_gamma,instfu_box_nm);
 names = names_unsorted;%(I);
 tmp = cell2mat(names);
 dex_in = true(size(names));%strcmp(tmp(:,1:3),"CER");
-
+gray = [.5 .5 .5];
 if nargin > 2
     i = 1;
     while i < nargin
@@ -288,14 +288,15 @@ for i = 1:size(plot_type,2)
     %legend(ax{i},'Location','best');
     switch lower(plot_type{i})
         case 'bes'
-            plot(ax{i},R_pts(time_dex),bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),'-',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            %plot(ax{i},R_pts(time_dex),bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),'-',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             %plot(ax{i},R_pts(time_dex_passive),bes(time_dex_passive),'o','DisplayName',['Data Passive ', num2str(t_passive- avg_time/2),'-',num2str(t_passive+ avg_time/2), 's'], 'LineWidth',2.0);
+            tmp_frames=bes(time_dex);
             tmp = sum(bes.*time_dex,2)./sum(time_dex,2);
             tmp_err=sqrt(sum(bes_err.*time_dex,2).^2)./sum(time_dex,2);
             ystr = 'BES';
-
         case 'fida'
-            plot(ax{i},R_pts(time_dex),fida(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            %plot(ax{i},R_pts(time_dex),fida(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            tmp_frames=fida(time_dex);
             tmp = sum(fida.*time_dex,2)./sum(time_dex,2);
             tmp_err=sqrt(sum(fida_err.*time_dex,2).^2)./sum(time_dex,2);
             ystr = 'FIDA';
@@ -303,9 +304,10 @@ for i = 1:size(plot_type,2)
             t.LineWidth = 0.01;
         case 'fidabes'
             %compose('Data %.3f - %.3f s', (t_point - avg_time/2)',(t_point + avg_time/2)')
-            for j = 1:sum(time_dex_vec)
-                plot(ax{i},R_pts(dex_in,time_dex_inds(j)),fida(dex_in,time_dex_inds(j))./bes(dex_in,time_dex_inds(j)),'o', 'DisplayName',sprintf('Data %.3f s', time(time_dex_inds(j))),'LineWidth',2.0);
-            end
+%             for j = 1:sum(time_dex_vec)
+%                 plot(ax{i},R_pts(dex_in,time_dex_inds(j)),fida(dex_in,time_dex_inds(j))./bes(dex_in,time_dex_inds(j)),'o','Color', gray,'DisplayName',sprintf('Data %.3f s', time(time_dex_inds(j))),'LineWidth',2.0);
+%             end
+            tmp_frames=fida(time_dex)./bes(time_dex);
             tmp = sum(fida./bes.*time_dex,2,'omitnan')./sum(time_dex,2,'omitnan');
             %plot(ax,R_pts(time_dex),fida(time_dex)./bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             %tmp = sum(fida./bes.*time_dex,2,'omitnan')./sum(time_dex,2);
@@ -317,7 +319,6 @@ for i = 1:size(plot_type,2)
             ylim([0 0.08])
             t = annotation('textbox',[0.15 0.15 0.3 0.05],'String',['FIDA Int. Range: [', num2str(fida_range),'] nm'],'FitBoxToText','on','LineStyle','none');
             t.LineWidth = 0.01;
-
         case 'timetrace_fida'
             plot(ax{i},time(2:end),fida(channel,2:end))
             xlabel(ax{i},'Time [s]')
@@ -373,6 +374,7 @@ for i = 1:size(plot_type,2)
     end
 
     if ~strcmp(plot_type{i},'spectrum') && ~strcmp(plot_type{i}(1:3),'tim')
+        plot(ax{i},R_pts(time_dex),tmp_frames,'o','Color', gray,'DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
         errorbar(ax{i},R(dex_in)*100, tmp(dex_in),tmp_err(dex_in),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
         xlabel(ax{i},'R [cm]')
         ylabel(ax{i},ystr);
