@@ -38,7 +38,7 @@ ti_s=[]; ti_f=[];
 zeff_s=[]; zeff_f=[];
 pot_s=[]; pot_f=[];
 nr=128; nz=128; nphi=[];
-nrho_dist=16; ntheta_dist = 8; nzeta_dist=80; nvpara_dist = 32; nvperp_dist=16; partvmax=1.25E7;
+nrho_dist=64; ntheta_dist = 8; nzeta_dist=40; nvpara_dist = 32; nvperp_dist=16; partvmax=1.25E7;
 npoinc=2;
 Zatom=1;
 species_type='H';
