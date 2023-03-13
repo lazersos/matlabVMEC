@@ -110,6 +110,7 @@ for i=1:beam_data.nbeams
         P_INITIAL(i) = sum(P(1,beam_dex));
         P_PORTS(i)   = sum(P(1,and(beam_dex,port_dex)));
         P_SHINE(i)   = sum(P(1,and(beam_dex,shine_dex)));
+        J_TOTAL(i)   = 0;
     else
         P_PORTS(i)   = 0;
         P_SHINE(i)   = 0;
@@ -120,7 +121,13 @@ for i=1:beam_data.nbeams
     P_WALL(i)    = sum(beam_data.wall_load(i,:).*A');
     P_ORBIT(i)   = sum(P_orbit(1,beam_dex));
     P_THERM(i)   = sum(P_therm(1,beam_dex));
-    J_TOTAL(i)   = sum(beam_data.j_prof(i,:).*dVdrho./Rmajor)./(double(beam_data.ns_prof1).*2.*pi);
+end
+% Do J separately
+if isfield(beam_data,'j_prof')
+    for i = 1:beam_data.nbeams
+        beam_dex=beam_data.Beam==i;
+        J_TOTAL(i)   = sum(beam_data.j_prof(i,:).*dVdrho./Rmajor)./(double(beam_data.ns_prof1).*2.*pi);
+    end
 end
 
 P = [P_INITIAL; P_PORTS; P_SHINE; P_IDEPO; P_EDEPO; P_WALL; P_ORBIT; P_THERM];
