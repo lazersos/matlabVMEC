@@ -4,16 +4,18 @@ function [BEAM,raxis,phiaxis,zaxis] = beams3d_beamdensity(beam_data,varargin)
 %   a cylindrical grid. Note that the units are [m^-2] as the weights are
 %   mutiplied by the particle velocities. The user can specify new axis
 %   arrays (R,phi(rad),Z) if the BEAMS3D background grid is not to be used.
+%   The code returns the beam density, R grid, phi grid, and Z grid
+%   [m,rad,m].
 %
 %   Example:
 %       beam_data=read_beams3d('beams3d_test.h5');
-%       BEAM = beams3d_beamdensity(beam_data);
+%       [BEAM,R,PHI,Z] = beams3d_beamdensity(beam_data);
 %
 %       raxis = beam_data.raxis;
 %       phiaxis = deg2rad(linspace(15,29,64));
 %       zaixs = beam_data.zaxis;
-%       BEAM = beams3d_beamdensity(beam_data,'raxis',raxis,'phiaxis',...
-%           phiaxis,'zaxis',zaxis);
+%       [BEAM,R,PHI,Z] = beams3d_beamdensity(beam_data,'raxis',raxis,...
+%           'phiaxis',phiaxis,'zaxis',zaxis);
 %
 %   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 %   Version:       1.5
