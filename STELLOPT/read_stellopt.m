@@ -1161,6 +1161,34 @@ while ~feof(fid);
                 data.([tstr '_scal11'])(niter,:) = temp(:,13);
                 data.([tstr '_scal33'])(niter,:) = temp(:,14);
                 data.([tstr '_scal31'])(niter,:) = temp(:,15);
+            % DKES
+            case {'DKES_ERDIFF'}
+                data.([tstr '_target'])(niter,:) = temp(:,1);
+                data.([tstr '_sigma'])(niter,:) = temp(:,2);
+                data.([tstr '_equil'])(niter,:) = temp(:,3);
+                data.([tstr '_chisq'])(niter,:) = ((temp(:,1)-temp(:,3))./(temp(:,2))).^2;
+                data.([tstr '_s'])(niter,:) = temp(:,4);
+                data.([tstr '_nu'])(niter,:) = temp(:,5);
+                data.([tstr '_er_plus'])(niter,:) = temp(:,6);
+                data.([tstr '_er_minus'])(niter,:) = temp(:,7);
+                data.([tstr '_L11p_plus'])(niter,:) = temp(:,8);
+                data.([tstr '_L11m_plus'])(niter,:) = temp(:,9);
+                data.([tstr '_L33p_plus'])(niter,:) = temp(:,10);
+                data.([tstr '_L33m_plus'])(niter,:) = temp(:,11);
+                data.([tstr '_L31p_plus'])(niter,:) = temp(:,12);
+                data.([tstr '_L31m_plus'])(niter,:) = temp(:,13);
+                data.([tstr '_scal11_plus'])(niter,:) = temp(:,14);
+                data.([tstr '_scal33_plus'])(niter,:) = temp(:,15);
+                data.([tstr '_scal31_plus'])(niter,:) = temp(:,16);
+                data.([tstr '_L11p_minus'])(niter,:) = temp(:,17);
+                data.([tstr '_L11m_minus'])(niter,:) = temp(:,18);
+                data.([tstr '_L33p_minus'])(niter,:) = temp(:,19);
+                data.([tstr '_L33m_minus'])(niter,:) = temp(:,20);
+                data.([tstr '_L31p_minus'])(niter,:) = temp(:,21);
+                data.([tstr '_L31m_minus'])(niter,:) = temp(:,22);
+                data.([tstr '_scal11_minus'])(niter,:) = temp(:,23);
+                data.([tstr '_scal33_minus'])(niter,:) = temp(:,24);
+                data.([tstr '_scal31_minus'])(niter,:) = temp(:,25);
             % ECE
             case {'ECEREFLECT'}
                 data.([tstr '_target'])(niter,:) = temp(:,1);

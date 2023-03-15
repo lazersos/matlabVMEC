@@ -29,11 +29,12 @@ function data = read_wall( filename )
 %       lim_data=read_wall('limiter_trimesh.dat');
 %
 %   Written by:     S.Lazerson (samuel.lazerson@ipp.mpg.de)
-%   Version:        2.0
+%   Version:        2.1
 %   Date:           9/29/16
 
 % Defaults
 data=[];
+lread_accel_data=1;
 
 % Check arguments
 if nargin<1
@@ -55,12 +56,33 @@ if strcmp(filename(n-3:n),'.dat')
     if and(temp(1)==0,temp(2)==0)
         disp('  Accelerated File Detected');
         temp=fscanf(fid,'%d',2);
+    else
+        lread_accel_data=0;
     end
     data.nvertex = temp(1);
     data.nfaces = temp(2);
     % Read dataset
     data.coords=fscanf(fid,'%E %E %E',[3 data.nvertex]);
     data.faces=fscanf(fid,'%d %d %d',[3 data.nfaces]);
+    if lread_accel_data
+        temp = fscanf(fid,'%i %i %i %i'); % wall%nblocks, wall%step
+        data.nblocks = temp(1);
+        data.nsteps = temp(2:4);
+        temp = fscanf(fid,'%E %i %i %i',4); % wall%stepsize, wall%br
+        data.stepsize = temp(1);
+        data.br = temp(2:4);
+        data.blockbounds = zeros(6,data.nblocks);
+        data.nblockfaces = zeros(1,data.nblocks);
+        for n = 1:data.nblocks
+            data.blockbounds(1:6,n) = fscanf(fid,' %g ',6); % RMIN
+            data.nblockfaces(n) = fscanf(fid,'%i',1);
+            if data.nblockfaces(n) > 0
+                data.blockfaces(n).faces = fscanf(fid,'%i',data.nblockfaces(n));
+            else
+                data.blockfaces(n).faces=[];
+            end
+        end
+    end
     fclose(fid);
 elseif strcmp(filename(n-3:n),'.stl')
     stl_data=stlread(filename);

@@ -154,7 +154,8 @@ NE   = permute(beam_data.NE,[2 1 3]);
 TI   = permute(beam_data.TI,[2 1 3]);
 TE   = permute(beam_data.TE,[2 1 3]);
 ZEFF   = permute(beam_data.ZEFF_ARR,[2 1 3]);
-MODB   = permute(sqrt(beam_data.B_R.^2+beam_data.B_PHI.^2+beam_data.B_Z.^2),[2 1 3]);
+ZEFF(isnan(ZEFF))=1;
+%MODB   = permute(sqrt(beam_data.B_R.^2+beam_data.B_PHI.^2+beam_data.B_Z.^2),[2 1 3]);
 NE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     NE,R_BEAM,P_BEAM,Z_BEAM);
 
@@ -164,8 +165,8 @@ TI_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     TI,R_BEAM,P_BEAM,Z_BEAM);
 ZE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     ZEFF,R_BEAM,P_BEAM,Z_BEAM);
-MODB_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
-    MODB,R_BEAM,P_BEAM,Z_BEAM);
+%MODB_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
+%    MODB,R_BEAM,P_BEAM,Z_BEAM);
 
 % PInj
 if size(W_BEAM,2) == 1, W_BEAM=W_BEAM'; end % Flip W

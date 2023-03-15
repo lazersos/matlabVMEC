@@ -32,10 +32,13 @@ function [ output_args ] = plot_beams( beam_data,varargin)
 %      plot_beams(beam_data,'injection'); % Make an NBI injection plot
 %      plot_beams(beam_data,'birth_image'); % R/Z Image plot
 %      plot_beams(beam_data,'wall_loss'); % # of particle lost
-%      plot_beams(beam_data,'wall_shine'); % [W/m^3]
-%      plot_beams(beam_data,'wall_heat'); % [W/m^3]
-%      plot_beams(beam_data,'wall_heat_2d'); % [W/m^3]
+%      plot_beams(beam_data,'wall_shine'); % [W/m^2]
+%      plot_beams(beam_data,'wall_heat'); % [W/m^2]
+%      plot_beams(beam_data,'wall_heat_2d'); % [W/m^2]
+%      plot_beams(beam_data,'bmir'); % Mirro magnetic field
 %      plot_beams(beam_data,'benchmark'); % Old benchmark plots
+%      beam_dex = [7:12 19:24];
+%      plot_beams(beam_data,'wall_heat','beam',beam_dex); % plot subset.
 %
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.70

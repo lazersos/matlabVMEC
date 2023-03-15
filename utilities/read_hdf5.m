@@ -47,6 +47,7 @@ end
 if ngroups > 0
     for i = 1 : ngroups
         group_name = data_info.Groups(i).Name;
+        group_name=strrep(group_name,':','_');
         data.(group_name(2:end)) = getGroup(filename,[data_info.Groups(i).Name]);
     end
 end
