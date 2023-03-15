@@ -126,32 +126,32 @@ end
 
 bg_range = [664.5, 666];
 
-bes_range = [  654.621      655.086
-    654.797      655.267
-    655.009      655.487
-    656.204      656.691
-    656.438      656.934
-    656.669      657.174
-    656.907      657.419
-    657.135      657.656
-    654.844      655.320
-    656.124      656.611
-    656.453      656.949
-    656.787      657.291
-    657.115      657.628
-    657.442      657.964
-    658.290      658.815
-    658.200      658.717
-    658.107      658.616
-    658.013      658.514
-    657.908      658.400
-    657.812      658.296
-    657.716      658.193
-    657.622      658.091
-    657.526      657.987
-    657.430      657.884
-    658.256      658.731
-    658.839      659.327];
+bes_range = [ 654.56110	655.05627
+654.73962	655.24072
+655.97443	656.48553
+656.21759	656.73773
+656.45605	656.98492
+656.69189	657.22961
+656.93341	657.48016
+657.16632	657.72180
+654.78632	655.29498
+656.13635	656.65588
+656.47156	657.00012
+656.81158	657.34930
+657.14575	657.69293
+657.47827	658.03491
+658.34113	658.90131
+658.24969	658.80139
+658.15497	658.69794
+658.05914	658.59344
+657.95184	658.47662
+657.85443	658.37079
+657.75659	658.26471
+657.66028	658.16034
+657.56232	658.05450
+657.46442	657.94891
+658.30511	658.81262
+658.89917	659.41998];
 
 if shotid < 32000
     bes_range = [658.906      658.906
@@ -192,17 +192,18 @@ if t_point ~=0
     time_dex = (t_point + avg_time/2 >= time) & (t_point -avg_time/2 <= time);
     time_dex_vec = logical(sum(time_dex,2));
     time_dex = permute(repmat(time_dex_vec',size(spec_in,2),1,size(spec_in,1)),[3,1,2]);
-    disp(['Frames used for averaging of ', filename,': ', num2str(max(sum(time_dex(1,:,:),3)))]);
+    disp(['Frames used for averaging of ', filename,': ', num2str(max(sum(time_dex(1,:,:),3))), ', frames: ', sprintf('%d,',(find(time_dex_vec)))]);
 end
 if t_passive~=0
     if numel(t_passive)==1
-        dt = time(2)-time(1);
+        dt = avg_time;%time(2)-time(1);
         time_dex_passive = and(((t_passive +dt/2) >= time),((t_passive-dt/2) < time));%and(((t_passive + avg_time/2) >= time),((t_passive -avg_time/2) < time));
     elseif numel(t_passive)==2
         time_dex_passive = and((t_passive(2) >= time),(t_passive(1) < time));%and(((t_passive + avg_time/2) >= time),((t_passive -avg_time/2) < time));
     end
+    time_dex_passive_vec = time_dex_passive;
     time_dex_passive = permute(repmat(time_dex_passive,1,1,size(spec_in,2),size(spec_in,1)),[4,3,1,2]);
-    disp(['Frames used for averaging passive sig. of ', filename,': ', num2str(max(sum(time_dex_passive(1,:,:),3)))]);
+    disp(['Frames used for averaging passive sig. of ', filename,': ', num2str(max(sum(time_dex_passive(1,:,:),3))), ', frames: ', sprintf('%d,',(find(time_dex_passive_vec)))]);
     if numel(t_passive) > 1
         closest_to_passive = interp1(t_passive,t_passive,time,'nearest','extrap');
         closest_to_passive = (closest_to_passive-t_passive);
@@ -230,16 +231,18 @@ bg_dex = repmat(bg_dex,1,1,numel(time));
 dispersion = repmat(dispersion_in,1,1,numel(time));
 
 spec = spec_in - repmat(sum(spec_in.*bg_dex,1)./sum(bg_dex,1),size(spec_in,1),1); %Background subtraction
-
+ %spec=spec_in;
+spec(spec<0) = 0;
 if t_passive~=0
     for k = 1:size(time_dex_passive,4)
-        spec_passive(:,:,k) = sum(spec.*dex.*squeeze(time_dex_passive(:,:,:,k)),3)./sum(dex.*squeeze(time_dex_passive(:,:,:,k)),3);
+        spec_passive(:,:,k) = sum(spec.*squeeze(time_dex_passive(:,:,:,k)),3)./sum(squeeze(time_dex_passive(:,:,:,k)),3);
     end
     spec_passive(:,:,k+1) = zeros(size(lambda));
+    spec_passive(spec_passive<0) = 0;
     spec = spec - spec_passive(:,:,closest_to_passive);
 end
 
-
+spec(spec<0) = 0;
 
 %plot(squeeze(spec(:,16,1000)))
 
@@ -280,7 +283,6 @@ for i = 1:size(plot_type,2)
         figure;
         ax{i} = gca;
         hold on;
-        colororder(ax{i},parula(5))
     else
         %allAxesInFigure = findall(figs{i},'type','axes');
         %ax = allAxesInFigure(~ismember(get(allAxesInFigure,'Tag'),{'legend','Colobar'}));
@@ -300,8 +302,8 @@ for i = 1:size(plot_type,2)
             tmp = sum(fida.*time_dex,2)./sum(time_dex,2);
             tmp_err=sqrt(sum(fida_err.*time_dex,2).^2)./sum(time_dex,2);
             ystr = 'FIDA';
-            t = annotation('textbox',[0.15 0.61 0.3 0.3],'String',['FIDA Int. Range: [', num2str(fida_range),'] nm'],'FitBoxToText','on','LineStyle','none');
-            t.LineWidth = 0.01;
+%             t = annotation('textbox',[0.15 0.61 0.3 0.3],'String',['FIDA Int. Range: [', num2str(fida_range),'] nm'],'FitBoxToText','on','LineStyle','none');
+%             t.LineWidth = 0.01;
         case 'fidabes'
             %compose('Data %.3f - %.3f s', (t_point - avg_time/2)',(t_point + avg_time/2)')
 %             for j = 1:sum(time_dex_vec)
@@ -317,8 +319,8 @@ for i = 1:size(plot_type,2)
             %             tmp_err = std(tmp_err,0,2,'omitnan');%fida_bes_err_out;
             ystr = 'FIDA/BES';
             ylim([0 0.08])
-            t = annotation('textbox',[0.15 0.15 0.3 0.05],'String',['FIDA Int. Range: [', num2str(fida_range),'] nm'],'FitBoxToText','on','LineStyle','none');
-            t.LineWidth = 0.01;
+%             t = annotation('textbox',[0.15 0.15 0.3 0.05],'String',['FIDA Int. Range: [', num2str(fida_range),'] nm'],'FitBoxToText','on','LineStyle','none');
+%             t.LineWidth = 0.01;
         case 'timetrace_fida'
             plot(ax{i},time(2:end),fida(channel,2:end))
             xlabel(ax{i},'Time [s]')
@@ -354,12 +356,14 @@ for i = 1:size(plot_type,2)
             tmp =squeeze(sum(spec.*time_dex_spec,3)./sum(time_dex_spec,3));
             plot(ax{i},lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);%, Chan: ', names{channel} 
             tmp_err=sqrt(sum(spec_err.*time_dex_spec,3).^2)./sum(time_dex_spec,3);
+            %plot(ax{i},lambda(:,channel),squeeze(spec_passive(:,channel,1)),'LineWidth',2.0,'HandleVisibility','off');
+            tmp_in =squeeze(sum(spec_in.*time_dex_spec,3)./sum(time_dex_spec,3));
+            %plot(ax{i},lambda(:,channel),tmp_in(:,channel),'LineWidth',2.0,'HandleVisibility','off'); 
             %errorbar(ax{i},lambda(:,channel),tmp(:,channel),tmp_err(:,channel),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
             %plot(ax{i},lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
             %tmp_in =squeeze(sum(spec_in.*permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3)./sum(permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3));
             %plot(ax{i},lambda(:,channel),tmp_in(:,channel), 'DisplayName',['Data, bo BG sub ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
-            xline(bes_range(channel,:),'DisplayName', 'BES Range')
-            legend((ax{i}.Legend.String(1:end-1)))
+            xline([bes_range(channel,:)],'HandleVisibility','off');%'BES Range')
             set(ax{i},'YScale','log');
         case 'movie'
             v = VideoWriter([num2str(shotid), '_fidabes_movie','.mp4'], 'MPEG-4');

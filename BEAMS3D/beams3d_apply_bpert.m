@@ -60,10 +60,13 @@ for i = 1:numel(fluxi0)
 %Quadratic/analytical form:
 %fluxir = fluxi0(i) * (rhoarr.^2) .*  (1- rhoarr).^2;
 %Strumberger 2008, Perturbation 2:
-fluxir = fluxi0(i)*(rhoarr.^2).^(2/2) .* (1-(rhoarr.^2)).^4;
+fluxir= fluxi0(i)*(rhoarr.^2).^(2/2) .* (1-(rhoarr.^2)).^4;
 if lplot
 plot(linspace(0,1,100),.1*linspace(0,1,100).^(2/2) .* (1-linspace(0,1,100)).^4);
+hold on
+%plot(linspace(0,1,100),.1*linspace(0,1,100).^(2/2) .* (1-linspace(0,1,100)).^2);
 %plot(rhoarr,fluxir);
+%plot(rhoarr,fluxir_s);
 xlabel('Rho')
 ylabel('Perturbation Amplitude');
 end
@@ -131,7 +134,7 @@ curlphi(isnan(curlphi)|isinf(curlphi)|sarr>1) = 0;
 curlz(isnan(curlz)|isinf(curlz)|sarr>1) = 0;
 
 
-modb=sqrt(br.^2+bphi.^2+bz.^2);
+%modb=sqrt(br.^2+bphi.^2+bz.^2);
 
 % modcurl=sqrt(curlr.^2+curlphi.^2+curlz.^2);
 % [~,I] = max(modcurl,[],'all');
@@ -148,13 +151,13 @@ modb=sqrt(br.^2+bphi.^2+bz.^2);
 % pixplot(squeeze(curlr(:,:,50))./squeeze(br(:,:,50)))
 % caxis([-1 1])
 
-if lplot
-figure
-subplot(1,2,1)
-pixplot(squeeze(modb(:,1,:)))
-title('Before Pert')
-axis equal
-end
+% if lplot
+% figure
+% subplot(1,2,1)
+% pixplot(squeeze(modb(:,1,:)))
+% title('Before Pert')
+% axis equal
+% end
 
 br = br + curlr;
 bphi = bphi + curlphi;
@@ -170,15 +173,18 @@ lines_out.S_ARR=sarr;
 lines_out.U_ARR=uarr;
 lines_out.RHO_ARR=rhoarr;
 
-if lplot
-subplot(1,2,2)
-modb=sqrt(br.^2+bphi.^2+bz.^2);
-pixplot(squeeze(modb(:,1,:)))
-title('After Pert')
-axis equal
-end
+% if lplot
+% subplot(1,2,2)
+% modb=sqrt(br.^2+bphi.^2+bz.^2);
+% pixplot(squeeze(modb(:,1,:)))
+% title('After Pert')
+% axis equal
+% end
+
 
 if lsave
+%end_state= h5read(filename_in,'/end_state');
+%end_state=2.*ones(size(end_state));
 %rbphi = h5read(filename_out,'/B_PHI');
 %if sum(size(rbphi)-size(bphi))~=0
 delete_hdf5_group(filename_out,'/B_R');
@@ -199,8 +205,9 @@ delete_hdf5_group(filename_out,'/nphi');
 h5create(filename_out,'/nphi',1);
 delete_hdf5_group(filename_out,'/nz');
 h5create(filename_out,'/nz',1);
+%delete_hdf5_group(filename_out,'/end_state');
+%h5create(filename_out,'/end_state',size(end_state));
 %end
-
 h5write(filename_out,'/B_R',br)
 h5write(filename_out,'/B_PHI',bphi)
 h5write(filename_out,'/B_Z',bz)
@@ -210,7 +217,7 @@ h5write(filename_out,'/zaxis',z)
 h5write(filename_out,'/nr',numel(r))
 h5write(filename_out,'/nphi',numel(phi))
 h5write(filename_out,'/nz',numel(z))
-
+%h5write(filename_out,'/end_state',end_state)
 
 end
 end

@@ -66,6 +66,7 @@ lspec = 0;
 lneut = 0;
 lmean=0;
 lgeom =0;
+linput=0;
 n_fida=-1;
 sim_data = {};
 channel = 0;
@@ -89,6 +90,14 @@ if nargin > 1
             case{'ndensvert', 'ndenshorz', 'ndenscross'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 lneut = 1;
+                lgeom=1;
+                linput=1;
+            case{'ndens2d', 'ndenstor','ndens'}
+                plot_type{end+1}=varargin{i}; %Make multiple plots possible
+                lneut = 1;
+                lgeom=1;
+                linput=1;
+                leq=1;
             case{'spectrum'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 lspec = 1;
@@ -103,8 +112,8 @@ if nargin > 1
                 channel = varargin{i};
                 i=i+1;
                 length=varargin{i};
-                i=i+1;
-                color=varargin{i};
+                %                 i=i+1;
+                %                 color=varargin{i};
             case {'fida', 'bes', 'fidabes'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 disp(['ERROR: Option ', varargin{i}, ' not implemented here. Use plot_fidasim_profiles instead.']);
@@ -134,6 +143,10 @@ if nargin > 1
         end
         i=i+1;
     end
+end
+
+if linput
+    input=read_namelist([filename,'_inputs.dat'],'fidasim_inputs');
 end
 
 if ldist
@@ -189,6 +202,14 @@ if lneut
         disp('ERROR: Neutrals file not found, check filename!');
         disp(['       Filename: ' filename]);
     end
+    neut.dens = neut.dcxdens+neut.fdens+neut.hdens+neut.tdens+neut.halodens;
+    neut.dens=squeeze(sum(neut.dens,1));%Sum over all levels
+    neut.grid.vol = repmat(mean(diff(neut.grid.x))*mean(diff(neut.grid.y))*mean(diff(neut.grid.z)),size(neut.grid.x_grid));
+    neut.nparts=neut.dens.*neut.grid.vol;
+      nneutrals=1.d6*input.pinj/ (1.d3*input.einj*ec...
+         *( input.current_fractions(1)      ...
+         +  input.current_fractions(2)/2.d0 ...
+         +  input.current_fractions(3)/3.d0 ) );
 end
 
 if lspec
@@ -246,7 +267,6 @@ for i = 1:size(plot_type,2)
         figure;
         ax{i} = gca;
         hold(ax{i},'on');
-        colororder(ax{i},parula(5))
     else
         %allAxesInFigure = findall(figs{i},'type','axes');
         %ax{i} = allAxesInFigure(~ismember(get(allAxesInFigure,'Tag'),{'legend','Colobar'}));
@@ -361,38 +381,92 @@ for i = 1:size(plot_type,2)
             ylabel('Fast ion density [m^{-3}]')
             title('Fast ion density profile at z=0')
         case 'denf2d'
+            r = dist.r;
+            z = dist.z;
             tmp = dist.denf;
             cstring = 'Fast ion density [m^{-3}]';
         case 'fdenf2d'
+            r = dist.r;
+            z = dist.z;
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
             cstring = 'Fast ion density [m^{-3}]';
         case 'br2d'
+            r = eq.fields.r;
+            z = eq.fields.z;
             tmp = eq.fields.br;
             cstring = 'Magnetic Field B_r [T]';
         case 'bt2d'
+            r = eq.fields.r;
+            z = eq.fields.z;
             tmp = eq.fields.bt;
             cstring = 'Magnetic Field B_t [T]';
         case 'bz2d'
+            r = eq.fields.r;
+            z = eq.fields.z;
             tmp = eq.fields.bz;
             cstring = 'Magnetic Field B_z [T]';
         case 'q2d'
+            r = eq.fields.r;
+            z = eq.fields.z;
             tmp = (eq.fields.bt(:,:,1) .* eq.fields.r2d) ./ sqrt(eq.fields.bz(:,:,1).^2 + eq.fields.br(:,:,1).^2);
             cstring = 'Magnetic Field B_z [T]';
         case 'denftor'
+            r = eq.fields.r;
+            phi = eq.fields.phi;
             tmp = dist.denf;
             cstring = 'Fast ion density [m^{-3}]';
         case 'fdenftor'
+            r = eq.fields.r;
+            phi = eq.fields.phi;
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
             cstring = 'Fast ion density [m^{-3}]';
         case 'brtor'
+            r = eq.fields.r;
+            phi = eq.fields.phi;
             tmp = eq.fields.br;
             cstring = 'Magnetic Field B_r [T]';
         case 'bttor'
+            r = eq.fields.r;
+            phi = eq.fields.phi;
             tmp = eq.fields.bt;
             cstring = 'Magnetic Field B_t [T]';
         case 'bztor'
+            r = eq.fields.r;
+            phi = eq.fields.phi;
             tmp = eq.fields.bz;
             cstring = 'Magnetic Field B_z [T]';
+        case 'ndens'
+            neut_r = sqrt(neut.grid.x_grid(:).^2+neut.grid.y_grid(:).^2);
+            [discr,redges]=discretize(neut_r,128);
+            tmp = accumarray(discr,neut.nparts(:));
+            plot(redges(1:end-1),tmp./diff(redges));
+            xlabel('R [m]')
+            ylabel('Deposition [particles/s]')
+            title('Radial Deposition profile')
+        case 'ndens2d'
+            %eq.fields.phi=linspace(0,1,32);
+            %[r,z,phi] = ndgrid(eq.fields.r,eq.fields.z,eq.fields.phi);
+            %uvw = [r(:).*cos(phi(:)), -r(:).*sin(phi(:)),z(:)];
+            %uvw = [u(:),v(:),w(:)];
+            %[xyz] = uvw_to_xyz(input.alpha, input.beta, input.gamma, uvw, input.origin);
+            %ngrid = [neut.grid.x_grid(:),neut.grid.y_grid(:),neut.grid.z_grid(:)];
+            neut_r = sqrt(neut.grid.x_grid(:).^2+neut.grid.y_grid(:).^2);
+            neut_phi= atan2(neut.grid.y_grid(:),neut.grid.x_grid(:));
+            neut_z = neut.grid.z_grid(:);
+            [discphi,phiedges]=discretize(neut_phi,8);
+            [discr,redges]=discretize(neut_r,64);
+            [discz,zedges]=discretize(neut_z,32);
+            r = redges(1:end-1)+mean(diff(redges))/2;
+            z = zedges(1:end-1)+mean(diff(zedges))/2;
+            tmp = accumarray([discr,discz,discphi],neut_r.*neut.dens(:));
+            tmp=sum(tmp,3)*(phiedges(2)-phiedges(1));%Sum over phi
+            %             ndens_F = scatteredInterpolant(ngrid,neut.dens(:));
+            %             ndens_F.Method = 'linear';
+            %             ndens_F.ExtrapolationMethod = 'none';
+            %             ndens = ndens_F(uvw);
+            %             tmp=reshape(ndens,size(r));
+            cstring='Neutral Density [neutrals/cm^3]';
+
         case 'ndensvert'
             pixplot(neut.grid.x, neut.grid.z, squeeze(sum(neut.tdens(:,:,20,:) + neut.hdens(:,:,20,:) + neut.fdens(:,:,20,:), 1)))
             xlabel('Beam Grid X [cm]')
@@ -434,23 +508,23 @@ for i = 1:size(plot_type,2)
                 end
                 cwav_mid=mean(spec.lambda);
                 instfu = box_gauss_funct(spec.lambda,0.,1.,cwav_mid,sim_data.instfu_gamma,sim_data.instfu_box_nm);
-                plot(spec.lambda,conv(specr(:,channel),instfu(:,channel),'same'), 'DisplayName', ['Instfu - ' name] );
-                plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
-                plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
-                plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
-                plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
-                fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
-                plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
+                plot(spec.lambda,conv(specr(:,channel),instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
+                %                 plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
+                %                 plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
+                %                 plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
+                %                 plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
+                %                 fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
+                %                 plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
             else
                 plot(spec.lambda,specr(:,channel), 'DisplayName', ['Spectrum - ' name] );
                 disp('Supply in_data from e.g. get_bes_fida_aug_data for more plots!')
             end
             hold on
             xlabel('Wavelength [nm]')
-            ylabel(' Intensity [Ph/(s nm m^2 sr)]')
+            ylabel('Intensity [Ph/(s nm m^2 sr)]')
             set(gca,'YScale','log')
             xlim([650 663]);
-            ylim([1e15, 1e19]);
+            ylim([1e15, 3e19]);
             if lgeom
                 %title(['Channel: ' geom.spec.id(channel)])
                 disp(['Channel: ', char(geom.spec.id(channel))])
@@ -464,16 +538,16 @@ for i = 1:size(plot_type,2)
             axi = rotate_points(geom.spec.axis,vec,deg2rad(rotation));
             los = [lens, lens + axi.*max(geom.spec.radius)*length];
             los = reshape(los,geom.spec.nchan,3,2);
-            h=plot3(ax{i},squeeze(los(channel,1,:))'*fac,squeeze(los(channel,2,:))'*fac,squeeze(los(channel,3,:))'*fac);
+            h=plot3(ax{i},squeeze(los(channel,1,:))'*fac,squeeze(los(channel,2,:))'*fac,squeeze(los(channel,3,:))'*fac,linestyle);
             src = rotate_points(geom.nbi.src,vec,deg2rad(rotation));
             axi_nbi = rotate_points(geom.nbi.axis,vec,deg2rad(rotation));
-            los_nbi = [src, src + axi_nbi.*length.*sqrt(sum(src.^2)/2)];
-            los_nbi = reshape(los_nbi,3,2);   
-            plot3(ax,squeeze(los_nbi(1,:))'*fac,squeeze(los_nbi(2,:))'*fac,squeeze(los_nbi(3,:))'*fac,'Color',color);
-            plot3(ax,squeeze(los_nbi(1,1))'*fac,squeeze(los_nbi(2,1))'*fac,squeeze(los_nbi(3,1))'*fac,'+','Color',color);
+            los_nbi = [src, src + axi_nbi.*length.*sqrt(sum(src.^2)/3)];
+            los_nbi = reshape(los_nbi,3,2);
+            plot3(ax{i},squeeze(los_nbi(1,:))'*fac,squeeze(los_nbi(2,:))'*fac,squeeze(los_nbi(3,:))'*fac,'-r');
+            plot3(ax{i},squeeze(los_nbi(1,1))'*fac,squeeze(los_nbi(2,1))'*fac,squeeze(los_nbi(3,1))'*fac,'+k');
             sname = [filename, '_', plot_type{i}];
-            writematrix(los_nbi,sname,linestyle);
-            set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))))
+            %writematrix(los_nbi,sname,linestyle);
+            % set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))))
             %legend(h,'Location','bestoutside');
             axis equal
             rotate3d on
@@ -527,30 +601,37 @@ for i = 1:size(plot_type,2)
 
     end
     %disp(plot_type{i});
-    if numel(plot_type{i}) > 2
-        if strcmp(plot_type{i}(end-1:end),'2d')
-            if ldist
-                pixplot(dist.r,dist.z,tmp(:,:,2))
-                c = colorbar;
-                c.Label.String = cstring;
-                xlim([dist.r(1) dist.r(end)])
-                ylim([dist.z(1) dist.z(end)])
-            end
-            xlabel('R [cm]')
-            ylabel('Z [cm]')
-        elseif strcmp(plot_type{i}(end-2:end),'tor') && ldist
-            if ndims(dist.f) == 5
-                pixplot(dist.r,dist.phi,squeeze(tmp(:,z0_ind,:)))
-                xlabel('R [cm]')
-                ylabel('Phi [rad]')
-                c = colorbar;
-                c.Label.String = cstring;
-                xlim([dist.r(1) dist.r(end)])
-            else
-                disp('4D Distribution has no toroidal information')
-            end
+    %if numel(plot_type{i}) > 2
+    if strcmp(plot_type{i}(end-1:end),'2d')
+        %if ldist
+        pixplot(r,z,tmp(:,:,1));
+        c = colorbar;
+        c.Label.String = cstring;
+        xlim([r(1) r(end)])
+        ylim([z(1) z(end)])
+        %end
+        xlabel('R [cm]')
+        ylabel('Z [cm]')
+    elseif strcmp(plot_type{i}(end-2:end),'tor') && ldist
+        if ndims(dist.f) < 5
+            disp('4D Distribution has no toroidal information')
+            return;
         end
+        pixplot(r,phi,squeeze(tmp(:,z0_ind,:)))
+        xlabel('R [cm]')
+        ylabel('Phi [rad]')
+        c = colorbar;
+        c.Label.String = cstring;
+        xlim([r(1) r(end)])
+    elseif strcmp(plot_type{i}(end-2:end),'tor')
+        pixplot(r,phi,squeeze(tmp(:,z0_ind,:)))
+        xlabel('R [cm]')
+        ylabel('Phi [rad]')
+        c = colorbar;
+        c.Label.String = cstring;
+        xlim([r(1) r(end)])
     end
+    %end
     if lsave
         %caxis([0 3e11])
         legend(ax,'Location','best');
@@ -580,3 +661,17 @@ F = F./sum(F,1);
 F(F<1e-5) = 0;
 end
 
+
+function [xyz] = uvw_to_xyz(alpha, beta, gamma, uvw, origin) % From uvw_to_xyz.pro (D3D FIDASIM)
+sa = sin(alpha); ca = cos(alpha);
+sb = sin(beta) ; cb = cos(beta);
+sg = sin(gamma) ; cg = cos(gamma);
+
+R = zeros(3);
+R(1,1) = ca*cb ; R(2,1) = ca*sb*sg - cg*sa ; R(3,1) = sa*sg + ca*cg*sb;
+R(1,2) = cb*sa ; R(2,2) = ca*cg + sa*sb*sg ; R(3,2) = cg*sa*sb - ca*sg;
+R(1,3)= -sb   ; R(2,3) = cb*sg            ; R(3,3)= cb*cg;
+
+uvw_shifted = uvw-repmat(origin,size(uvw,1),1);
+xyz = uvw_shifted*R;
+end

@@ -224,6 +224,7 @@ v_crit = ((0.75.*sqrt(pi.*ab./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./ab);
 vcrit_cube = v_crit.^3;
 tau_spit = 3.777183E41.*at.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
 nu0_fe = 6.6E-11 .* NE_BEAM .* myZ.*myZ ./ sqrt(at./9.31E-31) ./ (E_BEAM ./ 1.6022E-19).^(3/2) .* (coulomb_log./17);
+data.nu0_fe = nu0_fe;
 end
 
 
@@ -403,7 +404,7 @@ data.Pinj = Pinj;
 data.Iinj = Iinj;
 data.tslow = t;
 data.tau_spit = tau_spit;
-data.nu0_fe = nu0_fe;
+
 if ~isempty(vp)
     data.VP = vp;
     data.QE = PE_RHO./vp;

@@ -28,7 +28,7 @@ dZ_F = griddedInterpolant(r,phi,z,dZdphi,'cubic');
 
 
     function [value,isterminal,direction] = events(t,~)
-        value = mod(t,maxphi)-poinc_loc-pi;
+        value = mod(t-poinc_loc,maxphi)-pi;
         isterminal=0;
         direction=-1;
     end
