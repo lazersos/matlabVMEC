@@ -39,7 +39,7 @@ avg_time=0;
 lmovie=0;
 t_passive =0;
 t_point = 0;
-fida_range = [660, 661];
+fida_range = [659, 661];
 
 dex_in = '';
 
@@ -180,7 +180,6 @@ if shotid < 32000
     bes_range=bes_range(1:22,:);
     bes_range(:,1) = bes_range(:,1)-0.5;
 end
-
 
 %bes_range=bes_range(I,:);
 if avg_time==0

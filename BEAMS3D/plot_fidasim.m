@@ -363,9 +363,9 @@ for i = 1:size(plot_type,2)
             legend()
         case 'denf'
             if fac == 1
-                plot(ax{i},dist.r, squeeze(dist.denf(:,z0_ind,1)), 'DisplayName',['Denf - ' name] );
+                plot(ax{i},dist.r, squeeze(dist.denf(:,z0_ind,1)),linestyle, 'DisplayName',['Denf - ' name] );
             else
-                plot(ax{i},dist.r, fac*squeeze(dist.denf(:,z0_ind,1)), 'DisplayName',['Denf - ' name ', scaling factor: ' num2str(fac)]);
+                plot(ax{i},dist.r, fac*squeeze(dist.denf(:,z0_ind,1)),linestyle, 'DisplayName',['Denf - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [m]')
             ylabel('Fast ion density [m^{-3}]')
@@ -373,9 +373,9 @@ for i = 1:size(plot_type,2)
         case 'fdenf'
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
             if fac == 1
-                plot(ax{i},dist.r, tmp(:,z0_ind,1), 'DisplayName',['Denf from f - ' name] );
+                plot(ax{i},dist.r, tmp(:,z0_ind,1),linestyle, 'DisplayName',['Denf from f - ' name] );
             else
-                plot(ax{i},dist.r, fac*tmp(:,z0_ind,1), 'DisplayName',['Denf from f - ' name ', scaling factor: ' num2str(fac)]);
+                plot(ax{i},dist.r, fac*tmp(:,z0_ind,1),linestyle, 'DisplayName',['Denf from f - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [m]')
             ylabel('Fast ion density [m^{-3}]')
@@ -516,7 +516,7 @@ for i = 1:size(plot_type,2)
                 %                 fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
                 %                 plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
             else
-                plot(spec.lambda,specr(:,channel), 'DisplayName', ['Spectrum - ' name] );
+                plot(spec.lambda,specr(:,channel),linestyle, 'DisplayName', ['Spectrum - ' name] );
                 disp('Supply in_data from e.g. get_bes_fida_aug_data for more plots!')
             end
             hold on
