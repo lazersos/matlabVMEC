@@ -22,7 +22,7 @@ dist_out = [];
 dist_out=beam_data.dist_prof;
 
 % Probably should check version in future
-if beam_data.VERSION > 999
+if beam_data.VERSION >=3.0
     disp(['Distribution already in correct units.'])
     dist_out=beam_data.dist_prof;
     return;
