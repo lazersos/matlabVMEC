@@ -36,7 +36,7 @@ end
 lsave = 0;
 lmean = 0;
 plot_type = {};
-
+linestyle = '+';
 fac = 1;
 name = filename(1:end-2);
 if nargin > 2
@@ -61,6 +61,9 @@ if nargin > 2
             case 'name'
                 i = i+1;
                 name = varargin{i};
+            case 'style'
+                i = i+1;
+                linestyle = varargin{i};
             otherwise
                 disp(['ERROR: Option ', varargin{i}, ' not found!']);
 
@@ -150,7 +153,7 @@ for i = 1:size(plot_type,2)
     else
         dispname = ['FIDASIM ', name];
     end
-    plot(ax{i},R(dex), tmp,'+','DisplayName',dispname, 'LineWidth',2.0);
+    plot(ax{i},R(dex), tmp,linestyle,'DisplayName',dispname, 'LineWidth',2.0);
     xlabel(ax{i},'R [cm]')
     ylabel(ax{i},ystr)
     if lsave

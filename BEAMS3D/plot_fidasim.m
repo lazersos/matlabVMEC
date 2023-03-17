@@ -241,7 +241,7 @@ for i = 1:size(plot_type,2)
         figure;
         ax{i} = gca;
         hold(ax{i},'on');
-        colororder(ax{i},parula(5))
+        %colororder(ax{i},parula(5))
     else
         %allAxesInFigure = findall(figs{i},'type','axes');
         %ax{i} = allAxesInFigure(~ismember(get(allAxesInFigure,'Tag'),{'legend','Colobar'}));
@@ -338,9 +338,9 @@ for i = 1:size(plot_type,2)
             legend()
         case 'denf'
             if fac == 1
-                plot(ax{i},dist.r, squeeze(dist.denf(:,z0_ind,1)), 'DisplayName',['Denf - ' name] );
+                plot(ax{i},dist.r, squeeze(dist.denf(:,z0_ind,1)),linestyle, 'DisplayName',['Denf - ' name] );
             else
-                plot(ax{i},dist.r, fac*squeeze(dist.denf(:,z0_ind,1)), 'DisplayName',['Denf - ' name ', scaling factor: ' num2str(fac)]);
+                plot(ax{i},dist.r, fac*squeeze(dist.denf(:,z0_ind,1)),linestyle, 'DisplayName',['Denf - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [m]')
             ylabel('Fast ion density [m^{-3}]')
@@ -348,9 +348,9 @@ for i = 1:size(plot_type,2)
         case 'fdenf'
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
             if fac == 1
-                plot(ax{i},dist.r, tmp(:,z0_ind,1), 'DisplayName',['Denf from f - ' name] );
+                plot(ax{i},dist.r, tmp(:,z0_ind,1),linestyle, 'DisplayName',['Denf from f - ' name] );
             else
-                plot(ax{i},dist.r, fac*tmp(:,z0_ind,1), 'DisplayName',['Denf from f - ' name ', scaling factor: ' num2str(fac)]);
+                plot(ax{i},dist.r, fac*tmp(:,z0_ind,1),linestyle, 'DisplayName',['Denf from f - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [m]')
             ylabel('Fast ion density [m^{-3}]')
@@ -429,7 +429,7 @@ for i = 1:size(plot_type,2)
                 end
                 cwav_mid=mean(spec.lambda);
                 instfu = box_gauss_funct(spec.lambda,0.,1.,cwav_mid,sim_data.instfu_gamma,sim_data.instfu_box_nm);
-                plot(spec.lambda,conv(specr(:,channel),instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
+                plot(spec.lambda,conv(specr(:,channel),instfu(:,channel),'same'),linestyle, 'DisplayName', ['Spectrum - ' name] );
 %                 plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
 %                 plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
 %                 plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
@@ -437,7 +437,7 @@ for i = 1:size(plot_type,2)
 %                 plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
 
             else
-                plot(spec.lambda,specr(:,channel), 'DisplayName', ['Spectrum - ' name] );
+                plot(spec.lambda,specr(:,channel),linestyle, 'DisplayName', ['Spectrum - ' name] );
                 disp('Supply in_data from e.g. get_bes_fida_aug_data for more plots!')
             end
             hold on
@@ -510,7 +510,7 @@ for i = 1:size(plot_type,2)
     if numel(plot_type{i}) > 2
         if strcmp(plot_type{i}(end-1:end),'2d')
             if ldist
-                pixplot(dist.r,dist.z,tmp(:,:,2))
+                pixplot(dist.r,dist.z,tmp(:,:,1))
                 c = colorbar;
                 c.Label.String = cstring;
                 xlim([dist.r(1) dist.r(end)])
