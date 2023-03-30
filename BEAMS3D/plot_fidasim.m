@@ -76,7 +76,7 @@ if nargin > 1
         switch varargin{i}
             case {'overview','profiles',...
                     'ba','br2d','bt2d','bz2d',...
-                    'brtor','bttor','bztor','q2d'}
+                    'brtor','bttor','bztor','q2d','te2d','ne2d','ti2d'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 leq = 1;
             case {'fslice','denf2d','denf','fdenf','fdenf2d',...
@@ -318,6 +318,15 @@ for i = 1:size(plot_type,2)
             plot(ax{i},eq.plasma.r, squeeze(eq.plasma.dene(:,z0_ind,1)), 'DisplayName',['n_e - ' name] );
             xlabel(ax{i},'R [cm]')
             ylabel(ax{i},'n_e [cm^{-3}]')
+        case 'ne2d'
+            tmp = eq.plasma.dene;
+            cstring = 'Electron density [m^{-3}]';            
+        case 'te2d'
+            tmp = eq.plasma.te;
+            cstring = 'Electron temperature [keV]';
+        case 'ti2d'
+            tmp = eq.plasma.ti;
+            cstring = 'Ion temperature [keV]';               
         case 'ba'
             plot(ax{i},eq.plasma.r, squeeze(eq.fields.br(:,z0_ind,1)),linestyle, 'DisplayName','B_r');
             plot(ax{i},eq.plasma.r, squeeze(eq.fields.bt(:,z0_ind,1)),linestyle, 'DisplayName','B_t');
@@ -354,7 +363,7 @@ for i = 1:size(plot_type,2)
             end
             xlabel('R [m]')
             ylabel('Fast ion density [m^{-3}]')
-            title('Fast ion density profile at z=0')
+            title('Fast ion density profile at z=0')         
         case 'denf2d'
             tmp = dist.denf;
             cstring = 'Fast ion density [m^{-3}]';
