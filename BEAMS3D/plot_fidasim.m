@@ -66,6 +66,8 @@ lspec = 0;
 lneut = 0;
 lmean=0;
 lgeom =0;
+lcontour=0;
+levels=2;
 linput=0;
 n_fida=-1;
 sim_data = {};
@@ -121,6 +123,10 @@ if nargin > 1
                 lgeom = 1;
             case 'mean'
                 lmean = 1;
+            case 'contour'
+                lcontour = 1;                
+                i=i+1;
+                levels = varargin{i};
             case 'sim_data'
                 i=i+1;
                 sim_data = varargin{i};
@@ -284,9 +290,9 @@ for i = 1:size(plot_type,2)
             end
             if fac == 1
                 % plot(ax,dist.energy(2:end), tmp(1:end-1),'DisplayName',['Energy - ' name] );
-                plot(ax{i},dist.energy, tmp,'DisplayName',['Energy - ' name] );
+                plot(ax{i},dist.energy, tmp,linestyle,'DisplayName',['Energy - ' name] );
             else
-                plot(ax{i},dist.energy, fac*tmp,'DisplayName',['Energy - ' name ', scaling factor: ' num2str(fac)]);
+                plot(ax{i},dist.energy, fac*tmp,linestyle,'DisplayName',['Energy - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('Energy [keV]')
             ylabel('Fast Ion Distribution [1/keV]')
@@ -300,10 +306,10 @@ for i = 1:size(plot_type,2)
             end
             fprintf('Total fast ions in %s: %3.2e\n',filename,n_fida);
             if fac == 1
-                plot(ax{i},dist.pitch, tmp,'DisplayName',['Pitch - ' name] );
+                plot(ax{i},dist.pitch, tmp,linestyle,'DisplayName',['Pitch - ' name] );
                 fprintf('Total from pitch: %3.2e\n',trapz(dist.pitch, tmp));
             else
-                plot(ax{i},dist.pitch, fac*tmp,'DisplayName',['Pitch - ' name ', scaling factor: ' num2str(fac)]);
+                plot(ax{i},dist.pitch, fac*tmp,linestyle,'DisplayName',['Pitch - ' name ', scaling factor: ' num2str(fac)]);
             end
             %plot(dist.pitch, squeeze(trapz(dist.phi,trapz(dist.z,trapz(dist.r,trapz(dist.energy,dist.f,1),3),4),5)),'DisplayName','Pitch');
             xlabel('Pitch [-]')
@@ -317,12 +323,16 @@ for i = 1:size(plot_type,2)
                 rtmp = permute(repmat(dist.r,1,size(dist.f,1),size(dist.f,2),1),[2,3,1]);
             end
             tmp = squeeze(trapz(dist.r,rtmp.*tmp,3));
+            if lcontour
+                contour(dist.energy,dist.pitch,tmp',levels,linestyle,'DisplayName',name)
+            else
             pixplot(dist.energy,dist.pitch,tmp)
-            ylabel('Pitch [-]')
-            xlabel('Energy [keV]')
             cstring='Fast Ion Distribution [1/keV]';
             c = colorbar;
             c.Label.String = cstring;
+            end
+            ylabel('Pitch [-]')
+            xlabel('Energy [keV]')
             xlim([dist.energy(1) dist.energy(end)])
             ylim([dist.pitch(1) dist.pitch(end)])
             if lsave
@@ -613,13 +623,15 @@ for i = 1:size(plot_type,2)
     %disp(plot_type{i});
     %if numel(plot_type{i}) > 2
     if strcmp(plot_type{i}(end-1:end),'2d')
-        %if ldist
+        if lcontour
+            contour(r,z,tmp(:,:,1),5,'DisplayName',name)
+        else
         pixplot(r,z,tmp(:,:,1));
         c = colorbar;
         c.Label.String = cstring;
+        end
         xlim([r(1) r(end)])
         ylim([z(1) z(end)])
-        %end
         xlabel('R [cm]')
         ylabel('Z [cm]')
     elseif strcmp(plot_type{i}(end-2:end),'tor') && ldist
