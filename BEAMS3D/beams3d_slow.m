@@ -31,7 +31,7 @@ beam_data=[];
 data=[];
 plasma_mass=[];
 plasma_charge=[];
-log_type = 3;
+log_type = 4;
 
 % Handle varargin
 if nargin > 0
@@ -176,6 +176,14 @@ Iinj = sum(CHARGE.*W_BEAM);
 % Calculate Values
 TE3=TE_BEAM.^3;
 beta = SPEED./299792458;
+% denb =  N_BEAM;
+% tempb=TE_BEAM/1000;%TI?
+% zb = plasma_charge/ec;
+ab = plasma_mass/amu;
+
+at = MASS/amu;
+% zt = CHARGE/ec;
+% et = E_BEAM/ec/1000;
 if log_type == 1
     %coulomb_log=[];
     coulomb_log = 35 - log(myZ.*ZE_BEAM.*(MASS+plasma_mass).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*plasma_mass.*beta.*beta.*6.02214076208E+26));
@@ -203,27 +211,55 @@ elseif log_type == 3
     rmax = sqrt(1./(omegae2./uave2 + omegai2./uavi2));
     coulomb_loge = log(rmax./rmine);
     coulomb_logi = log(rmax./rmini);
-    if lplot
-        figure
-        plot(coulomb_loge,'DisplayName','electron log')
-        hold on
-        plot(coulomb_logi,'DisplayName','Ion log')
-    end
 coulomb_loge(coulomb_loge <=1) = 1;
 coulomb_logi(coulomb_logi <=1) = 1;
+    if lplot
+        figure
+%         plot(coulomb_loge,'DisplayName','electron log')
+%         hold on
+%         plot(coulomb_logi,'DisplayName','Ion log')
+        %plot(coulomb_logi./coulomb_loge,'DisplayName','Factor between BEAMS3D and NUBEAM');\
+        histogram(coulomb_logi./coulomb_loge)
+    end
 ai = plasma_mass/amu;
 zi2_ai = myZ.^2./ai .* coulomb_logi./coulomb_loge;
 zi2 = myZ.^2 .* coulomb_logi./coulomb_loge;
 v_crit = 5.33e4 .* sqrt(TE_BEAM) .* zi2_ai.^(1/3);
 vcrit_cube = v_crit.^3;
 tau_spit = 6.32e8 .* (MASS./amu) ./ (myZ.^2 .* coulomb_loge) .* TE_BEAM.^(3/2) ./ (NE_BEAM.*1E-6);
+elseif log_type == 4
+        map  = plasma_mass.*MASS./(plasma_mass+MASS);
+    mae  = me.*MASS./(me+MASS);
+    ue    = sqrt(3.*ec.*TE_BEAM./me);
+    ui    = sqrt(3.*ec.*TI_BEAM./plasma_mass);
+    uave2  = SPEED.*SPEED + ue.*ue;
+    uavi2  = SPEED.*SPEED + ui.*ui;
+    rmincle = myZ.*ZE_BEAM.*ec.*ec./(mae.*uave2);
+    rmincli = myZ.*ZE_BEAM.*ec.*ec./(map.*uavi2);
+    rminque = hbar./(2.*mae.*sqrt(uave2));
+    rminqui = hbar./(2.*map.*sqrt(uavi2));
+    rmine = max(rmincle,rminque);
+    rmini = max(rmincli,rminqui);
+    omegape2 = NE_BEAM.*ec.*ec./(me.*eps0);
+    omegapi2 = (NE_BEAM./ZE_BEAM).*ec.*ec./(plasma_mass.*eps0);
+    omegace = ec.*B_BEAM./me;
+    omegaci = ec.*B_BEAM./plasma_mass;
+    omegae2 = omegape2+omegace.*omegace;
+    omegai2 = omegapi2+omegaci.*omegaci;
+    rmax = sqrt(1./(omegae2./uave2 + omegai2./uavi2));
+    coulomb_loge = log(rmax./rmine);
+    coulomb_log = log(rmax./rmini);
 end
 
 if log_type ~=3
 coulomb_log(coulomb_log <=1) = 1;
-v_crit = ((0.75.*sqrt(pi.*ab./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./ab);
+v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./plasma_mass).* (coulomb_log./coulomb_loge).^(1/3);
+%v_crit = 5.33e4 .* sqrt(TE_BEAM) .* (myZ.^2./ (plasma_mass/amu) .* coulomb_log./coulomb_loge).^(1/3);
 vcrit_cube = v_crit.^3;
-tau_spit = 3.777183E41.*at.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
+tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_loge);
+% v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./plasma_mass);
+% vcrit_cube = v_crit.^3;
+% tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
 nu0_fe = 6.6E-11 .* NE_BEAM .* myZ.*myZ ./ sqrt(at./9.31E-31) ./ (E_BEAM ./ 1.6022E-19).^(3/2) .* (coulomb_log./17);
 data.nu0_fe = nu0_fe;
 end
@@ -251,14 +287,7 @@ end
 % N_BEAM(size(beam_data.NI,1)+1,:)= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
 %     NE,R_BEAM,P_BEAM,Z_BEAM);
 % 
-% denb =  N_BEAM;
-% tempb=TE_BEAM/1000;%TI?
-% zb = plasma_charge/ec;
-% ab = plasma_mass/amu;
-% 
-% at = MASS/amu;
-% zt = CHARGE/ec;
-% et = E_BEAM/ec/1000;
+
 % 
 %     omega2=1.74d0*zb.^2./ab.*NE_BEAM ...
 %          +9.18d15.*zt.^2./ab.^2.*MODB_BEAM.^2;
@@ -300,13 +329,19 @@ end
 % Integrate
 C1 = 1./tau_spit;
 C2 = vcrit_cube./tau_spit;
+% if lplot
+%     figure
+%     plot(C2,'.')
+% end
 v_sound = 1.5*sqrt(ec.*TI_BEAM./plasma_mass);
 V  = SPEED;
 V2 = V;
-dt = 1E-4;
+dt= 1E-4; %Previous setting (W7-X presumably);
+dt = 2E-3; %Gives correct NPART for AUG #38581 benchmark
 Ee = zeros(1,length(W_BEAM));
 Ei = zeros(1,length(W_BEAM));
 jb = zeros(1,length(W_BEAM));
+dist = zeros(1,length(W_BEAM));
 t=0;
 while any(V > v_sound)
     t = t+dt;
@@ -318,6 +353,7 @@ while any(V > v_sound)
     Ee(dex) = Ee(dex) + V(dex).*dve.*dt;
     Ei(dex) = Ei(dex) + V(dex).*dvi.*dt;
     jb(dex) = jb(dex) + V(dex).*PITCH(dex).*dt;
+    dist(dex)=dist(dex)+W_BEAM(dex)*dt;
     V = max(V2,v_sound);
     disp([num2str(t) ' ' num2str(V(1:3))]);
 end
@@ -334,13 +370,17 @@ RHO=[0 RHO];
 PE_RHO = zeros(1,length(RHO));
 PI_RHO = zeros(1,length(RHO));
 J_RHO  = zeros(1,length(RHO));
+PART_RHO  = zeros(1,length(RHO));
 for i = 1:length(RHO)-1
     dex = and(RHO_BEAM<RHO(i+1), RHO_BEAM>= RHO(i));
     %dex = and(dex,BEAM==k);
     PE_RHO(i+1) = sum(Pe(dex));
     PI_RHO(i+1) = sum(Pi(dex));
     J_RHO(i+1) = sum(J(dex));
+    PART_RHO(i+1) = sum(dist(dex));
 end 
+npart=sum(PART_RHO);
+fprintf('Total no. of fast ions: %.2e\n',sum(PART_RHO));
 
 % Calculate Volume for each radial point
 % dV = dV/drho * drho
@@ -396,6 +436,9 @@ if lplot
     xlabel('Effective Radius (\rho/a)');
     ylabel(['Beam Current ' unitsj2]);
     title('BEAMS3D Simple Current');
+    figure('Position',[1 1 1024 768],'Color','white');
+    plot(RHO_BEAM,C2,'.')
+    title('Ion slowing down');
 end
 
 data.PE = PE_RHO;
@@ -403,8 +446,13 @@ data.PI = PI_RHO;
 data.RHO  = RHO;
 data.Pinj = Pinj;
 data.Iinj = Iinj;
+data.PART_RHO=PART_RHO;
+data.npart=npart;
 data.tslow = t;
 data.tau_spit = tau_spit;
+data.v_crit=v_crit;
+data.V=V;
+data.V2=V2;
 
 if ~isempty(vp)
     data.VP = vp;
