@@ -78,7 +78,7 @@ if nargin > 1
         switch varargin{i}
             case {'overview','profiles',...
                     'ba','br2d','bt2d','bz2d',...
-                    'brtor','bttor','bztor','q2d'}
+                    'brtor','bttor','bztor','q2d','te2d','ne2d','ti2d'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 leq = 1;
             case {'fslice','denf2d','denf','fdenf','fdenf2d',...
@@ -185,7 +185,7 @@ if ldist
         n_fida = 2*pi*dr*dz*sum(dist.r.*sum(squeeze(dist.denf(:,:,1)),2)); %Axisymmetric only.
     end
 
-    [~,z0_ind]=min(abs(dist.z-2));
+    [~,z0_ind]=min(abs(dist.z+4.9));
 end
 if leq
     eq = read_hdf5(eq_name);
@@ -193,7 +193,7 @@ if leq
         disp('ERROR: Equilbirium file not found, check filename!');
         disp(['       Filename: ' filename]);
     end
-    [~,z0_ind]=min(abs(eq.fields.z-2));
+    [~,z0_ind]=min(abs(eq.fields.z+4.9));
 end
 
 if lneut
@@ -343,6 +343,15 @@ for i = 1:size(plot_type,2)
             plot(ax{i},eq.plasma.r, squeeze(eq.plasma.dene(:,z0_ind,1)), 'DisplayName',['n_e - ' name] );
             xlabel(ax{i},'R [cm]')
             ylabel(ax{i},'n_e [cm^{-3}]')
+        case 'ne2d'
+            tmp = eq.plasma.dene;
+            cstring = 'Electron density [m^{-3}]';            
+        case 'te2d'
+            tmp = eq.plasma.te;
+            cstring = 'Electron temperature [keV]';
+        case 'ti2d'
+            tmp = eq.plasma.ti;
+            cstring = 'Ion temperature [keV]';               
         case 'ba'
             plot(ax{i},eq.plasma.r, squeeze(eq.fields.br(:,z0_ind,1)),linestyle, 'DisplayName','B_r');
             plot(ax{i},eq.plasma.r, squeeze(eq.fields.bt(:,z0_ind,1)),linestyle, 'DisplayName','B_t');
@@ -374,12 +383,13 @@ for i = 1:size(plot_type,2)
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
             if fac == 1
                 plot(ax{i},dist.r, tmp(:,z0_ind,1),linestyle, 'DisplayName',['Denf from f - ' name] );
+                %plot(ax{i},dist.r, movmean(tmp(:,z0_ind,1),15),linestyle, 'DisplayName',['Movmean Denf from f - ' name] );
             else
                 plot(ax{i},dist.r, fac*tmp(:,z0_ind,1),linestyle, 'DisplayName',['Denf from f - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [m]')
             ylabel('Fast ion density [m^{-3}]')
-            title('Fast ion density profile at z=0')
+            title('Fast ion density profile at z=0')         
         case 'denf2d'
             r = dist.r;
             z = dist.z;
