@@ -167,7 +167,7 @@ if ldist
         n_fida = 2*pi*dr*dz*sum(dist.r.*sum(squeeze(dist.denf(:,:,1)),2)); %Axisymmetric only.
     end
 
-    [~,z0_ind]=min(abs(dist.z));
+    [~,z0_ind]=min(abs(dist.z+4.9));
 end
 if leq
     eq = read_hdf5(eq_name);
@@ -175,7 +175,7 @@ if leq
         disp('ERROR: Equilbirium file not found, check filename!');
         disp(['       Filename: ' filename]);
     end
-    [~,z0_ind]=min(abs(eq.fields.z));
+    [~,z0_ind]=min(abs(eq.fields.z+4.9));
 end
 
 if lneut
@@ -358,6 +358,7 @@ for i = 1:size(plot_type,2)
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
             if fac == 1
                 plot(ax{i},dist.r, tmp(:,z0_ind,1),linestyle, 'DisplayName',['Denf from f - ' name] );
+                %plot(ax{i},dist.r, movmean(tmp(:,z0_ind,1),15),linestyle, 'DisplayName',['Movmean Denf from f - ' name] );
             else
                 plot(ax{i},dist.r, fac*tmp(:,z0_ind,1),linestyle, 'DisplayName',['Denf from f - ' name ', scaling factor: ' num2str(fac)]);
             end
@@ -519,7 +520,7 @@ for i = 1:size(plot_type,2)
     if numel(plot_type{i}) > 2
         if strcmp(plot_type{i}(end-1:end),'2d')
             if ldist
-                pixplot(dist.r,dist.z,tmp(:,:,1))
+                pixplot(dist.r,dist.z,tmp(:,:,end))
                 c = colorbar;
                 c.Label.String = cstring;
                 xlim([dist.r(1) dist.r(end)])

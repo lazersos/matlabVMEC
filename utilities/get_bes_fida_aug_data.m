@@ -39,7 +39,7 @@ avg_time=0;
 lmovie=0;
 t_passive =0;
 t_point = 0;
-fida_range = [659, 661];
+fida_range = [660, 661];
 
 dex_in = '';
 
@@ -79,7 +79,7 @@ if nargin > 2
                 if strcmp("F50",string(varargin{i}))
                     fida_range = [652.5,653.5];
                 else
-                    fida_range = [660, 661];
+                    fida_range = [659, 660];
                 end
             case{'spectrum', 'timetrace_fida', 'timetrace_bes', 'timetrace_fidabes'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
