@@ -108,10 +108,13 @@ switch plottype
         x=data.R_lines(1:skip:nlines,line_dex);
         y=data.Z_lines(1:skip:nlines,line_dex);
         if liota
-            t = repmat(iota,size(x,2),1);
-            scatter(reshape(x,[],1),reshape(y,[],1),1.0,t);
+            s=ones(size(x));
+            %t = repmat(data.iota,size(x,2),1);
+            c=repmat(data.iota(1:skip:nlines),[1 size(x,2)]);
+            scatter(x(:),y(:),s(:).*0.1,c(:),'.');
+            %scatter(reshape(x,[],1),reshape(y,[],1),s(:).*0.1,t,'.');
         elseif isfield(data,'rho')
-            s=ones(size(x,1),size(x,2));
+            s=ones(size(x));
             c=repmat(data.rho(1:skip:nlines),[1 size(x,2)]);
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
             caxis([0 data.rho(end-1)]);

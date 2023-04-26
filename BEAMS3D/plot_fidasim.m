@@ -74,6 +74,7 @@ sim_data = {};
 channel = 0;
 linestyle = '-';
 color='k';
+index=1;
 if nargin > 1
     i = 1;
     while i < nargin
@@ -89,6 +90,12 @@ if nargin > 1
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 ldist = 1;
                 leq=1;
+                if numel(varargin)>i
+				if ~isstr(varargin{i+1})
+                i=i+1;
+                index = varargin{i};
+                end
+                end
             case{'ndensvert', 'ndenshorz', 'ndenscross'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 lneut = 1;
@@ -336,9 +343,10 @@ for i = 1:size(plot_type,2)
             xlim([dist.energy(1) dist.energy(end)])
             ylim([dist.pitch(1) dist.pitch(end)])
             if lsave
-                sname = [filename, '_', plot_type{i}];
-                savefig(sname)
-                exportgraphics(gcf,[sname,'.png'],'Resolution',300);
+                legend('Location','best')
+                sname = [filename, '_', name,'_', plot_type{i} ,'.fig'];
+                savefig(ax{i}.Parent,sname)
+                exportgraphics(ax{i}.Parent,[sname,'.png'],'Resolution',300);
             end
             return
         case 'profiles'
@@ -399,7 +407,7 @@ for i = 1:size(plot_type,2)
             end
             xlabel('R [m]')
             ylabel('Fast ion density [m^{-3}]')
-            title('Fast ion density profile at z=0')         
+            %title('Fast ion density profile at z=0')         
         case 'denf2d'
             r = dist.r;
             z = dist.z;
@@ -624,9 +632,9 @@ for i = 1:size(plot_type,2)
     %if numel(plot_type{i}) > 2
     if strcmp(plot_type{i}(end-1:end),'2d')
         if lcontour
-            contour(r,z,tmp(:,:,1),5,'DisplayName',name)
+            contour(r,z,tmp(:,:,index),5,'DisplayName',name)
         else
-        pixplot(r,z,tmp(:,:,1));
+        pixplot(r,z,tmp(:,:,index));
         c = colorbar;
         c.Label.String = cstring;
         end
@@ -656,12 +664,10 @@ for i = 1:size(plot_type,2)
     %end
     if lsave
         %caxis([0 3e11])
-        legend(ax,'Location','best');
-        sname = [filename, '_', plot_type{i}];
-        %         savefig(figs{i},sname)
-        %         exportgraphics(figs{i},[sname,'.png'],'Resolution',300);
-        savefig(gcf,sname)
-        exportgraphics(gcf,[sname,'.png'],'Resolution',300);
+        legend(ax{i},'Location','best');
+        sname = [filename, '_', name,  '_', plot_type{i}];
+        savefig(ax{i}.Parent,sname)
+        exportgraphics(ax{i}.Parent,[sname,'.png'],'Resolution',300);
     end
 
 end
