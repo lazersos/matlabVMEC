@@ -108,15 +108,16 @@ switch plottype
         x=data.R_lines(1:skip:nlines,line_dex);
         y=data.Z_lines(1:skip:nlines,line_dex);
         if liota
-            t = repmat(iota,size(x,2),1);
-            scatter(reshape(x,[],1),reshape(y,[],1),1.0,t);
+            t = repmat(data.iota,size(x,2),1);
+            %scatter(reshape(x,[],1),reshape(y,[],1),1.0,t);
+            plot3(x',y',t,'.','MarkerSize',.01);
         elseif isfield(data,'rho')
             s=ones(size(x,1),size(x,2));
             c=repmat(data.rho(1:skip:nlines),[1 size(x,2)]);
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
             caxis([0 data.rho(end-1)]);
         else
-            plot(x,y,'.','Color',line_color,'MarkerSize',1.0);
+            plot(x,y,'.','Color',line_color,'MarkerSize',0.5);
         end
         if isfield(data,'Rhc_lines')  && isfield(data,'Zhc_lines')
             line_dex = nphi:npoinc:size(data.Rhc_lines,2);

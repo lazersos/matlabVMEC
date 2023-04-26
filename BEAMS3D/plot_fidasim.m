@@ -20,7 +20,7 @@ function [ ax, n_fida ] = plot_fidasim(filename,varargin)
 %      plot_fidasim(runid,'fdenf_'); %FI density on RZ plane from f
 %      plot_fidasim(runid,'energy'); %Energy dist, int. over real space
 %      plot_fidasim(runid,'pitch'); %Pitch dist, int. over real space
-%      plot_fidasim(runid,'ep_'); %E-p dist.,  int. over real space
+%      plot_fidasim(runid,'ep_'); %E-p dist.,  open  over real space
 %      !!! '_' can be '2d' (RZ plane) or 'tor' (midplane)
 %      plot_fidasim(runid,'ndensvert'); %Neutral density, vertical
 %      plot_fidasim(runid,'ndenshorz'); %Neutral density, horizontal
