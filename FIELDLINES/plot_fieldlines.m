@@ -119,7 +119,7 @@ switch plottype
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
             caxis([0 data.rho(end-1)]);
         else
-            plot(x,y,'.','Color',line_color,'MarkerSize',1.0);
+            plot(x,y,'.','Color',line_color,'MarkerSize',0.5);
         end
         if isfield(data,'Rhc_lines')  && isfield(data,'Zhc_lines')
             line_dex = nphi:npoinc:size(data.Rhc_lines,2);
