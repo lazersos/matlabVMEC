@@ -46,7 +46,7 @@ dex_in = '';
 R = h5read(filename,'/r_pos');
 
 spec_err_in= h5read(filename,'/intenserr');
-lambda = h5read(filename,'/cor_wavel')-0.055;
+lambda = h5read(filename,'/cor_wavel');%-0.055;
 spec_in= h5read(filename,'/intens');
 names_unsorted = h5read(filename,'/los_name');
 dispersion_in=h5read(filename,'/dispersion');

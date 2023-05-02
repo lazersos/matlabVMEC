@@ -54,6 +54,7 @@ eq_name = [filename,'_equilibrium.h5'];
 neut_name = [filename, '_neutrals.h5'];
 spec_name = [filename,'_spectra.h5'];
 geom_name = [filename,'_geometry.h5'];
+birth_name = [filename,'_birth.h5'];
 
 lsave = 0;
 plot_type = {};
@@ -84,6 +85,12 @@ if nargin > 1
                     'brtor','bttor','bztor','q2d','te2d','ne2d','ti2d'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 leq = 1;
+                if numel(varargin)>i
+                    if ~isstr(varargin{i+1})
+                        i=i+1;
+                        index = varargin{i};
+                    end
+                end
             case {'fslice','denf2d','denf','fdenf','fdenf2d',...
                     'pitch','energy','ep2d',...
                     'fdenftor','denftor'}
@@ -91,10 +98,10 @@ if nargin > 1
                 ldist = 1;
                 leq=1;
                 if numel(varargin)>i
-				if ~isstr(varargin{i+1})
-                i=i+1;
-                index = varargin{i};
-                end
+                    if ~isstr(varargin{i+1})
+                        i=i+1;
+                        index = varargin{i};
+                    end
                 end
             case{'ndensvert', 'ndenshorz', 'ndenscross'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
@@ -128,10 +135,12 @@ if nargin > 1
                 disp(['ERROR: Option ', varargin{i}, ' not implemented here. Use plot_fidasim_profiles instead.']);
                 lspec = 1;
                 lgeom = 1;
+            case 'birth'
+                lbirth = 1;
             case 'mean'
                 lmean = 1;
             case 'contour'
-                lcontour = 1;                
+                lcontour = 1;
                 i=i+1;
                 levels = varargin{i};
             case 'sim_data'
@@ -219,10 +228,10 @@ if lneut
     neut.dens=squeeze(sum(neut.dens,1));%Sum over all levels
     neut.grid.vol = repmat(mean(diff(neut.grid.x))*mean(diff(neut.grid.y))*mean(diff(neut.grid.z)),size(neut.grid.x_grid));
     neut.nparts=neut.dens.*neut.grid.vol;
-      nneutrals=1.d6*input.pinj/ (1.d3*input.einj*ec...
-         *( input.current_fractions(1)      ...
-         +  input.current_fractions(2)/2.d0 ...
-         +  input.current_fractions(3)/3.d0 ) );
+    nneutrals=1.d6*input.pinj/ (1.d3*input.einj*ec...
+        *( input.current_fractions(1)      ...
+        +  input.current_fractions(2)/2.d0 ...
+        +  input.current_fractions(3)/3.d0 ) );
 end
 
 if lspec
@@ -238,6 +247,15 @@ if lgeom
     geom = read_hdf5(geom_name);
     if ~isstruct(geom)
         disp('ERROR: Geometry file not found, check filename!');
+        disp(['       Filename: ' filename]);
+        lgeom=0;
+    end
+end
+
+if lbirth
+    birth = read_hdf5(birth_name);
+    if ~isstruct(birth)
+        disp('ERROR: Birth file not found, check filename!');
         disp(['       Filename: ' filename]);
         lgeom=0;
     end
@@ -333,10 +351,10 @@ for i = 1:size(plot_type,2)
             if lcontour
                 contour(dist.energy,dist.pitch,tmp',levels,linestyle,'DisplayName',name)
             else
-            pixplot(dist.energy,dist.pitch,tmp)
-            cstring='Fast Ion Distribution [1/keV]';
-            c = colorbar;
-            c.Label.String = cstring;
+                pixplot(dist.energy,dist.pitch,tmp)
+                cstring='Fast Ion Distribution [1/keV]';
+                c = colorbar;
+                c.Label.String = cstring;
             end
             ylabel('Pitch [-]')
             xlabel('Energy [keV]')
@@ -363,13 +381,13 @@ for i = 1:size(plot_type,2)
             ylabel(ax{i},'n_e [cm^{-3}]')
         case 'ne2d'
             tmp = eq.plasma.dene;
-            cstring = 'Electron density [m^{-3}]';            
+            cstring = 'Electron density [m^{-3}]';
         case 'te2d'
             tmp = eq.plasma.te;
             cstring = 'Electron temperature [keV]';
         case 'ti2d'
             tmp = eq.plasma.ti;
-            cstring = 'Ion temperature [keV]';               
+            cstring = 'Ion temperature [keV]';
         case 'ba'
             plot(ax{i},eq.plasma.r, squeeze(eq.fields.br(:,z0_ind,1)),linestyle, 'DisplayName','B_r');
             plot(ax{i},eq.plasma.r, squeeze(eq.fields.bt(:,z0_ind,1)),linestyle, 'DisplayName','B_t');
@@ -407,7 +425,7 @@ for i = 1:size(plot_type,2)
             end
             xlabel('R [m]')
             ylabel('Fast ion density [m^{-3}]')
-            %title('Fast ion density profile at z=0')         
+            %title('Fast ion density profile at z=0')
         case 'denf2d'
             r = dist.r;
             z = dist.z;
@@ -520,6 +538,11 @@ for i = 1:size(plot_type,2)
 
         case 'spectrum'
             specr = spec.full + spec.half + spec.third + spec.halo + spec.dcx + spec.fida;% + spec.brems;
+            if isfield(spec,'pfida')
+                specr=specr+spec.pfida;
+            else
+                disp('No passive FIDA signal found!')
+            end
             specr = specr.*fac;
             if lmean
                 k = 12;
@@ -539,12 +562,18 @@ for i = 1:size(plot_type,2)
                 plot(spec.lambda,conv(specr(:,channel),instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
                 %                 plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
                 %                 plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
-                %                 plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
+                %plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
+                if isfield(spec,'pfida')
+                plot(spec.lambda, conv(spec.pfida(:,channel),instfu(:,channel),'same'),  'DisplayName',['Passive FIDA - ' name] );
+                end
                 %                 plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
                 %                 fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
-                %                 plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
+                %plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
             else
                 plot(spec.lambda,specr(:,channel),linestyle, 'DisplayName', ['Spectrum - ' name] );
+                if isfield(spec,'pfida')
+                plot(spec.lambda, spec.pfida(:,channel),  'DisplayName',['Passive FIDA - ' name] );
+                end
                 disp('Supply in_data from e.g. get_bes_fida_aug_data for more plots!')
             end
             hold on
@@ -634,9 +663,9 @@ for i = 1:size(plot_type,2)
         if lcontour
             contour(r,z,tmp(:,:,index),5,'DisplayName',name)
         else
-        pixplot(r,z,tmp(:,:,index));
-        c = colorbar;
-        c.Label.String = cstring;
+            pixplot(r,z,tmp(:,:,index));
+            c = colorbar;
+            c.Label.String = cstring;
         end
         xlim([r(1) r(end)])
         ylim([z(1) z(end)])
