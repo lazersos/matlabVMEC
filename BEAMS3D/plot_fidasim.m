@@ -20,7 +20,7 @@ function [ ax, n_fida ] = plot_fidasim(filename,varargin)
 %      plot_fidasim(runid,'fdenf_'); %FI density on RZ plane from f
 %      plot_fidasim(runid,'energy'); %Energy dist, int. over real space
 %      plot_fidasim(runid,'pitch'); %Pitch dist, int. over real space
-%      plot_fidasim(runid,'ep_'); %E-p dist.,  open  over real space
+%      plot_fidasim(runid,'ep_'); %E-p dist.,  int. over real space
 %      !!! '_' can be '2d' (RZ plane) or 'tor' (midplane)
 %      plot_fidasim(runid,'ndensvert'); %Neutral density, vertical
 %      plot_fidasim(runid,'ndenshorz'); %Neutral density, horizontal
@@ -67,6 +67,7 @@ lspec = 0;
 lneut = 0;
 lmean=0;
 lgeom =0;
+lbirth=0;
 lcontour=0;
 levels=2;
 linput=0;
@@ -135,8 +136,9 @@ if nargin > 1
                 disp(['ERROR: Option ', varargin{i}, ' not implemented here. Use plot_fidasim_profiles instead.']);
                 lspec = 1;
                 lgeom = 1;
-            case 'birth'
+            case {'birth_R','birth_Z','birth_pitch', 'birth_phi'}
                 lbirth = 1;
+                plot_type{end+1}=varargin{i}; %Make multiple plots possible
             case 'mean'
                 lmean = 1;
             case 'contour'
@@ -564,7 +566,7 @@ for i = 1:size(plot_type,2)
                 %                 plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
                 %plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
                 if isfield(spec,'pfida')
-                plot(spec.lambda, conv(spec.pfida(:,channel),instfu(:,channel),'same'),  'DisplayName',['Passive FIDA - ' name] );
+                    plot(spec.lambda, conv(spec.pfida(:,channel),instfu(:,channel),'same'),  'DisplayName',['Passive FIDA - ' name] );
                 end
                 %                 plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
                 %                 fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
@@ -572,7 +574,7 @@ for i = 1:size(plot_type,2)
             else
                 plot(spec.lambda,specr(:,channel),linestyle, 'DisplayName', ['Spectrum - ' name] );
                 if isfield(spec,'pfida')
-                plot(spec.lambda, spec.pfida(:,channel),  'DisplayName',['Passive FIDA - ' name] );
+                    plot(spec.lambda, spec.pfida(:,channel),  'DisplayName',['Passive FIDA - ' name] );
                 end
                 disp('Supply in_data from e.g. get_bes_fida_aug_data for more plots!')
             end
@@ -655,7 +657,51 @@ for i = 1:size(plot_type,2)
                 %set(h, 'DisplayName', chan_description{k});
             end
             %legend(h,'Location','bestoutside');
-
+        case 'birth_r'
+            edges = min(birth.ri(1,:)):1:max(birth.ri(1,:));
+            dists = discretize(birth.ri(1,:),edges);
+            dists(isnan(dists)) = 1;
+            weights = birth.weight;
+            sum(weights)
+            histo = accumarray(dists',weights,[size(edges,2)-1, 1]);
+            x=(edges(2:end-1)+mean(diff(edges))/2)/100;
+            plot(ax{i},x,histo(2:end),'DisplayName','FIDASIM','LineWidth', 2.0)
+            xlabel('R [m]')
+            ylabel('Deposition [particles/s]')
+        case 'birth_z'
+            edges = min(birth.ri(2,:)):1:max(birth.ri(2,:));
+            dists = discretize(birth.ri(2,:),edges);
+            dists(isnan(dists)) = 1;
+            weights = birth.weight;
+            sum(weights)
+            histo = accumarray(dists',weights,[size(edges,2)-1, 1]);
+            x=(edges(2:end-1)+mean(diff(edges))/2)/100;
+            plot(ax{i},x,histo(2:end),'DisplayName','FIDASIM','LineWidth', 2.0)
+            xlabel('Z [m]')
+            ylabel('Deposition [particles/s]')    
+        case 'birth_phi'
+            birth_phi=mod(birth.ri(3,:),2*pi);
+            edges = min(birth_phi):0.01:max(birth_phi);
+            dists = discretize(birth_phi,edges);
+            dists(isnan(dists)) = 1;
+            weights = birth.weight;
+            sum(weights)
+            histo = accumarray(dists',weights,[size(edges,2)-1, 1]);
+            x=(edges(2:end-1)+mean(diff(edges))/2);
+            plot(ax{i},x,histo(2:end),'DisplayName','FIDASIM','LineWidth', 2.0)
+            xlabel('Phi [rad]')
+            ylabel('Deposition [particles/s]')   
+        case 'birth_pitch'
+            edges=linspace(-1.05,1.05,70)';
+            dists = discretize(birth.pitch,edges);
+            dists(isnan(dists)) = 1;
+            weights = birth.weight;
+            sum(weights)
+            histo = accumarray(dists,weights',[numel(edges)-1, 1]);
+            x=(edges(2:end-1)+mean(diff(edges))/2);
+            plot(ax{i},x,histo(2:end),'DisplayName','FIDASIM','LineWidth', 2.0)
+            xlabel('Phi [rad]')
+            ylabel('Deposition [particles/s]')                
     end
     %disp(plot_type{i});
     %if numel(plot_type{i}) > 2
