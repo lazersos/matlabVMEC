@@ -17,6 +17,8 @@ function plot_data = plot_fidasim_profiles(filename,sim_data,varargin)
 %      plot_fidasim(runid,'name', 'test'); %ID Name for legend
 %      plot_fidasim(runid,'fac', 1.0); %Scaling factor
 %
+bg_range=sim_data.bg_range;
+
 bes_range = sim_data.bes_range;
 fida_range = sim_data.fida_range;
 dispersion = sim_data.dispersion;
@@ -43,7 +45,7 @@ if nargin > 2
     i = 1;
     while i < nargin-1
         switch varargin{i}
-            case {'FIDA','BES','FIDABES','fida','bes','fidabes'}
+            case {'FIDA','BES','FIDABES','fida','bes','fidabes','bck'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
             case 'mean'
                 lmean =1;
@@ -105,7 +107,7 @@ dispersion_tmp = repmat(dispersion_tmp,1,size(spec,2));
 
 % bes_dex = (lambda_dat > repmat(bes_range(:,1)',size(lambda_dat,1),1)) & (lambda_dat < repmat(bes_range(:,2)',size(lambda_dat,1),1));
 % fida_dex = (lambda_dat > fida_range(1)) & (lambda_dat < fida_range(2));
-
+bg_dex = (lambda > bg_range(1)) & (lambda < bg_range(2));
 bes_dex = (lambda > repmat(bes_range(:,1)',size(lambda,1),1)) & (lambda < repmat(bes_range(:,2)',size(lambda,1),1));
 fida_dex = (lambda > fida_range(1)) & (lambda < fida_range(2));
 
@@ -116,7 +118,7 @@ fida_dex = (lambda > fida_range(1)) & (lambda < fida_range(2));
 % bes = sum(spec.*dispersion_tmp.*bes_dex,1);
 % fida = sum(spec.*dispersion_tmp.*fida_dex,1);
 
-
+bg = sum(brems.*dispersion_tmp.*bg_dex,1,'omitnan');
 bes = sum(spec.*dispersion_tmp.*bes_dex,1,'omitnan');
 fida = sum(spec.*dispersion_tmp.*fida_dex,1,'omitnan');
 
@@ -128,6 +130,9 @@ for i = 1:size(plot_type,2)
     end
     legend(ax{i},'Location','best');
     switch lower(plot_type{i})
+        case 'bck'
+            tmp = bg(dex);
+            ystr = 'BG';
         case 'bes'
             tmp = bes(dex);
             ystr = 'BES';

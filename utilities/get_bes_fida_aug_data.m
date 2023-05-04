@@ -72,7 +72,7 @@ if nargin > 2
     i = 1;
     while i < nargin
         switch varargin{i}
-            case {'FIDA','BES','FIDABES','fida','bes','fidabes'}
+            case {'FIDA','BES','FIDABES','fida','bes','fidabes','bck'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
             case 'channels'
                 i=i+1;
@@ -127,31 +127,31 @@ end
 bg_range = [664.5, 666];
 
 bes_range = [ 654.56110	655.05627
-654.73962	655.24072
-655.97443	656.48553
-656.21759	656.73773
-656.45605	656.98492
-656.69189	657.22961
-656.93341	657.48016
-657.16632	657.72180
-654.78632	655.29498
-656.13635	656.65588
-656.47156	657.00012
-656.81158	657.34930
-657.14575	657.69293
-657.47827	658.03491
-658.34113	658.90131
-658.24969	658.80139
-658.15497	658.69794
-658.05914	658.59344
-657.95184	658.47662
-657.85443	658.37079
-657.75659	658.26471
-657.66028	658.16034
-657.56232	658.05450
-657.46442	657.94891
-658.30511	658.81262
-658.89917	659.41998];
+    654.73962	655.24072
+    655.97443	656.48553
+    656.21759	656.73773
+    656.45605	656.98492
+    656.69189	657.22961
+    656.93341	657.48016
+    657.16632	657.72180
+    654.78632	655.29498
+    656.13635	656.65588
+    656.47156	657.00012
+    656.81158	657.34930
+    657.14575	657.69293
+    657.47827	658.03491
+    658.34113	658.90131
+    658.24969	658.80139
+    658.15497	658.69794
+    658.05914	658.59344
+    657.95184	658.47662
+    657.85443	658.37079
+    657.75659	658.26471
+    657.66028	658.16034
+    657.56232	658.05450
+    657.46442	657.94891
+    658.30511	658.81262
+    658.89917	659.41998];
 
 if shotid < 32000
     bes_range = [658.906      658.906
@@ -229,8 +229,9 @@ fida_dex = repmat(fida_dex,1,1,numel(time));
 bg_dex = repmat(bg_dex,1,1,numel(time));
 dispersion = repmat(dispersion_in,1,1,numel(time));
 
-spec = spec_in - repmat(sum(spec_in.*bg_dex,1)./sum(bg_dex,1),size(spec_in,1),1); %Background subtraction
- %spec=spec_in;
+bg = sum(spec_in.*bg_dex,1)./sum(bg_dex,1);
+spec = spec_in - repmat(bg,size(spec_in,1),1);%Background subtraction
+%spec=spec_in;
 spec(spec<0) = 0;
 if t_passive~=0
     for k = 1:size(time_dex_passive,4)
@@ -287,38 +288,31 @@ for i = 1:size(plot_type,2)
     end
     %legend(ax{i},'Location','best');
     switch lower(plot_type{i})
+        case 'bck'
+            tmp_frames=bg(time_dex);
+            tmp = sum(squeeze(bg).*time_dex,2)./sum(time_dex,2);
+            tmp_err=sqrt(sum(squeeze(bg_err).*time_dex,2).^2)./sum(time_dex,2);
+            ystr = 'BG';
         case 'bes'
-            %plot(ax{i},R_pts(time_dex),bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),'-',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
-            %plot(ax{i},R_pts(time_dex_passive),bes(time_dex_passive),'o','DisplayName',['Data Passive ', num2str(t_passive- avg_time/2),'-',num2str(t_passive+ avg_time/2), 's'], 'LineWidth',2.0);
             tmp_frames=bes(time_dex);
             tmp = sum(bes.*time_dex,2)./sum(time_dex,2);
             tmp_err=sqrt(sum(bes_err.*time_dex,2).^2)./sum(time_dex,2);
             ystr = 'BES';
         case 'fida'
-            %plot(ax{i},R_pts(time_dex),fida(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
             tmp_frames=fida(time_dex);
             tmp = sum(fida.*time_dex,2)./sum(time_dex,2);
             tmp_err=sqrt(sum(fida_err.*time_dex,2).^2)./sum(time_dex,2);
             ystr = 'FIDA';
-%             t = annotation('textbox',[0.15 0.61 0.3 0.3],'String',['FIDA Int. Range: [', num2str(fida_range),'] nm'],'FitBoxToText','on','LineStyle','none');
-%             t.LineWidth = 0.01;
+            %             t = annotation('textbox',[0.15 0.61 0.3 0.3],'String',['FIDA Int. Range: [', num2str(fida_range),'] nm'],'FitBoxToText','on','LineStyle','none');
+            %             t.LineWidth = 0.01;
         case 'fidabes'
-            %compose('Data %.3f - %.3f s', (t_point - avg_time/2)',(t_point + avg_time/2)')
-%             for j = 1:sum(time_dex_vec)
-%                 plot(ax{i},R_pts(dex_in,time_dex_inds(j)),fida(dex_in,time_dex_inds(j))./bes(dex_in,time_dex_inds(j)),'o','Color', gray,'DisplayName',sprintf('Data %.3f s', time(time_dex_inds(j))),'LineWidth',2.0);
-%             end
             tmp_frames=fida(time_dex)./bes(time_dex);
             tmp = sum(fida./bes.*time_dex,2,'omitnan')./sum(time_dex,2,'omitnan');
-            %plot(ax,R_pts(time_dex),fida(time_dex)./bes(time_dex),'o','DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
-            %tmp = sum(fida./bes.*time_dex,2,'omitnan')./sum(time_dex,2);
             tmp_err=sqrt(sum(fida_bes_err.*time_dex,2,'omitnan').^2)./sum(time_dex,2,'omitnan');
-            %             tmp_err = (fida./bes).*dex.*time_dex;
-            %             tmp_err(tmp_err==0) = NaN;
-            %             tmp_err = std(tmp_err,0,2,'omitnan');%fida_bes_err_out;
             ystr = 'FIDA/BES';
             ylim([0 0.08])
-%             t = annotation('textbox',[0.15 0.15 0.3 0.05],'String',['FIDA Int. Range: [', num2str(fida_range),'] nm'],'FitBoxToText','on','LineStyle','none');
-%             t.LineWidth = 0.01;
+            %             t = annotation('textbox',[0.15 0.15 0.3 0.05],'String',['FIDA Int. Range: [', num2str(fida_range),'] nm'],'FitBoxToText','on','LineStyle','none');
+            %             t.LineWidth = 0.01;
         case 'timetrace_fida'
             plot(ax{i},time(2:end),fida(channel,2:end))
             xlabel(ax{i},'Time [s]')
@@ -330,11 +324,9 @@ for i = 1:size(plot_type,2)
             ylabel(ax{i},['Integrated BES: ', num2str(bes_range(channel,1)), '-',num2str(bes_range(channel,end)), 'nm']);
             legend(ax{i},deblank(names(channel)'))
         case 'timetrace_fidabes'
-            %plot(ax,time(2:end),fida(channel,2:end)./bes(channel,2:end), 'DisplayName', ['FIDA/BES Chan: ', names{channel}])
-            %plot(ax,repmat(time(2:end),1,numel(channel)),movmean(fida(channel,2:end)./bes(channel,2:end),8,2)') %['FIDA/BES smoothed ',
-            plot(ax,repmat(time(2:end),1,numel(channel)),(fida(channel,2:end)./bes(channel,2:end))') %['FIDA/BES smoothed ',
+            plot(ax,repmat(time(2:end),1,numel(channel)),(fida(channel,2:end)./bes(channel,2:end))')
             tmp = (fida(channel,:)./bes(channel,:))';
-            plot(ax,repmat(time(:),1,numel(channel)),tmp) %['FIDA/BES smoothed ',
+            plot(ax,repmat(time(:),1,numel(channel)),tmp)
             xlabel(ax,'Time [s]')
             ylabel(ax,['Integrated FIDA/BES: ', num2str(fida_range(1)), '-',num2str(fida_range(end)), 'nm']);
             ylim([0,0.16])
@@ -345,18 +337,15 @@ for i = 1:size(plot_type,2)
             fprintf(fid,'Time %s\n', strjoin(deblank(names(channel)),' '));
             format = repmat('%.3f ',1,size(tmp,2)+1);
             fprintf(fid,[format, '\n'],[time, tmp]');
-            %for l = 1:numel(time)
-                %fprintf(fid,'%.3f %.3f\n',time(l),tmp(l,:));
-            %end
             fclose(fid);
         case 'spectrum'
             time_dex_spec = permute(repmat(time_dex,1,1,size(spec,1)),[3,1,2]);
             tmp =squeeze(sum(spec.*time_dex_spec,3)./sum(time_dex_spec,3));
-            plot(ax{i},lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);%, Chan: ', names{channel} 
+            plot(ax{i},lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);%, Chan: ', names{channel}
             tmp_err=sqrt(sum(spec_err.*time_dex_spec,3).^2)./sum(time_dex_spec,3);
             %plot(ax{i},lambda(:,channel),squeeze(spec_passive(:,channel,1)),'LineWidth',2.0,'HandleVisibility','off');
             tmp_in =squeeze(sum(spec_in.*time_dex_spec,3)./sum(time_dex_spec,3));
-            %plot(ax{i},lambda(:,channel),tmp_in(:,channel),'LineWidth',2.0,'HandleVisibility','off'); 
+            %plot(ax{i},lambda(:,channel),tmp_in(:,channel),'LineWidth',2.0,'HandleVisibility','off');
             %errorbar(ax{i},lambda(:,channel),tmp(:,channel),tmp_err(:,channel),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
             %plot(ax{i},lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
             %tmp_in =squeeze(sum(spec_in.*permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3)./sum(permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3));
@@ -375,12 +364,13 @@ for i = 1:size(plot_type,2)
             close(v);
     end
 
-    if ~strcmp(plot_type{i},'spectrum') && ~strcmp(plot_type{i}(1:3),'tim')
-        plot(ax{i},R_pts(time_dex),tmp_frames,'o','Color', gray,'DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
-        errorbar(ax{i},R(dex_in)*100, tmp(dex_in),tmp_err(dex_in),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
-        xlabel(ax{i},'R [cm]')
-        ylabel(ax{i},ystr);
-    end
+
+        if ~strcmp(plot_type{i},'spectrum') && ~strcmp(plot_type{i}(1:3),'tim')
+            plot(ax{i},R_pts(time_dex),tmp_frames,'o','Color', gray,'DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            errorbar(ax{i},R(dex_in)*100, tmp(dex_in),tmp_err(dex_in),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
+            xlabel(ax{i},'R [cm]')
+            ylabel(ax{i},ystr);
+        end
     if lsave
         legend(ax{i});
         sname = [num2str(shotid), '_', num2str(t_point*1000), '_' plot_type{i}];
@@ -395,11 +385,13 @@ plot_data.spec = spec;
 plot_data.names = names;
 plot_data.lambda=lambda;
 if t_point ~=0
+    bg_out = sum(squeeze(bg).*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
     bes_out = sum(bes.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
     fida_out =sum(fida.*dex.*time_dex,2,'omitnan')./sum(time_dex,2);
     bes_err_out = sqrt(sum(bes_err.^2.*dex.*time_dex,2,'omitnan').^2 + std(bes_err.*dex.*time_dex,0,2).^2)./sum(time_dex,2);
     fida_err_out = sqrt(sum(fida_err.^2.*dex.*time_dex,2,'omitnan').^2 + std(fida_err.*dex.*time_dex,0,2).^2)./sum(time_dex,2);
     fida_bes_err_out = sqrt(sum(fida_bes_err.^2.*dex.*time_dex,2,'omitnan').^2 + std(fida_bes_err.*dex.*time_dex,0,2).^2)./sum(time_dex,2);
+    plot_data.bg = bg_out;
     plot_data.bes = bes_out;
     plot_data.fida = fida_out;
     plot_data.bes_err = bes_err_out;
@@ -413,6 +405,7 @@ sim_data.names = names;
 sim_data.names_unsorted = names_unsorted;
 sim_data.lambda=lambda;
 sim_data.dispersion = dispersion_in;
+sim_data.bg_range=bg_range;
 sim_data.bes_range = bes_range;
 sim_data.fida_range = fida_range;
 if ~(strcmp(dex_in,''))
