@@ -316,7 +316,7 @@ for i = 1:size(plot_type,2)
             tmp = sum(fida./bes.*time_dex,2,'omitnan')./sum(time_dex,2,'omitnan');
             tmp_err=sqrt(sum(fida_bes_err.*time_dex,2,'omitnan').^2)./sum(time_dex,2,'omitnan');
             ystr = 'FIDA/BES';
-            ylim([0 0.08])
+            %ylim([0 0.08])
             %             t = annotation('textbox',[0.15 0.15 0.3 0.05],'String',['FIDA Int. Range: [', num2str(fida_range),'] nm'],'FitBoxToText','on','LineStyle','none');
             %             t.LineWidth = 0.01;
         case 'timetrace_fida'
@@ -350,13 +350,13 @@ for i = 1:size(plot_type,2)
             plot(ax{i},lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);%, Chan: ', names{channel}
             tmp_err=sqrt(sum(spec_err.*time_dex_spec,3).^2)./sum(time_dex_spec,3);
             %plot(ax{i},lambda(:,channel),squeeze(spec_passive(:,channel,1)),'LineWidth',2.0,'HandleVisibility','off');
-            tmp_in =squeeze(sum(spec_in.*time_dex_spec,3)./sum(time_dex_spec,3));
+            %tmp_in =squeeze(sum(spec_in.*time_dex_spec,3)./sum(time_dex_spec,3));
             %plot(ax{i},lambda(:,channel),tmp_in(:,channel),'LineWidth',2.0,'HandleVisibility','off');
             %errorbar(ax{i},lambda(:,channel),tmp(:,channel),tmp_err(:,channel),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
             %plot(ax{i},lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
             %tmp_in =squeeze(sum(spec_in.*permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3)./sum(permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3));
             %plot(ax{i},lambda(:,channel),tmp_in(:,channel), 'DisplayName',['Data, bo BG sub ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
-            xline([bes_range(channel,:)],'HandleVisibility','off');%'BES Range')
+            %xline([bes_range(channel,:)],'HandleVisibility','off');%'BES Range')
             set(ax{i},'YScale','log');
         case 'movie'
             v = VideoWriter([num2str(shotid), '_fidabes_movie','.mp4'], 'MPEG-4');
