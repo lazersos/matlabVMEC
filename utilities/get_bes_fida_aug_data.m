@@ -40,13 +40,13 @@ lmovie=0;
 t_passive =0;
 t_point = 0;
 fida_range = [660, 661];
-
+calibration=1.0;
 dex_in = '';
 
 R = h5read(filename,'/r_pos');
 
 spec_err_in= h5read(filename,'/intenserr');
-lambda = h5read(filename,'/cor_wavel');%-0.055;
+lambda = h5read(filename,'/cor_wavel');%-0.104;%-0.055;
 spec_in= h5read(filename,'/intens');
 names_unsorted = h5read(filename,'/los_name');
 dispersion_in=h5read(filename,'/dispersion');
@@ -116,6 +116,10 @@ if nargin > 2
                 lmovie=1;
                 i = i+1;
                 t = varargin{i};
+            case 'calib'
+                i = i+1;
+                calibration = varargin{i};
+                spec_in=spec_in.*calibration;
             otherwise
                 disp(['ERROR: Option ', varargin{i}, ' not found!']);
 
@@ -123,6 +127,8 @@ if nargin > 2
         i=i+1;
     end
 end
+
+
 
 bg_range = [664.5, 666];
 
