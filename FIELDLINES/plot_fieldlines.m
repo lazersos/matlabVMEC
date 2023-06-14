@@ -7,6 +7,7 @@ function [ output_args ] = plot_fieldlines(data,varargin)
 %       '3D':           Same as 'basic' but in 3D space.
 %       'color':        Specify color ('color','r')
 %       'iota':         Color according to local iota value
+%       'conlen':       Color according to fieldline path length
 %       'cutplane':     Poincare plot on specific cutplane ('cutplane',5)
 %       'camera':       Make a camera image by binning poincare points.
 %       'camera_AEV30': W7-X AEV30 view (from AEQ21)
@@ -40,6 +41,7 @@ line_color='k';
 camera = [];
 skip=1;
 liota=0;
+llen=0;
 % Handle varargin
 if nargin > 1
     i = 1;
@@ -91,6 +93,8 @@ if nargin > 1
             case 'skip'
                 i=i+1;
                 skip=varargin{i};
+            case 'conlen'
+                llen = 1;
             case 'iota'
                 if isfield(data,'iota')
                     liota = 1;
@@ -111,15 +115,21 @@ switch plottype
             s=ones(size(x));
             %t = repmat(data.iota,size(x,2),1);
             c=repmat(data.iota(1:skip:nlines),[1 size(x,2)]);
-            scatter(x(:),y(:),s(:).*0.1,c(:),'.');
+            scatter(x(:),y(:),s(:).*1.1,c(:),'.');
             %scatter(reshape(x,[],1),reshape(y,[],1),s(:).*0.1,t,'.');
+        elseif llen
+            s=ones(size(x));
+            %t = repmat(data.iota,size(x,2),1);
+            c=repmat(data.L_lines(1:skip:nlines),[1 size(x,2)]);
+            scatter(x(:),y(:),s(:).*1.1,c(:),'.');
+            %scatter(reshape(x,[],1),reshape(y,[],1),s(:).*0.1,t,'.');            
         elseif isfield(data,'rho')
             s=ones(size(x));
             c=repmat(data.rho(1:skip:nlines),[1 size(x,2)]);
-            scatter(x(:),y(:),s(:).*0.1,c(:),'.');
-            caxis([0 data.rho(end-1)]);
+            scatter(x(:),y(:),s(:).*5.1,c(:),'.');
+            clim([0 data.rho(end-1)]);
         else
-            plot(x,y,'.','Color',line_color,'MarkerSize',0.5);
+            plot(x,y,'.','Color',line_color,'MarkerSize',1.5);
         end
         if isfield(data,'Rhc_lines')  && isfield(data,'Zhc_lines')
             line_dex = nphi:npoinc:size(data.Rhc_lines,2);
@@ -171,7 +181,7 @@ switch plottype
             c=repmat(data.rho(1:skip:nlines),[1 n2]);
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
         else
-            plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
+            plot(x,y,'.','Color',line_color,'MarkerSize',2.5);
         end
         %plot(R(1:skip:data.nlines,:),Z(1:skip:nlines,:),'.','Color',line_color,'MarkerSize',0.1);
         axis equal
@@ -546,20 +556,21 @@ switch plottype
         v = VideoWriter([data.input_extension(1:end-3),'.avi'], 'Motion JPEG AVI');
         open(v);
         f=figure;
-        set(gcf,'position',get(0,'ScreenSize'));
+        set(f,'position',get(0,'ScreenSize'));
         for nphi = 1:npoinc
+            cla;
             line_dex = nphi:npoinc:nsteps;
             x=data.R_lines(1:skip:nlines,line_dex);
             y=data.Z_lines(1:skip:nlines,line_dex);
-            plot(x,y,'.','Color',line_color,'MarkerSize',0.1);
+            plot(gca,x,y,'.','Color',line_color,'MarkerSize',0.1);
             axis equal
             title('Poicare plot')
             xlabel('R [m]')
             ylabel('Z [m]')
-            %xlim([1.5 1.9])
-            %ylim([-0.2 0.3])
-            xlim([4.5 6.5])
-            ylim([-1.5 1.5])
+            xlim([1.1 2.1])
+            ylim([-0.8 0.8])
+            %xlim([4.5 6.5])
+            %ylim([-1.5 1.5])
             frame = getframe(f); %for writing
             writeVideo(v,frame);
         end

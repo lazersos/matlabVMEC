@@ -24,7 +24,7 @@ function [ lines_out ] = beams3d_apply_bpert(filename_in,filename_out,fluxi0, ni
 
 lplot = 0;
 lsave = 0;
-
+llines=0;
 % Handle varargin
 if nargin > 5
     i = 1;
@@ -34,6 +34,8 @@ if nargin > 5
                 lplot=1;
             case 'save'
                 lsave = 1;
+            case 'lines' %Calculate B_R and B_Z for fieldlines file
+                llines=1;
         end
         i=i+1;
     end
@@ -45,6 +47,12 @@ bz = h5read(filename_in,'/B_Z');
 r = h5read(filename_in,'/raxis');
 phi = h5read(filename_in,'/phiaxis');
 z = h5read(filename_in,'/zaxis');
+rnorm=repmat(r,1,size(br,2),size(br,3));
+% if llines
+% br = br.*bphi./rnorm;
+% bz = bz.*bphi./rnorm;
+% end
+
 sarr = h5read(filename_in,'/S_ARR');
 uarr = h5read(filename_in,'/U_ARR');
 rhoarr = sqrt(sarr);
@@ -71,7 +79,10 @@ xlabel('Rho')
 ylabel('Perturbation Amplitude');
 end
 fluxphi = fluxphi + fluxir .* cos(mi.*uarr + ni .* phig);
+%fluxphi = fluxphi + ones(size(rhoarr))*fluxi0(i);
 end
+%fluxphi(rhoarr<0.2)=0;
+%fluxphi(rhoarr>0.5)=0;
 
 
 fluxphi(sarr>1)=0;
@@ -122,13 +133,17 @@ if lplot
     figure
     contour(r,z,squeeze(fluxphi(:,1,:))')
         xlabel('R')
-        ylabel('Z')    
+        ylabel('Z')  
+    figure
+    contour(r,z,squeeze(fluxphi(:,2,:))')
+        xlabel('R')
+        ylabel('Z')           
 end
 %%
 
-%[curlr,curlphi,curlz,cav] = curl(xg,yg,zg,br,bphi,bz);
-%[curlr,curlphi,curlz,cav] = curl(rg,phig,zg,br,bphi,bz);
-[curlr,curlphi,curlz,~] = curl(brc,bphic,bzc);
+[curlr,curlphi,curlz,~] = curl(xg,yg,zg,brc,bphic,bzc);
+%[curlr,curlphi,curlz,cav] = curl(rg,phig,zg,brc,bphic,bzc);
+%[curlr,curlphi,curlz,~] = curl(brc,bphic,bzc);
 curlr(isnan(curlr)|isinf(curlr)|sarr>1) = 0;
 curlphi(isnan(curlphi)|isinf(curlphi)|sarr>1) = 0;
 curlz(isnan(curlz)|isinf(curlz)|sarr>1) = 0;
@@ -163,15 +178,24 @@ br = br + curlr;
 bphi = bphi + curlphi;
 bz = bz + curlz;
 
+if llines
+lines_out.B_R = br./bphi.*rnorm;
+lines_out.B_Z = bz./bphi.*rnorm;
+else
 lines_out.B_R = br;
-lines_out.B_PHI = bphi;
 lines_out.B_Z = bz;
+end
+lines_out.B_PHI = bphi;
 lines_out.raxis = r;
 lines_out.zaxis=z;
 lines_out.phiaxis=phi;
 lines_out.S_ARR=sarr;
 lines_out.U_ARR=uarr;
 lines_out.RHO_ARR=rhoarr;
+
+lines_out.nr=numel(r);
+lines_out.nphi=numel(phi);
+lines_out.nz=numel(z);
 
 % if lplot
 % subplot(1,2,2)

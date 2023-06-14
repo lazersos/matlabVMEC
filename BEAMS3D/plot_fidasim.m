@@ -354,10 +354,10 @@ for i = 1:size(plot_type,2)
                 contour(dist.energy,dist.pitch,tmp',levels,linestyle,'DisplayName',name)
             else
                 pixplot(dist.energy,dist.pitch,tmp)
-                cstring='Fast Ion Distribution [1/keV]';
-                c = colorbar;
-                c.Label.String = cstring;
             end
+            cstring='Fast Ion Distribution [1/keV]';
+            c = colorbar;
+            c.Label.String = cstring;
             ylabel('Pitch [-]')
             xlabel('Energy [keV]')
             xlim([dist.energy(1) dist.energy(end)])
@@ -366,7 +366,7 @@ for i = 1:size(plot_type,2)
                 legend('Location','best')
                 sname = [filename, '_', name,'_', plot_type{i} ,'.fig'];
                 savefig(ax{i}.Parent,sname)
-                exportgraphics(ax{i}.Parent,[sname,'.png'],'Resolution',300);
+                exportgraphics(ax{i}.Parent,[sname,'.eps'],'Resolution',300);
             end
             return
         case 'profiles'
@@ -431,6 +431,7 @@ for i = 1:size(plot_type,2)
         case 'denf2d'
             r = dist.r;
             z = dist.z;
+            phi=dist.phi;
             tmp = dist.denf;
             cstring = 'Fast ion density [m^{-3}]';
         case 'fdenf2d'
@@ -678,7 +679,7 @@ for i = 1:size(plot_type,2)
             x=(edges(2:end-1)+mean(diff(edges))/2)/100;
             plot(ax{i},x,histo(2:end),'DisplayName','FIDASIM','LineWidth', 2.0)
             xlabel('Z [m]')
-            ylabel('Deposition [particles/s]')    
+            ylabel('Deposition [particles/s]')
         case 'birth_phi'
             birth_phi=mod(birth.ri(3,:),2*pi);
             edges = min(birth_phi):0.01:max(birth_phi);
@@ -690,7 +691,7 @@ for i = 1:size(plot_type,2)
             x=(edges(2:end-1)+mean(diff(edges))/2);
             plot(ax{i},x,histo(2:end),'DisplayName','FIDASIM','LineWidth', 2.0)
             xlabel('Phi [rad]')
-            ylabel('Deposition [particles/s]')   
+            ylabel('Deposition [particles/s]')
         case 'birth_pitch'
             edges=linspace(-1.05,1.05,70)';
             dists = discretize(birth.pitch,edges);
@@ -701,22 +702,23 @@ for i = 1:size(plot_type,2)
             x=(edges(2:end-1)+mean(diff(edges))/2);
             plot(ax{i},x,histo(2:end),'DisplayName','FIDASIM','LineWidth', 2.0)
             xlabel('Phi [rad]')
-            ylabel('Deposition [particles/s]')                
+            ylabel('Deposition [particles/s]')
     end
     %disp(plot_type{i});
     %if numel(plot_type{i}) > 2
     if strcmp(plot_type{i}(end-1:end),'2d')
         if lcontour
-            contour(r,z,tmp(:,:,index),5,'DisplayName',name)
+            contour(r*fac,z*fac,tmp(:,:,index),5,'DisplayName',name)
         else
-            pixplot(r,z,tmp(:,:,index));
+            pixplot(r*fac,z*fac,tmp(:,:,index));
             c = colorbar;
             c.Label.String = cstring;
         end
-        xlim([r(1) r(end)])
-        ylim([z(1) z(end)])
-        xlabel('R [cm]')
-        ylabel('Z [cm]')
+        title(sprintf('Phi=%.2f',phi(index)))
+        xlim([r(1)*fac r(end)*fac])
+        ylim([z(1)*fac z(end)*fac])
+        xlabel(['R [cm] * ', num2str(fac)])
+        ylabel(['Z [cm] * ', num2str(fac)])
     elseif strcmp(plot_type{i}(end-2:end),'tor') && ldist
         if ndims(dist.f) < 5
             disp('4D Distribution has no toroidal information')
@@ -739,10 +741,11 @@ for i = 1:size(plot_type,2)
     %end
     if lsave
         %caxis([0 3e11])
+        colorbar
         legend(ax{i},'Location','best');
         sname = [filename, '_', name,  '_', plot_type{i}];
-        savefig(ax{i}.Parent,sname)
-        exportgraphics(ax{i}.Parent,[sname,'.png'],'Resolution',300);
+        savefig(ax{i}.Parent,[sname,'.fig'])
+        exportgraphics(ax{i}.Parent,[sname,'.eps'],'Resolution',300);
     end
 
 end

@@ -53,7 +53,7 @@ end
 if or(lplotgrid,lplotsubgrid)
     colors = lines(wall_data.nblocks)';
     for i=1:wall_data.nblocks
-        if and(wall_data.nblockfaces(i) <=0,lplotsubgrid), continue; end
+        if and(wall_data.nblockfaces(i) <=2000,lplotsubgrid), continue; end
         xmin = wall_data.blockbounds(1,i);
         xmax = wall_data.blockbounds(2,i);
         ymin = wall_data.blockbounds(3,i);

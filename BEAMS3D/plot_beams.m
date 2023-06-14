@@ -968,8 +968,8 @@ else
                 title('Initial Lost Distribution');
             case 'denf2d'
                 figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
-                dist = squeeze(trapz(beam_data.paxis,trapz(beam_data.Vaxis,trapz(beam_data.Waxis,sum(beam_data.dist_prof,1),6),5),4));
-                pixplot(beam_data.rhoaxis.^2,beam_data.uaxis,dist);
+                dist = squeeze(trapz(beam_data.dist_paxis,trapz(beam_data.dist_Vaxis,trapz(beam_data.dist_Waxis,sum(beam_data.dist_prof,1),6),5),4));
+                pixplot(beam_data.dist_rhoaxis.^2,beam_data.dist_uaxis,dist);
 
                 %pixplot(beam_data.rhoaxis.^2.*cos(beam_data.uaxis),beam_data.rhoaxis.^2.*sin(beam_data.uaxis),dist);
                 ylabel('U bins [-]')
@@ -1359,7 +1359,7 @@ else
                 if (tend < 1E-6)
                     units = '[ns]'; factor = 1E9;
                 elseif (tend<1E-3)
-                    units = '[µs]'; factor = 1E6;
+                    units = '[s]'; factor = 1E6;
                 end
                 plot(t.*factor,100.*f./ftotal,'k','LineWidth',4);
                 xlabel(['Time ' units]);
@@ -1384,7 +1384,7 @@ else
                 if (tend < 1E-6)
                     units = '[ns]'; factor = 1E9;
                 elseif (tend<1E-3)
-                    units = '[µs]'; factor = 1E6;
+                    units = '[s]'; factor = 1E6;
                 end
                 plot(t.*factor,100.*f./ftotal,'k','LineWidth',4);
                 xlabel(['Time ' units]);
