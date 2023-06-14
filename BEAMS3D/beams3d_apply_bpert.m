@@ -245,9 +245,9 @@ h5write(filename_out,'/nz',numel(z))
 
 end
 end
-
-function delete_hdf5_group(filename, group_name)
-fid = H5F.open(filename,'H5F_ACC_RDWR','H5P_DEFAULT');
-H5L.delete(fid,group_name,'H5P_DEFAULT');
-H5F.close(fid);
-end
+% 
+% function delete_hdf5_group(filename, group_name)
+% fid = H5F.open(filename,'H5F_ACC_RDWR','H5P_DEFAULT');
+% H5L.delete(fid,group_name,'H5P_DEFAULT');
+% H5F.close(fid);
+% end

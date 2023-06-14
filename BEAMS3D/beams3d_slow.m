@@ -64,6 +64,11 @@ if nargin > 0
                     log_type = 5;
                 case 'boron'
                     lboron=1;
+                    i=i+1;
+                    m_1=varargin{i}(1);
+                    Z_1=varargin{i}(2);
+                    m_2=varargin{i}(3);
+                    Z_2=varargin{i}(4);                    
             end
         end
         i=i+1;
@@ -168,26 +173,7 @@ for i = 1:num_species
     NI_BEAM(i,:) = interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
         squeeze(NI(i,:,:,:)),R_BEAM,P_BEAM,Z_BEAM);
 end
-if num_species==1 && lboron
-    %%%%%%%%
-    %CALCULATE ZMEAN FROM ZEFF AND ASSUMED BORON IMPURITY, and calculate
-    %boron and ion density
-    %%%%%%%%
-    Z_D = 1;%plasma_charge/ec;
-    Z_B = 5;
-    m_D = 2.014;
-    m_pl=m_D;
-    m_B = 10.811;
-    c_B=(max(beam_data.ZEFF_ARR,[],'all')-Z_D^2)/(Z_B^2-Z_B*Z_D^2); %Caution Max of ZEFF
-    ZMEAN = Z_D^2*m_pl/m_D*(1-Z_B*c_B)+c_B*Z_B^2*m_pl/m_B;
-    NI_BEAM(1,:) = NE_BEAM.*(1-Z_B*c_B);
-    NI_BEAM(2,:) = NE_BEAM.*c_B;
-    plasma_mass(2) = plasma_mass.*m_B;
-    plasma_charge(1)=Z_D*ec;
-    plasma_charge(2)=Z_B*ec;
-    num_species=2;
-    disp('Adding Boron impurity to single ion run!');
-end
+
 
 TE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     TE,R_BEAM,P_BEAM,Z_BEAM);
@@ -197,6 +183,41 @@ ZE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     ZEFF,R_BEAM,P_BEAM,Z_BEAM);
 MODB_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     MODB,R_BEAM,P_BEAM,Z_BEAM);
+
+if num_species==1 && lboron
+    %%%%%%%%
+    %CALCULATE ZMEAN FROM ZEFF AND ASSUMED BORON IMPURITY, and calculate
+    %boron and ion density
+    %%%%%%%%
+%     Z_1 = 1;%plasma_charge/ec;
+%     m_1 = 2.014;
+%     
+%     Z_2 = 5;
+%     m_2 = 10.811;
+    m_pl=m_1;
+%     Z_2 = 74;%TUNGSTEN
+%     m_2 = 183.84;%TUNGSTEN
+%     Z_2 = 6;%Carbon
+%     m_2 = 12.011;%Carbon
+    %c_B=(max(beam_data.ZEFF_ARR,[],'all')-Z_D^2)/(Z_B^2-Z_B*Z_D^2); %Caution Max of ZEFF
+    c_B=(ZE_BEAM-Z_1^2)/(Z_2^2-Z_2*Z_1^2); %Caution Max of ZEFF
+
+    
+    data.c_B=c_B(1);
+    NI_BEAM(1,:) = NE_BEAM.*(1-Z_2.*c_B);
+    NI_BEAM(2,:) = NE_BEAM.*c_B;
+
+    plasma_mass(2) = plasma_mass.*m_2;
+    plasma_charge(1)=Z_1*ec;
+    plasma_charge(2)=Z_2*ec;
+    num_species=2;
+    
+    disp('Adding Boron impurity to single ion run!');
+
+    data.NI_BEAM=NI_BEAM;
+    data.ZMEAN = Z_1^2*m_pl/m_1*(1-Z_2*c_B)+c_B*Z_2^2*m_pl/m_2;
+    data.ZMEAN=data.ZMEAN(1);
+end
 
 % PInj
 if size(W_BEAM,2) == 1, W_BEAM=W_BEAM'; end % Flip W
@@ -596,6 +617,7 @@ data.tau_spit = tau_spit;
 data.v_crit=v_crit;
 data.V=V;
 data.V2=V2;
+data.RHO_BEAM=RHO_BEAM;
 
 
 if ~isempty(vp)

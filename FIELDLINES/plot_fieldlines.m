@@ -396,6 +396,21 @@ switch plottype
         FNz  = V1(:,1).*V0(:,2)-V1(:,2).*V0(:,1);
         heat = 2*double(data.wall_strikes)./sqrt(FNx.*FNx+FNy.*FNy+FNz.*FNz);
         output_args{1}=patch('Vertices',data.wall_vertex,'Faces',data.wall_faces,'FaceVertexCData',heat,'LineStyle','none','CDataMapping','scaled','FaceColor','flat');
+                        %Add keyboard movement
+                fig = gcf;
+                fig.KeyPressFcn = @ax_keyboard_control;
+                disableDefaultInteractivity(gca);
+                p0=[ -3.1747   -4.1376    3.0109];
+                nvec=[0.05272    0.068706       -0.05];
+                rvec=[641.4264     -492.1845  6.593837e-12];
+                a_cam=60;
+                campos(gca, p0);
+                camtarget(gca, p0+nvec);
+                camup(gca, -cross(nvec,rvec));
+                camva(gca, a_cam);
+                camproj(gca, 'perspective');
+                axis(gca, 'equal');
+                camlight left
     case{8} % Glen's port
         figure('Color','white','Position',[1 -100 1024 768]);
         %x_cam=[-6899 5012 -1549]./1000;

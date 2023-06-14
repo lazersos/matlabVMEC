@@ -577,6 +577,7 @@ for i = 1:size(plot_type,2)
                 if isfield(spec,'pfida')
                     plot(spec.lambda, spec.pfida(:,channel),  'DisplayName',['Passive FIDA - ' name] );
                 end
+                plot(spec.lambda,spec.fida(:,channel),linestyle, 'DisplayName', ['FIDA - ' name] );
                 disp('Supply in_data from e.g. get_bes_fida_aug_data for more plots!')
             end
             hold on

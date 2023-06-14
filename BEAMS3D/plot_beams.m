@@ -968,9 +968,13 @@ else
                 title('Initial Lost Distribution');
             case 'denf2d'
                 figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+                if isfield(beam_data,'paxis')
+                dist = squeeze(trapz(beam_data.paxis,trapz(beam_data.Vaxis,trapz(beam_data.Waxis,sum(beam_data.dist_prof,1),6),5),4));
+                pixplot(beam_data.rhoaxis.^2,beam_data.uaxis,dist);
+                else
                 dist = squeeze(trapz(beam_data.dist_paxis,trapz(beam_data.dist_Vaxis,trapz(beam_data.dist_Waxis,sum(beam_data.dist_prof,1),6),5),4));
                 pixplot(beam_data.dist_rhoaxis.^2,beam_data.dist_uaxis,dist);
-
+                end
                 %pixplot(beam_data.rhoaxis.^2.*cos(beam_data.uaxis),beam_data.rhoaxis.^2.*sin(beam_data.uaxis),dist);
                 ylabel('U bins [-]')
                 xlabel('S bins [-]')
