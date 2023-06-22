@@ -308,6 +308,7 @@ Ei = zeros(1,length(W_BEAM));
 jb = zeros(1,length(W_BEAM));
 t=0;
 while any(V > v_sound)
+    disp([num2str(t*1000) ' ms : ' num2str(max(V)./1E3) ' km/s']);
     t = t+dt;
     dex = V > v_sound;
     dve = C1(dex).*V(dex);
@@ -318,7 +319,7 @@ while any(V > v_sound)
     Ei(dex) = Ei(dex) + V(dex).*dvi.*dt;
     jb(dex) = jb(dex) + V(dex).*PITCH(dex).*dt;
     V = max(V2,v_sound);
-    disp([num2str(t) ' ' num2str(V(1:3))]);
+    %disp([num2str(t) ' ' num2str(V(1:3))]);
 end
 Pe = MASS.*W_BEAM.*Ee;
 Pi = MASS.*W_BEAM.*Ei;
@@ -404,7 +405,7 @@ data.Pinj = Pinj;
 data.Iinj = Iinj;
 data.tslow = t;
 data.tau_spit = tau_spit;
-data.nu0_fe = nu0_fe;
+%data.nu0_fe = nu0_fe;
 if ~isempty(vp)
     data.VP = vp;
     data.QE = PE_RHO./vp;
