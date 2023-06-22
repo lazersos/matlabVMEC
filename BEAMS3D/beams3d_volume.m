@@ -1,4 +1,4 @@
-function [s, plasma_vol, plasma_dvolds] = beams3d_volume(beam_data)
+function [s, plasma_vol, plasma_dvolds] = beams3d_volume(beam_data,varargin)
 %BEASM3D_VOLUME Extracts plasma volume data
 %   The BEASM3D_VOLUME function calculates volume and differential volume
 %   (dV/ds) from the background grid data.  Values are returned on the half
@@ -8,9 +8,24 @@ function [s, plasma_vol, plasma_dvolds] = beams3d_volume(beam_data)
 %       beam_data=read_beams3d('beams3d_test.h5');
 %       [s, V, dVds] = beams3d_volume(beam_data);
 %
+%       [s, V, dVds] = beams3d_voluem(beam_data,'ns',128);
+%
 %   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 %   Version:       1.0
 
+ns = [];
+
+% Handle varargin
+if ~isempty(varargin)
+    i = 1;
+    while i <= length(varargin)
+        switch varargin{i}
+            case 'ns'
+                ns = varargin{i+1};
+        end
+        i=i+1;
+    end
+end
 
 % We assume R/Z/phi equidistant points
 nfp = round(2*pi/beam_data.phiaxis(end));
@@ -34,7 +49,9 @@ for i = 1:beam_data.nphi-1
     dv(:,i,:) = grid.*vol2d;
 end
 
-ns = beam_data.ns_prof1;
+if isempty(ns)
+    ns = beam_data.ns_prof1;
+end
 ds = 1./(ns);
 edges = 0:ds:1;
 s = 0.5.*(edges(1:end-1)+edges(2:end));
