@@ -61,12 +61,31 @@ end
 
 if ~liota, return; end
 
+% Fix values that don't start at phi=0;
+phi0 = data.PHI_lines(1,1);
+ishift = find(data.PHI_lines(:,1) ~=0);
+PHI = data.PHI_lines;
+R   = data.R_lines;
+Z   = data.Z_lines;
+for i = ishift'
+    zeta = mod(PHI(i,:),data.phiaxis(end)');
+    idex = find(zeta==phi0,1,'first');
+    ldex = find(data.R_lines(i,:) == 0,1,'first')-1;
+    if isempty(ldex), ldex=double(data.nsteps)-1; end
+    dex = idex:ldex;
+    R(i,1:length(dex)) = R(i,dex);
+    R(i,length(dex)+1:end) = 0.0;
+    Z(i,1:length(dex)) = Z(i,dex);
+    Z(i,length(dex)+1:end) = 0.0;
+    PHI(i,1:length(dex)) = PHI(i,dex);
+    PHI(i,length(dex)+1:end) = -1.0;
+end
 
 % Calculate rotational transform
-for i=1:data.nsteps
-    x(:,i) = data.R_lines(:,i)-data.R_lines(1,i);
-    y(:,i) = data.Z_lines(:,i)-data.Z_lines(1,i);
-end
+R0 = repmat(R(1,:),[data.nlines 1]);
+Z0 = repmat(Z(1,:),[data.nlines 1]);
+x  = R - R0;
+y  = Z - Z0;
 theta = atan2(y,x);
 dtheta = diff(theta')';
 dtheta(dtheta<-pi) = dtheta(dtheta<-pi)+2*pi;
@@ -74,22 +93,34 @@ dtheta(dtheta>pi) = dtheta(dtheta>pi)-2*pi;
 theta = cumsum(dtheta')';
 theta=[zeros(data.nlines,1) theta];
 rho=sqrt(x.*x+y.*y);
+clear Z x y R0 Z0 dtheta zeta;
+data.iota = zeros(1,data.nlines);
+data.iota_err = zeros(1,data.nlines);
+data.rho = zeros(1,data.nlines);
+data.rho_err = zeros(1,data.nlines);
 try
     for j=2:data.nlines
-        f0 = fit(data.PHI_lines(j,:)',theta(j,:)','poly1');
+        dex = R(j,:) ~=0;
+        f0 = fit(PHI(j,dex)',theta(j,dex)','poly1');
         ci = confint(f0)-f0.p1;
         ci = ci(:,1);
         data.iota(j) = f0.p1;
         data.iota_err(j) = max(abs(ci));
+        data.rho(j) = mean(rho(j,dex),2);
+        data.rho_err(j) = std(rho(j,dex),0,2);
     end
 catch
     for j=2:data.nlines
-        f0 = polyfit(data.PHI_lines(j,:)',theta(j,:)',1);
+        dex = R(j,:) ~=0;
+        f0 = polyfit(PHI(j,dex)',theta(j,dex)',1);
         data.iota(j) = f0(1);
-        data.iota_err(j) = 1.0;
+        data.iota_err(j) = 0.0;
+        data.rho(j) = mean(rho(j,dex),2);
+        data.rho_err(j) = std(rho(j,dex),0,2);
     end
 end
-data.rho=mean(rho,2);
+%ldex = R >0;
+%data.rho=mean(rho,2);
 %if isfield(data,'iota0')
 %    data.iota(1) = data.iota0;
 %    data.iota_err(1) = 1.0E-6;
