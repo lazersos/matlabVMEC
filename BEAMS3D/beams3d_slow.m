@@ -353,8 +353,9 @@ elseif log_type == 2
     data.rmax=rmax;
     data.zi2_ai= zi2_ai;
     data.zi2= zi2;
+    fact_crit =  ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2*ec./plasma_mass);
     % fact_crit=sqrt(2*ec./plasma_mass)*(0.75*sqrt(pi)*sqrt(plasma_mass/me)).^(1/3);
-    v_crit =5.33e4 .*sqrt(TE_BEAM) .* zi2_ai.^(1/3);
+    v_crit =fact_crit.*sqrt(TE_BEAM) .* zi2_ai.^(1/3);
     vcrit_cube = v_crit.^3;
     %tau_spit = 6.32e8 .* (MASS./amu) ./ (myZ.^2 .* coulomb_loge) .* TE_BEAM.^(3/2) ./ (NE_BEAM.*1E-6);
     tau_spit=3.777183e41.*MASS.*TE_BEAM.^(3/2)./(myZ.^2 .* coulomb_loge.*NE_BEAM);
