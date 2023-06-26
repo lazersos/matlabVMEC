@@ -77,6 +77,8 @@ channel = 0;
 linestyle = '-';
 color='k';
 index=1;
+rotation=0;
+lpassive=0;
 if nargin > 1
     i = 1;
     while i < nargin
@@ -150,6 +152,8 @@ if nargin > 1
                 sim_data = varargin{i};
             case 'save'
                 lsave = 1;
+            case 'passive'
+                lpassive=1;
             case 'ax'
                 i=i+1;
                 ax = varargin{i};
@@ -566,15 +570,15 @@ for i = 1:size(plot_type,2)
                 %                 plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
                 %                 plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
                 %plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
-                if isfield(spec,'pfida')
+                if ( isfield(spec,'pfida') && lpassive)
                     plot(spec.lambda, conv(spec.pfida(:,channel),instfu(:,channel),'same'),  'DisplayName',['Passive FIDA - ' name] );
                 end
-                %                 plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
-                %                 fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
-                %plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
+                %                  plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
+                %                  fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
+                % plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
             else
                 plot(spec.lambda,specr(:,channel),linestyle, 'DisplayName', ['Spectrum - ' name] );
-                if isfield(spec,'pfida')
+                if (isfield(spec,'pfida' ) && lpassive)
                     plot(spec.lambda, spec.pfida(:,channel),  'DisplayName',['Passive FIDA - ' name] );
                 end
                 plot(spec.lambda,spec.fida(:,channel),linestyle, 'DisplayName', ['FIDA - ' name] );
@@ -658,6 +662,7 @@ for i = 1:size(plot_type,2)
                 h=plot(ax{i},r*fac,squeeze(los(:,channel(:,k),3))*fac,linestyle, 'DisplayName', displ);
                 %set(h, 'DisplayName', chan_description{k});
             end
+            return
             %legend(h,'Location','bestoutside');
         case 'birth_r'
             edges = min(birth.ri(1,:)):1:max(birth.ri(1,:));
@@ -709,13 +714,15 @@ for i = 1:size(plot_type,2)
     %if numel(plot_type{i}) > 2
     if strcmp(plot_type{i}(end-1:end),'2d')
         if lcontour
-            contour(r*fac,z*fac,tmp(:,:,index),5,'DisplayName',name)
+            contour(r*fac,z*fac,squeeze(tmp(:,:,index))',levels,'DisplayName',name,'LineWidth',4.0)
         else
             pixplot(r*fac,z*fac,tmp(:,:,index));
             c = colorbar;
             c.Label.String = cstring;
         end
-        title(sprintf('Phi=%.2f',phi(index)))
+        if ndims(dist.f) == 5
+            title(sprintf('Phi=%.2f',phi(index)))
+        end
         xlim([r(1)*fac r(end)*fac])
         ylim([z(1)*fac z(end)*fac])
         xlabel(['R [cm] * ', num2str(fac)])
@@ -746,7 +753,9 @@ for i = 1:size(plot_type,2)
         legend(ax{i},'Location','best');
         sname = [filename, '_', name,  '_', plot_type{i}];
         savefig(ax{i}.Parent,[sname,'.fig'])
-        exportgraphics(ax{i}.Parent,[sname,'.eps'],'Resolution',300);
+        set(ax{i}.Parent, 'Renderer', 'painters');
+        set(ax{i}, 'Color', 'none');
+        exportgraphics(ax{i}.Parent,[sname,'.eps'],'Resolution',300,'BackgroundColor','none');
     end
 
 end

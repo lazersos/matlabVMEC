@@ -4,8 +4,14 @@ function [R_lines,PHI_lines,Z_lines] = fieldlines_follow(in_data,start_loc,phi_e
 nstart = size(start_loc,1);
 [r,phi,z] = ndgrid(in_data.raxis,in_data.phiaxis,in_data.zaxis);
 maxphi=max(in_data.phiaxis);
-dRdphi = r.*in_data.B_R ./ in_data.B_PHI;
+    if ~strcmp(in_data.datatype,'FIELDLINES')
+        dRdphi = r.*in_data.B_R ./ in_data.B_PHI;
 dZdphi = r.*in_data.B_Z ./ in_data.B_PHI;
+    else
+        dRdphi=in_data.B_R;
+        dZdphi=in_data.B_Z;
+    end
+
 
 %Setup derivatives
 dR_F = griddedInterpolant(r,phi,z,dRdphi,'cubic');

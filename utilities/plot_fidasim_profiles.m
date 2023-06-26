@@ -147,9 +147,9 @@ for i = 1:size(plot_type,2)
 
     if fac~=1
         tmp = tmp.*fac;
-        dispname = ['FIDASIM ', name, ', scaling factor: ' num2str(fac)];
+        dispname = ['', name, ', scaling factor: ' num2str(fac)];
     else
-        dispname = ['FIDASIM ', name];
+        dispname = ['', name];
     end
     plot(ax{i},R(dex), tmp,linestyle,'DisplayName',dispname, 'LineWidth',2.0);
     xlabel(ax{i},'R [cm]')

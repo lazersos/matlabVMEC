@@ -181,7 +181,7 @@ switch plottype
             c=repmat(data.rho(1:skip:nlines),[1 n2]);
             scatter(x(:),y(:),s(:).*0.1,c(:),'.');
         else
-            plot(x,y,'.','Color',line_color,'MarkerSize',2.5);
+            plot(x,y,'.','Color',line_color,'MarkerSize',0.5);
         end
         %plot(R(1:skip:data.nlines,:),Z(1:skip:nlines,:),'.','Color',line_color,'MarkerSize',0.1);
         axis equal

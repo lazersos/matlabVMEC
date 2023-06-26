@@ -42,6 +42,7 @@ t_point = 0;
 fida_range = [660, 661];
 calibration=1.0;
 dex_in = '';
+lpoints=0;
 
 R = h5read(filename,'/r_pos');
 
@@ -55,7 +56,7 @@ instfu_gamma = h5read(filename,'/instfu_gamma')';
 instfu_box_nm = h5read(filename,'/instfu_box_nm')';
 instfu_gauss_nm = h5read(filename,'/instfu_gauss_nm')';
 cwav_mid = interp1(1:size(lambda,1),lambda,[size(lambda,1)/2.]);
-instfu = box_gauss_funct(lambda,0.,1.,cwav_mid,instfu_gamma,instfu_box_nm);
+instfu = box_gauss_funct(lambda,0.,1.,cwav_mid,instfu_gamma,instfu_gauss_nm);
 
 
 % [R,I] = sort(R);
@@ -103,6 +104,8 @@ if nargin > 2
                 t_passive = varargin{i};
             case 'save'
                 lsave = 1;
+            case 'points'
+                lpoints=1;
             case 'ax'
                 i=i+1;
                 ax = varargin{i};
@@ -356,7 +359,7 @@ for i = 1:size(plot_type,2)
             %plot(ax{i},lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Chan: ', names{channel} ], 'LineWidth',2.0);
             %tmp_in =squeeze(sum(spec_in.*permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3)./sum(permute(repmat(time_dex,1,1,size(spec_in,1)),[3,1,2]),3));
             %plot(ax{i},lambda(:,channel),tmp_in(:,channel), 'DisplayName',['Data, bo BG sub ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
-            %xline([bes_range(channel,:)],'HandleVisibility','off');%'BES Range')
+            xline([bes_range(channel,:)],'HandleVisibility','off');%'BES Range')
             set(ax{i},'YScale','log');
         case 'movie'
             v = VideoWriter([num2str(shotid), '_fidabes_movie','.mp4'], 'MPEG-4');
@@ -372,7 +375,9 @@ for i = 1:size(plot_type,2)
 
 
         if ~strcmp(plot_type{i},'spectrum') && ~strcmp(plot_type{i}(1:3),'tim')
+            if lpoints
             plot(ax{i},R_pts(time_dex),tmp_frames,'o','Color', gray,'DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
+            end
             errorbar(ax{i},R(dex_in)*100, tmp(dex_in),tmp_err(dex_in),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
             xlabel(ax{i},'R [cm]')
             ylabel(ax{i},ystr);
