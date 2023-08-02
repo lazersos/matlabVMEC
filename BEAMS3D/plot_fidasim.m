@@ -96,7 +96,7 @@ if nargin > 1
                 end
             case {'fslice','denf2d','denf','fdenf','fdenf2d',...
                     'pitch','energy','ep2d',...
-                    'fdenftor','denftor'}
+                    'fdenftor','denftor','bmir'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 ldist = 1;
                 leq=1;
@@ -345,6 +345,37 @@ for i = 1:size(plot_type,2)
             %plot(dist.pitch, squeeze(trapz(dist.phi,trapz(dist.z,trapz(dist.r,trapz(dist.energy,dist.f,1),3),4),5)),'DisplayName','Pitch');
             xlabel('Pitch [-]')
             ylabel('Fast Ion Distribution [-]')
+        case 'bmir'
+            if ndims(dist.f) == 5
+                tmp = squeeze(trapz(dphi*nphi/(nphi-1),trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4),5));
+                tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2));
+            else
+                tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4))*2*pi;
+                tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2));
+            end
+            tmp=trapz(dist.energy,dist.f,1);
+            modb=sqrt(eq.fields.br.^2+eq.fields.bt.^2+eq.fields.bz.^2);
+            i = floor(dist.nr/2);
+            j =floor(dist.nz/2);
+            k = 1;
+            local=dist.f(:,:,i,j,k);
+            bmir = modb.*reshape(sign(dist.pitch)./(1-dist.pitch.^2),[1 1 1 numel(dist.pitch)]);
+            b=linspace(-5,5,500);
+            bmir_ind=discretize(bmir,b);
+            bmir_ind(isnan(bmir_ind))=1;
+            hist=accumarray(bmir_ind(:),tmp(:));
+
+            bmir=squeeze(bmir(floor(dist.nr/2),floor(dist.nz/2),1,:));
+            [bmir, index]=sort(bmir);
+            local=local(:,index);
+            local = trapz(dist.energy,local,1);
+            plot(bmir,tmp)
+            pixplot(dist.energy,bmir,local);
+            [maxb,I]=max(modb,[],'all','linear');
+            [~,~,index]=ind2sub(size(modb),I);
+            minb=min(modb(:,:,index),[],'all');
+            yline([-minb minb])
+            yline([-modb(floor(dist.nr/2),floor(dist.nz/2),1) modb(floor(dist.nr/2),floor(dist.nz/2),1)])
         case 'ep2d'
             if ndims(dist.f) == 5
                 tmp = squeeze(trapz(dist.phi,trapz(dist.z,dist.f,4),5));
@@ -567,14 +598,16 @@ for i = 1:size(plot_type,2)
                 cwav_mid=mean(spec.lambda);
                 instfu = box_gauss_funct(spec.lambda,0.,1.,cwav_mid,sim_data.instfu_gamma,sim_data.instfu_box_nm);
                 plot(spec.lambda,conv(specr(:,channel),instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
-                %                 plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
-                %                 plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
-                %plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
+                                 plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
+                                 plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
+                plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
                 if ( isfield(spec,'pfida') && lpassive)
                     plot(spec.lambda, conv(spec.pfida(:,channel),instfu(:,channel),'same'),  'DisplayName',['Passive FIDA - ' name] );
                 end
-                %                  plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
-                %                  fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
+                                  %plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
+                                  %plot(spec.lambda, conv(spec.halo(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo only - ' name] ); %+spec.brems(:,channel)
+                                  %plot(spec.lambda, conv(spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['DCX only - ' name] ); %+spec.brems(:,channel)
+                                  %fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
                 % plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
             else
                 plot(spec.lambda,specr(:,channel),linestyle, 'DisplayName', ['Spectrum - ' name] );
@@ -601,12 +634,12 @@ for i = 1:size(plot_type,2)
             rotation = 0;% 67.5;
             lens = rotate_points(geom.spec.lens,vec,deg2rad(rotation));
             axi = rotate_points(geom.spec.axis,vec,deg2rad(rotation));
-            los = [lens, lens + axi.*max(geom.spec.radius)*length];
+            los = [lens, lens + axi.*max(sqrt(sum(lens(channel,1:2).^2,2)))*length];
             los = reshape(los,geom.spec.nchan,3,2);
             h=plot3(ax{i},squeeze(los(channel,1,:))'*fac,squeeze(los(channel,2,:))'*fac,squeeze(los(channel,3,:))'*fac,linestyle);
             src = rotate_points(geom.nbi.src,vec,deg2rad(rotation));
             axi_nbi = rotate_points(geom.nbi.axis,vec,deg2rad(rotation));
-            los_nbi = [src, src + axi_nbi.*length.*sqrt(sum(src.^2)/3)];
+            los_nbi = [src, src + axi_nbi.*length.*sqrt(sum(src(1:2).^2))];
             los_nbi = reshape(los_nbi,3,2);
             plot3(ax{i},squeeze(los_nbi(1,:))'*fac,squeeze(los_nbi(2,:))'*fac,squeeze(los_nbi(3,:))'*fac,'-r');
             plot3(ax{i},squeeze(los_nbi(1,1))'*fac,squeeze(los_nbi(2,1))'*fac,squeeze(los_nbi(3,1))'*fac,'+k');
@@ -703,7 +736,7 @@ for i = 1:size(plot_type,2)
             dists = discretize(birth.pitch,edges);
             dists(isnan(dists)) = 1;
             weights = birth.weight;
-            sum(weights)
+            sum(weights);
             histo = accumarray(dists,weights',[numel(edges)-1, 1]);
             x=(edges(2:end-1)+mean(diff(edges))/2);
             plot(ax{i},x,histo(2:end),'DisplayName','FIDASIM','LineWidth', 2.0)
@@ -714,7 +747,7 @@ for i = 1:size(plot_type,2)
     %if numel(plot_type{i}) > 2
     if strcmp(plot_type{i}(end-1:end),'2d')
         if lcontour
-            contour(r*fac,z*fac,squeeze(tmp(:,:,index))',levels,'DisplayName',name,'LineWidth',4.0)
+            contour(r*fac,z*fac,squeeze(tmp(:,:,index))',levels,linestyle,'DisplayName',name) %,'LineWidth',4.0
         else
             pixplot(r*fac,z*fac,tmp(:,:,index));
             c = colorbar;
@@ -755,7 +788,8 @@ for i = 1:size(plot_type,2)
         savefig(ax{i}.Parent,[sname,'.fig'])
         set(ax{i}.Parent, 'Renderer', 'painters');
         set(ax{i}, 'Color', 'none');
-        exportgraphics(ax{i}.Parent,[sname,'.eps'],'Resolution',300,'BackgroundColor','none');
+        %exportgraphics(ax{i}.Parent,[sname,'.eps'],'Resolution',300,'BackgroundColor','none');
+        exportgraphics(ax{i}.Parent,[sname,'.png'],'Resolution',600);
     end
 
 end

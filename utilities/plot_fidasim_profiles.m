@@ -75,18 +75,33 @@ if nargin > 2
 end
 
 
-%h5info(filename);
-R = h5read(filename,'/radius');
-full = h5read(filename,'/full');
-half= h5read(filename,'/half');
-third= h5read(filename,'/third');
-halo= h5read(filename,'/halo');
-dcx= h5read(filename,'/dcx');
-fida= h5read(filename,'/fida');
-brems= h5read(filename,'/brems');
-lambda = h5read(filename,'/lambda');
+data=read_hdf5(filename);
+% R = h5read(filename,'/radius');
+% full = h5read(filename,'/full');
+% half= h5read(filename,'/half');
+% third= h5read(filename,'/third');
+% halo= h5read(filename,'/halo');
+% dcx= h5read(filename,'/dcx');
+% fida= h5read(filename,'/fida');
+% pfida= h5read(filename,'/pfida');
+% brems= h5read(filename,'/brems');
+% lambda = h5read(filename,'/lambda');
+R = data.radius;
+full =data.full;
+half= data.half;
+third= data.third;
+halo= data.halo;
+dcx= data.dcx;
+fida= data.fida;
+brems= data.brems;
+lambda =data.lambda;
+if isfield(data,'pfida')
+    pfida=data.pfida;
+else
+    pfida=zeros(size(fida));
+end
 
-spec = full + half + third + halo + dcx + fida;% + brems;
+spec = full + half + third + halo + dcx + fida+pfida;% + brems;
 
 cwav_mid=mean(lambda);
 instfu = box_gauss_funct(lambda,0.,1.,cwav_mid,sim_data.instfu_gamma,sim_data.instfu_box_nm);
