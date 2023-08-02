@@ -220,6 +220,9 @@ if leq
     if ~isstruct(eq)
         disp('ERROR: Equilbirium file not found, check filename!');
         disp(['       Filename: ' filename]);
+        eq={};
+        eq.fields.z=dist.z;
+        eq.fields.r=dist.r;
     end
     [~,z0_ind]=min(abs(eq.fields.z+4.9));
 end
