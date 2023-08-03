@@ -1396,7 +1396,7 @@ switch stemp
         for i=1:length(files)
             prof_data=importdata(files(i).name);
             vmec_data=read_vmec(files_wout(i).name);
-            f1 = gradient(prof_data.data(:,3),diff(prof_data.data(1:2,1)));
+            f1 = gradient(prof_data.data(:,3),diff(prof_data.data(1:2,1))); %dphi/ds
             f(:,i) = -2E-3.*sqrt(prof_data.data(:,1)).*f1./vmec_data.Aminor;
         end
         s = prof_data.data(:,1);
