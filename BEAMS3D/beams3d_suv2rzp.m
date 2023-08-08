@@ -23,7 +23,7 @@ tolerance = 1e-9;
 
 % Begin Newton Method
 residual = 1.0;
-factor = 0.5;
+factor = 1.0;
 %     if r_out < 0
 %         r_out = raxis(1) + (raxis(end) - raxis(1)) * 0.75;
 %     end
@@ -66,7 +66,7 @@ dYdZ=griddedInterpolant(R_ARR,PHI_ARR,Z_ARR,dYdZ,'cubic','none');
 
 
 % Loop (Newton's Method)
-while ( n < max_iterations) %residual > tolerance &&
+while ( max(residual,[],'all') > tolerance && n < max_iterations) %residual > tolerance &&
     %[~, i] = min(max(R_ARR < r_out, 1));
     %[~, k] = min(max(Z_ARR < z_out, 1));
     %xparam = (r_out - raxis(i)) * hri(i);
