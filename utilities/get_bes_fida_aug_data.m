@@ -47,15 +47,16 @@ lpoints=0;
 R = h5read(filename,'/r_pos');
 
 spec_err_in= h5read(filename,'/intenserr');
-lambda = h5read(filename,'/cor_wavel');%-0.104;%-0.055;
+
 spec_in= h5read(filename,'/intens');
 names_unsorted = h5read(filename,'/los_name');
 dispersion_in=h5read(filename,'/dispersion');
+lambda = h5read(filename,'/cor_wavel')-dispersion_in;%-0.104;%-0.055;
 time = h5read(filename,'/time_arr');
 instfu_gamma = h5read(filename,'/instfu_gamma')';
 instfu_box_nm = h5read(filename,'/instfu_box_nm')';
 instfu_gauss_nm = h5read(filename,'/instfu_gauss_nm')';
-cwav_mid = interp1(1:size(lambda,1),lambda,[size(lambda,1)/2.]);
+cwav_mid = interp1(1:size(lambda,1),lambda,size(lambda,1)/2.);
 instfu = box_gauss_funct(lambda,0.,1.,cwav_mid,instfu_gamma,instfu_gauss_nm);
 
 
@@ -350,7 +351,7 @@ for i = 1:size(plot_type,2)
         case 'spectrum'
             time_dex_spec = permute(repmat(time_dex,1,1,size(spec,1)),[3,1,2]);
             tmp =squeeze(sum(spec.*time_dex_spec,3)./sum(time_dex_spec,3));
-            plot(ax{i},lambda(:,channel),tmp(:,channel), 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);%, Chan: ', names{channel}
+            plot(ax{i},lambda(:,channel),tmp(:,channel).*calibration, 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Calib=', num2str(calibration)], 'LineWidth',2.0);%, Chan: ', names{channel}
             tmp_err=sqrt(sum(spec_err.*time_dex_spec,3).^2)./sum(time_dex_spec,3);
             %plot(ax{i},lambda(:,channel),squeeze(spec_passive(:,channel,1)),'LineWidth',2.0,'HandleVisibility','off');
             %tmp_in =squeeze(sum(spec_in.*time_dex_spec,3)./sum(time_dex_spec,3));
