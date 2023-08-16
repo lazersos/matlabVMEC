@@ -30,7 +30,7 @@ lfieldlines=0;
 % Handle varargin
 if nargin > 4
     i = 1;
-    while i < numel(varargin)
+    while i <= numel(varargin)
         switch varargin{i}
             case 'plot'
                 lplot=1;
@@ -105,6 +105,7 @@ c3=1;
 f=@(x) x.^(c1/2).*(1-x).^c2;
 fluxir= fluxi0(i)*f(sarr).^c3;
 if lplot
+    figure
     x=linspace(0,1,100);
 plot(x,f(x));
 hold on
@@ -162,8 +163,8 @@ if lplot
         axis equal
         camlight
         lighting phong
-        xlabel('R')
-        ylabel('PHI')
+        xlabel('X')
+        ylabel('Y')
         zlabel('Z')
     end
 

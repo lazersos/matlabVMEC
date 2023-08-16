@@ -25,14 +25,14 @@ tolerance = 1e-9;
 residual = 1.0;
 factor = 1.0;
 
-% data.nphi=nphi;
-% data.S_ARR=S_ARR;
-% data.raxis=raxis;
-% data.zaxis=zaxis;
-%[r_out,z_out] = beams3d_magaxis(data);
+data.nphi=nphi;
+data.S_ARR=S_ARR;
+data.raxis=raxis;
+data.zaxis=zaxis;
+[r_out,z_out] = beams3d_magaxis(data);
 
- r_out = ones(size(phiaxis')).*(raxis(1)+(raxis(numel(raxis))-raxis(1))*.75);
- z_out=zeros(size(phiaxis'));
+%  r_out = ones(size(phiaxis')).*(raxis(1)+(raxis(numel(raxis))-raxis(1))*.75);
+%  z_out=zeros(size(phiaxis'));
 
 % PHI does not change
 phi_out = mod(v, max(phiaxis));
