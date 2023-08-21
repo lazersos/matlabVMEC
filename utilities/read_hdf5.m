@@ -67,7 +67,7 @@ for i = 1: nvars
     natts = length(data_info.Datasets(i).Attributes);
     for j=1:natts
         att_name_local=data_info.Datasets(i).Attributes(j).Name;
-        if ~contains(att_name_local,name_local)
+        if ~startsWith(att_name_local,name_local)
             att_name_local=[name_local '_' strrep(att_name_local,' ','_')];
         end
         %data.(att_name_local) = data_info.Datasets(i).Attributes(j).Value{1};

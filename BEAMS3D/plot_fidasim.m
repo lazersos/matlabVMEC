@@ -372,7 +372,7 @@ for i = 1:size(plot_type,2)
             [bmir, index]=sort(bmir);
             local=local(:,index);
             local = trapz(dist.energy,local,1);
-            plot(bmir,tmp)
+            plot(bmir,local)
             pixplot(dist.energy,bmir,local);
             [maxb,I]=max(modb,[],'all','linear');
             [~,~,index]=ind2sub(size(modb),I);
@@ -401,10 +401,11 @@ for i = 1:size(plot_type,2)
             xlim([dist.energy(1) dist.energy(end)])
             ylim([dist.pitch(1) dist.pitch(end)])
             if lsave
-                legend('Location','best')
+                %legend('Location','best')
                 sname = [filename, '_', name,'_', plot_type{i} ,'.fig'];
                 savefig(ax{i}.Parent,sname)
-                exportgraphics(ax{i}.Parent,[sname,'.eps'],'Resolution',300);
+                %exportgraphics(ax{i}.Parent,[sname,'.eps'],'Resolution',300);
+                exportgraphics(ax{i}.Parent,[sname,'.png'],'Resolution',600);
             end
             return
         case 'profiles'
@@ -601,12 +602,12 @@ for i = 1:size(plot_type,2)
                 cwav_mid=mean(spec.lambda);
                 instfu = box_gauss_funct(spec.lambda,0.,1.,cwav_mid,sim_data.instfu_gamma,sim_data.instfu_box_nm);
                 plot(spec.lambda,conv(specr(:,channel),instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
-                                 plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
-                                 plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
-                plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
-                if ( isfield(spec,'pfida') && lpassive)
-                    plot(spec.lambda, conv(spec.pfida(:,channel),instfu(:,channel),'same'),  'DisplayName',['Passive FIDA - ' name] );
-                end
+                % plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
+                % plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
+                %plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
+                % if ( isfield(spec,'pfida') && lpassive)
+                %     plot(spec.lambda, conv(spec.pfida(:,channel),instfu(:,channel),'same'),  'DisplayName',['Passive FIDA - ' name] );
+                % end
                                   %plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
                                   %plot(spec.lambda, conv(spec.halo(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo only - ' name] ); %+spec.brems(:,channel)
                                   %plot(spec.lambda, conv(spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['DCX only - ' name] ); %+spec.brems(:,channel)
@@ -761,8 +762,13 @@ for i = 1:size(plot_type,2)
         end
         xlim([r(1)*fac r(end)*fac])
         ylim([z(1)*fac z(end)*fac])
-        xlabel(['R [cm] * ', num2str(fac)])
-        ylabel(['Z [cm] * ', num2str(fac)])
+        if fac==1
+            xlabel('R [cm] ')
+            ylabel('Z [cm] ')
+        else
+            xlabel(['R [cm] * ', num2str(fac)])
+            ylabel(['Z [cm] * ', num2str(fac)])
+        end
     elseif strcmp(plot_type{i}(end-2:end),'tor') && ldist
         if ndims(dist.f) < 5
             disp('4D Distribution has no toroidal information')
@@ -786,7 +792,7 @@ for i = 1:size(plot_type,2)
     if lsave
         %caxis([0 3e11])
         colorbar
-        legend(ax{i},'Location','best');
+        %legend(ax{i},'Location','best');
         sname = [filename, '_', name,  '_', plot_type{i}];
         savefig(ax{i}.Parent,[sname,'.fig'])
         set(ax{i}.Parent, 'Renderer', 'painters');
