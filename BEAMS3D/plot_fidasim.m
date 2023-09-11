@@ -73,10 +73,11 @@ levels=2;
 linput=0;
 n_fida=-1;
 sim_data = {};
+dist={};
 channel = 0;
 linestyle = '-';
 color='k';
-index=1;
+index=0;
 rotation=0;
 lpassive=0;
 if nargin > 1
@@ -111,12 +112,28 @@ if nargin > 1
                 lneut = 1;
                 lgeom=1;
                 linput=1;
+                if numel(varargin)>i
+                    if ~isstr(varargin{i+1})
+                        i=i+1;
+                        index = varargin{i};
+                    else
+                        index =20;
+                    end
+                end                
             case{'ndens2d', 'ndenstor','ndens'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 lneut = 1;
                 lgeom=1;
                 linput=1;
                 leq=1;
+                if numel(varargin)>i
+                    if ~isstr(varargin{i+1})
+                        i=i+1;
+                        index = varargin{i};
+                    else
+                        index = 1;
+                    end
+                end                    
             case{'spectrum'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 lspec = 1;
@@ -213,7 +230,7 @@ if ldist
         n_fida = 2*pi*dr*dz*sum(dist.r.*sum(squeeze(dist.denf(:,:,1)),2)); %Axisymmetric only.
     end
 
-    [~,z0_ind]=min(abs(dist.z+4.9));
+    [~,z0_ind]=min(abs(dist.z));
 end
 if leq
     eq = read_hdf5(eq_name);
@@ -224,7 +241,7 @@ if leq
         eq.fields.z=dist.z;
         eq.fields.r=dist.r;
     end
-    [~,z0_ind]=min(abs(eq.fields.z+4.9));
+    [~,z0_ind]=min(abs(eq.fields.z));
 end
 
 if lneut
@@ -241,6 +258,9 @@ if lneut
         *( input.current_fractions(1)      ...
         +  input.current_fractions(2)/2.d0 ...
         +  input.current_fractions(3)/3.d0 ) );
+    if index==0
+    [~,index]=min(abs(neut.grid.z));
+    end
 end
 
 if lspec
@@ -526,6 +546,7 @@ for i = 1:size(plot_type,2)
         case 'ndens'
             neut_r = sqrt(neut.grid.x_grid(:).^2+neut.grid.y_grid(:).^2);
             [discr,redges]=discretize(neut_r,128);
+            r = neut_r;
             tmp = accumarray(discr,neut.nparts(:));
             plot(redges(1:end-1),tmp./diff(redges));
             xlabel('R [m]')
@@ -545,6 +566,7 @@ for i = 1:size(plot_type,2)
             [discr,redges]=discretize(neut_r,64);
             [discz,zedges]=discretize(neut_z,32);
             r = redges(1:end-1)+mean(diff(redges))/2;
+            phi = phiedges(1:end-1)+mean(diff(phiedges))/2;
             z = zedges(1:end-1)+mean(diff(zedges))/2;
             tmp = accumarray([discr,discz,discphi],neut_r.*neut.dens(:));
             tmp=sum(tmp,3)*(phiedges(2)-phiedges(1));%Sum over phi
@@ -554,23 +576,42 @@ for i = 1:size(plot_type,2)
             %             ndens = ndens_F(uvw);
             %             tmp=reshape(ndens,size(r));
             cstring='Neutral Density [neutrals/cm^3]';
+            index=1;
+        case 'ndenstor'
+            neut_r = sqrt(neut.grid.x_grid(:).^2+neut.grid.y_grid(:).^2);
+            neut_phi= atan2(neut.grid.y_grid(:),neut.grid.x_grid(:));
+            neut_z = neut.grid.z_grid(:);
+            [discphi,phiedges]=discretize(neut_phi,8);
+            [discr,redges]=discretize(neut_r,64);
+            [discz,zedges]=discretize(neut_z,32);
+            r = redges(1:end-1)+mean(diff(redges))/2;
+            phi = phiedges(1:end-1)+mean(diff(phiedges))/2;
+            z = zedges(1:end-1)+mean(diff(zedges))/2;
+            tmp = accumarray([discr,discz,discphi],neut_r.*neut.dens(:));
+            %tmp=sum(tmp,3)*(phiedges(2)-phiedges(1));%Sum over phi
+            %             ndens_F = scatteredInterpolant(ngrid,neut.dens(:));
+            %             ndens_F.Method = 'linear';
+            %             ndens_F.ExtrapolationMethod = 'none';
+            %             ndens = ndens_F(uvw);
+            %             tmp=reshape(ndens,size(r));
+            cstring='Neutral Density [neutrals/cm^3]';
 
         case 'ndensvert'
-            pixplot(neut.grid.x, neut.grid.z, squeeze(sum(neut.tdens(:,:,20,:) + neut.hdens(:,:,20,:) + neut.fdens(:,:,20,:), 1)))
+            pixplot(neut.grid.x, neut.grid.z, squeeze(sum(neut.tdens(:,:,index,:) + neut.hdens(:,:,index,:) + neut.fdens(:,:,index,:), 1)))
             xlabel('Beam Grid X [cm]')
             ylabel('Beam Grid Z [cm]')
             cstring = 'Beam neutral density [1/cm^3]';
             c = colorbar;
             c.Label.String = cstring;
         case 'ndenshorz'
-            pixplot(neut.grid.x, neut.grid.y, squeeze(sum(neut.tdens(:,:,:,20) + neut.hdens(:,:,:,20)+ neut.fdens(:,:,:,20), 1)))
+            pixplot(neut.grid.x, neut.grid.y, squeeze(sum(neut.tdens(:,:,:,index) + neut.hdens(:,:,:,index)+ neut.fdens(:,:,:,index), 1)))
             xlabel('Beam Grid X [cm]')
             ylabel('Beam Grid Y [cm]')
             cstring = 'Beam neutral density [1/cm^3]';
             c = colorbar;
             c.Label.String = cstring;
         case 'ndenscross'
-            pixplot(neut.grid.y, neut.grid.z, squeeze(sum(neut.tdens(:,40,:,:) + neut.hdens(:,40,:,:)+ neut.fdens(:,40,:,:), 1)))
+            pixplot(neut.grid.y, neut.grid.z, squeeze(sum(neut.tdens(:,index,:,:) + neut.hdens(:,index,:,:)+ neut.fdens(:,index,:,:), 1)))
             xlabel('Beam Grid Y [cm]')
             ylabel('Beam Grid Z [cm]')
             cstring = 'Beam neutral density [1/cm^3]';
@@ -749,7 +790,7 @@ for i = 1:size(plot_type,2)
     end
     %disp(plot_type{i});
     %if numel(plot_type{i}) > 2
-    if strcmp(plot_type{i}(end-1:end),'2d')
+    if strcmp(plot_type{i}(end-1:end),'2d')            
         if lcontour
             contour(r*fac,z*fac,squeeze(tmp(:,:,index))',levels,linestyle,'DisplayName',name) %,'LineWidth',4.0
         else
@@ -757,8 +798,10 @@ for i = 1:size(plot_type,2)
             c = colorbar;
             c.Label.String = cstring;
         end
+        if ~isempty(dist)
         if ndims(dist.f) == 5
             title(sprintf('Phi=%.2f',phi(index)))
+        end
         end
         xlim([r(1)*fac r(end)*fac])
         ylim([z(1)*fac z(end)*fac])
