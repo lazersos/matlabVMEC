@@ -2272,7 +2272,7 @@ function f = h2f(var,ns)
 temp=zeros(1,ns);
 temp(1)      =  1.5 *   var( 2) - 0.5 *    var(3);
 temp(2:ns-1) =  0.5 * ( var(2:ns-1) + var(3:ns));
-temp(ns)     =  2   *   var(ns) - var(ns-2);
+temp(ns)     =  2   *   var(ns) - var(ns-1);
 f=temp;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

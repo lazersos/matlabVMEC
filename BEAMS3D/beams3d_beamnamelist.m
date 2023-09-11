@@ -37,6 +37,7 @@ te_s=[]; te_f=[];
 ti_s=[]; ti_f=[];
 zeff_s=[]; zeff_f=[];
 pot_s=[]; pot_f=[];
+rhofo = [];
 nr=128; nz=128; nphi=[];
 nrho_dist=64; ntheta_dist = 8; nzeta_dist=40; nvpara_dist = 32; nvperp_dist=16; partvmax=1.25E7;
 npoinc=2;
@@ -64,6 +65,9 @@ if (nargin > 6)
                 case {'pfrac','power_frac','power_fraction'}
                     j=j+1;
                     pfrac=varargin{j};
+                case {'RHOFO'}
+                    j=j+1;
+                    rhofo=varargin{j};
                 case {'file','filename'}
                     j=j+1;
                     filename=varargin{j};
@@ -258,6 +262,7 @@ fprintf(fid, '  INT_TYPE = ''LSODE''\n');
 fprintf(fid, '  FOLLOW_TOL = 1.0E-9\n');
 fprintf(fid,['  VC_ADAPT_TOL = ' num2str(vc_adapt_tol,'%20.10E') '\n']);
 fprintf(fid,['  NPOINC = ' num2str(npoinc,'%d') '\n']);
+if ~isempty(rhofo), fprintf(fid,['  RHO_FULLORBIT = ' num2str(rhofo,'%20.10E') '\n']); end
 fprintf(fid, '!--------PROFILES ----\n');
 if ~isempty(pot_f)
     fprintf(fid,[ '  POT_AUX_S = ' num2str(pot_s,'%12.6E  ') '\n']);

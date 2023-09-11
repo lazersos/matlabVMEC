@@ -84,7 +84,8 @@ if nargin > 1
                     % These are just passed to the next routine
                 case {'filename','file','mass','TE','TI','NE','ZEFF',...
                         'POT','nr','nz','nphi','NPOINC',...
-                        'NPARTICLES_START','VC_ADAPT_TOL'}
+                        'NPARTICLES_START','VC_ADAPT_TOL',...
+                        'RHOFO'}
                     next_varargin = [next_varargin varargin{i}];
                     i = i+1;
                     next_varargin = [next_varargin varargin{i}];
