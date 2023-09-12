@@ -30,5 +30,8 @@ data.coords = [datain1.coords datain2.coords];
 data.tet = [datain1.tet datain2.tet+datain1.nvertex];
 data.func_dex = [datain1.func_dex datain2.func_dex+datain1.nstate];
 data.state_func = [datain1.state_func datain2.state_func];
+data.nvertex = size(data.coords,2);
+data.ntet = size(data.tet,2);
+data.nstate = size(data.state_func,2);
 return
 end
