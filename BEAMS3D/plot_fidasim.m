@@ -250,7 +250,7 @@ if lneut
         disp('ERROR: Neutrals file not found, check filename!');
         disp(['       Filename: ' filename]);
     end
-    neut.dens = neut.dcxdens+neut.fdens+neut.hdens+neut.tdens+neut.halodens;
+    neut.dens = neut.fdens+neut.hdens+neut.tdens;%+neut.dcxdens+neut.halodens;
     neut.dens=squeeze(sum(neut.dens,1));%Sum over all levels
     neut.grid.vol = repmat(mean(diff(neut.grid.x))*mean(diff(neut.grid.y))*mean(diff(neut.grid.z)),size(neut.grid.x_grid));
     neut.nparts=neut.dens.*neut.grid.vol;
@@ -562,9 +562,9 @@ for i = 1:size(plot_type,2)
             neut_r = sqrt(neut.grid.x_grid(:).^2+neut.grid.y_grid(:).^2);
             neut_phi= atan2(neut.grid.y_grid(:),neut.grid.x_grid(:));
             neut_z = neut.grid.z_grid(:);
-            [discphi,phiedges]=discretize(neut_phi,8);
+            [discphi,phiedges]=discretize(neut_phi,16);
             [discr,redges]=discretize(neut_r,64);
-            [discz,zedges]=discretize(neut_z,32);
+            [discz,zedges]=discretize(neut_z,128);
             r = redges(1:end-1)+mean(diff(redges))/2;
             phi = phiedges(1:end-1)+mean(diff(phiedges))/2;
             z = zedges(1:end-1)+mean(diff(zedges))/2;
