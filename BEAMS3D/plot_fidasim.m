@@ -119,7 +119,7 @@ if nargin > 1
                     else
                         index =20;
                     end
-                end                
+                end
             case{'ndens2d', 'ndenstor','ndens'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 lneut = 1;
@@ -133,7 +133,7 @@ if nargin > 1
                     else
                         index = 1;
                     end
-                end                    
+                end
             case{'spectrum'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 lspec = 1;
@@ -259,7 +259,7 @@ if lneut
         +  input.current_fractions(2)/2.d0 ...
         +  input.current_fractions(3)/3.d0 ) );
     if index==0
-    [~,index]=min(abs(neut.grid.z));
+        [~,index]=min(abs(neut.grid.z));
     end
 end
 
@@ -336,11 +336,14 @@ for i = 1:size(plot_type,2)
     switch lower(plot_type{i})
         case 'energy'
             if ndims(dist.f) == 5
-                tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.pitch,dist.f,2),4));
-                tmp =squeeze(trapz(dr*nr/(nr-1),trapz(dphi*nphi/(nphi-1),repmat(dist.r',size(dist.f,1),1,size(dist.f,5)).*tmp,3),2));
+                tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.pitch,dist.f,2),4)); %Integral over pitch and z
+                tmp =squeeze(trapz(dr*nr/(nr-1),trapz(dphi*nphi/(nphi-1),repmat(dist.r',size(dist.f,1),1,size(dist.f,5)).*tmp,3),2)); %Integral over phi and r with jacobian
             else
                 tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.pitch,dist.f,2),4))*2*pi;
                 tmp=squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,1),1).*tmp,2));
+            end
+            if lmean
+                tmp=tmp./ sum(vol2d,'all');
             end
             if fac == 1
                 % plot(ax,dist.energy(2:end), tmp(1:end-1),'DisplayName',['Energy - ' name] );
@@ -352,11 +355,14 @@ for i = 1:size(plot_type,2)
             ylabel('Fast Ion Distribution [1/keV]')
         case 'pitch'
             if ndims(dist.f) == 5
-                tmp = squeeze(trapz(dphi*nphi/(nphi-1),trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4),5));
-                tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2));
+                tmp = squeeze(trapz(dphi*nphi/(nphi-1),trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4),5)); %Integral over energy, z and phi
+                tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2)); %Integral over r with jacobian
             else
                 tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4))*2*pi;
                 tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2));
+            end
+            if lmean
+                tmp=tmp./ sum(vol2d,'all');
             end
             fprintf('Total fast ions in %s: %3.2e\n',filename,n_fida);
             if fac == 1
@@ -408,6 +414,9 @@ for i = 1:size(plot_type,2)
                 rtmp = permute(repmat(dist.r,1,size(dist.f,1),size(dist.f,2),1),[2,3,1]);
             end
             tmp = squeeze(trapz(dist.r,rtmp.*tmp,3));
+            if lmean
+                tmp=tmp./sum(vol2d,'all');
+            end
             if lcontour
                 contour(dist.energy,dist.pitch,tmp',levels,linestyle,'DisplayName',name)
             else
@@ -649,10 +658,10 @@ for i = 1:size(plot_type,2)
                 % if ( isfield(spec,'pfida') && lpassive)
                 %     plot(spec.lambda, conv(spec.pfida(:,channel),instfu(:,channel),'same'),  'DisplayName',['Passive FIDA - ' name] );
                 % end
-                                  %plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
-                                  %plot(spec.lambda, conv(spec.halo(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo only - ' name] ); %+spec.brems(:,channel)
-                                  %plot(spec.lambda, conv(spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['DCX only - ' name] ); %+spec.brems(:,channel)
-                                  %fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
+                %plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
+                %plot(spec.lambda, conv(spec.halo(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo only - ' name] ); %+spec.brems(:,channel)
+                %plot(spec.lambda, conv(spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['DCX only - ' name] ); %+spec.brems(:,channel)
+                %fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
                 % plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
             else
                 plot(spec.lambda,specr(:,channel),linestyle, 'DisplayName', ['Spectrum - ' name] );
@@ -790,7 +799,7 @@ for i = 1:size(plot_type,2)
     end
     %disp(plot_type{i});
     %if numel(plot_type{i}) > 2
-    if strcmp(plot_type{i}(end-1:end),'2d')            
+    if strcmp(plot_type{i}(end-1:end),'2d')
         if lcontour
             contour(r*fac,z*fac,squeeze(tmp(:,:,index))',levels,linestyle,'DisplayName',name) %,'LineWidth',4.0
         else
@@ -799,9 +808,9 @@ for i = 1:size(plot_type,2)
             c.Label.String = cstring;
         end
         if ~isempty(dist)
-        if ndims(dist.f) == 5
-            title(sprintf('Phi=%.2f',phi(index)))
-        end
+            if ndims(dist.f) == 5
+                title(sprintf('Phi=%.2f',phi(index)))
+            end
         end
         xlim([r(1)*fac r(end)*fac])
         ylim([z(1)*fac z(end)*fac])
