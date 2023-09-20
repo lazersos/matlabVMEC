@@ -12,7 +12,7 @@ if ~isfield(beam_data,'pitch')
 beam_data.pitch=beam_data.vll_lines./sqrt(beam_data.vll_lines.^2+beam_data.vperp.^2);
 end
 if ~isfield(beam_data,'birth')
-beam_data.birth = beams3d_calc_depo(beam_data);
+beam_data.birth = beams3d_calc_depo(beam_data,'depo_only');
 end
 
 [s, ~, dVds] = beams3d_volume(beam_data);
