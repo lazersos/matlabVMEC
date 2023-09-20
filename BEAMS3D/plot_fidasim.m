@@ -483,7 +483,7 @@ for i = 1:size(plot_type,2)
                 plot(ax{i},dist.r, fac*squeeze(dist.denf(:,z0_ind,1)),linestyle, 'DisplayName',['Denf - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [m]')
-            ylabel('Fast ion density [m^{-3}]')
+            ylabel('Fast ion density [cm^{-3}]')
             %title(sprintf('FI density profile at z= %.2f',dist.z(z0_ind)))
         case 'fdenf'
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
@@ -494,19 +494,19 @@ for i = 1:size(plot_type,2)
                 plot(ax{i},dist.r, fac*tmp(:,z0_ind,1),linestyle, 'DisplayName',['Denf from f - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [m]')
-            ylabel('Fast ion density [m^{-3}]')
+            ylabel('Fast ion density [cm^{-3}]')
             %title('Fast ion density profile at z=0')
         case 'denf2d'
             r = dist.r;
             z = dist.z;
             phi=dist.phi;
             tmp = dist.denf;
-            cstring = 'Fast ion density [m^{-3}]';
+            cstring = 'Fast ion density [cm^{-3}]';
         case 'fdenf2d'
             r = dist.r;
             z = dist.z;
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
-            cstring = 'Fast ion density [m^{-3}]';
+            cstring = 'Fast ion density [cm^{-3}]';
         case 'br2d'
             r = eq.fields.r;
             z = eq.fields.z;
