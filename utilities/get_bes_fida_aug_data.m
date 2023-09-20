@@ -82,7 +82,7 @@ if nargin > 2
                 if strcmp("F50",string(varargin{i}))
                     fida_range = [652.5,653.5];
                 else
-                    fida_range = [660, 661];
+                    fida_range = [660,661];%[661.5, 662.5];
                 end
             case{'spectrum', 'timetrace_fida', 'timetrace_bes', 'timetrace_fidabes'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
@@ -353,6 +353,10 @@ for i = 1:size(plot_type,2)
             tmp =squeeze(sum(spec.*time_dex_spec,3)./sum(time_dex_spec,3));
             plot(ax{i},lambda(:,channel),tmp(:,channel).*calibration, 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Calib=', num2str(calibration)], 'LineWidth',2.0);%, Chan: ', names{channel}
             tmp_err=sqrt(sum(spec_err.*time_dex_spec,3).^2)./sum(time_dex_spec,3);
+            if lpoints
+                tmp =spec(:,:,time_dex_inds);
+                plot(ax{i},lambda(:,channel),squeeze(tmp(:,channel,:)).*calibration, '.', 'DisplayName','Frames');%, Chan: ', names{channel}
+            end
             %plot(ax{i},lambda(:,channel),squeeze(spec_passive(:,channel,1)),'LineWidth',2.0,'HandleVisibility','off');
             %tmp_in =squeeze(sum(spec_in.*time_dex_spec,3)./sum(time_dex_spec,3));
             %plot(ax{i},lambda(:,channel),tmp_in(:,channel),'LineWidth',2.0,'HandleVisibility','off');
@@ -375,14 +379,14 @@ for i = 1:size(plot_type,2)
     end
 
 
-        if ~strcmp(plot_type{i},'spectrum') && ~strcmp(plot_type{i}(1:3),'tim')
-            if lpoints
+    if ~strcmp(plot_type{i},'spectrum') && ~strcmp(plot_type{i}(1:3),'tim')
+        if lpoints
             plot(ax{i},R_pts(time_dex),tmp_frames,'o','Color', gray,'DisplayName',['Data ', num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's'], 'LineWidth',2.0);
-            end
-            errorbar(ax{i},R(dex_in)*100, tmp(dex_in),tmp_err(dex_in),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
-            xlabel(ax{i},'R [cm]')
-            ylabel(ax{i},ystr);
         end
+        errorbar(ax{i},R(dex_in)*100, tmp(dex_in),tmp_err(dex_in),'--','DisplayName',['Avg. ', num2str(t_point), 's'], 'LineWidth',2.0);
+        xlabel(ax{i},'R [cm]')
+        ylabel(ax{i},ystr);
+    end
     if lsave
         legend(ax{i});
         sname = [num2str(shotid), '_', num2str(t_point*1000), '_' plot_type{i}];
