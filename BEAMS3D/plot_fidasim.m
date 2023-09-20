@@ -73,10 +73,11 @@ levels=2;
 linput=0;
 n_fida=-1;
 sim_data = {};
+dist={};
 channel = 0;
 linestyle = '-';
 color='k';
-index=1;
+index=0;
 rotation=0;
 lpassive=0;
 if nargin > 1
@@ -111,12 +112,28 @@ if nargin > 1
                 lneut = 1;
                 lgeom=1;
                 linput=1;
+                if numel(varargin)>i
+                    if ~isstr(varargin{i+1})
+                        i=i+1;
+                        index = varargin{i};
+                    else
+                        index =20;
+                    end
+                end
             case{'ndens2d', 'ndenstor','ndens'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 lneut = 1;
                 lgeom=1;
                 linput=1;
                 leq=1;
+                if numel(varargin)>i
+                    if ~isstr(varargin{i+1})
+                        i=i+1;
+                        index = varargin{i};
+                    else
+                        index = 1;
+                    end
+                end
             case{'spectrum'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 lspec = 1;
@@ -212,7 +229,7 @@ if ldist
         n_fida = 2*pi*dr*dz*sum(dist.r.*sum(squeeze(dist.denf(:,:,1)),2)); %Axisymmetric only.
     end
 
-    [~,z0_ind]=min(abs(dist.z+4.9));
+    [~,z0_ind]=min(abs(dist.z));
 end
 if leq
     eq = read_hdf5(eq_name);
@@ -223,7 +240,7 @@ if leq
         eq.fields.z=dist.z;
         eq.fields.r=dist.r;
     end
-    [~,z0_ind]=min(abs(eq.fields.z+4.9));
+    [~,z0_ind]=min(abs(eq.fields.z));
 end
 
 if lneut
@@ -232,7 +249,7 @@ if lneut
         disp('ERROR: Neutrals file not found, check filename!');
         disp(['       Filename: ' filename]);
     end
-    neut.dens = neut.dcxdens+neut.fdens+neut.hdens+neut.tdens+neut.halodens;
+    neut.dens = neut.fdens+neut.hdens+neut.tdens;%+neut.dcxdens+neut.halodens;
     neut.dens=squeeze(sum(neut.dens,1));%Sum over all levels
     neut.grid.vol = repmat(mean(diff(neut.grid.x))*mean(diff(neut.grid.y))*mean(diff(neut.grid.z)),size(neut.grid.x_grid));
     neut.nparts=neut.dens.*neut.grid.vol;
@@ -240,6 +257,9 @@ if lneut
         *( input.current_fractions(1)      ...
         +  input.current_fractions(2)/2.d0 ...
         +  input.current_fractions(3)/3.d0 ) );
+    if index==0
+        [~,index]=min(abs(neut.grid.z));
+    end
 end
 
 if lspec
@@ -315,11 +335,14 @@ for i = 1:size(plot_type,2)
     switch lower(plot_type{i})
         case 'energy'
             if ndims(dist.f) == 5
-                tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.pitch,dist.f,2),4));
-                tmp =squeeze(trapz(dr*nr/(nr-1),trapz(dphi*nphi/(nphi-1),repmat(dist.r',size(dist.f,1),1,size(dist.f,5)).*tmp,3),2));
+                tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.pitch,dist.f,2),4)); %Integral over pitch and z
+                tmp =squeeze(trapz(dr*nr/(nr-1),trapz(dphi*nphi/(nphi-1),repmat(dist.r',size(dist.f,1),1,size(dist.f,5)).*tmp,3),2)); %Integral over phi and r with jacobian
             else
                 tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.pitch,dist.f,2),4))*2*pi;
                 tmp=squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,1),1).*tmp,2));
+            end
+            if lmean
+                tmp=tmp./ sum(vol2d,'all');
             end
             if fac == 1
                 % plot(ax,dist.energy(2:end), tmp(1:end-1),'DisplayName',['Energy - ' name] );
@@ -331,11 +354,14 @@ for i = 1:size(plot_type,2)
             ylabel('Fast Ion Distribution [1/keV]')
         case 'pitch'
             if ndims(dist.f) == 5
-                tmp = squeeze(trapz(dphi*nphi/(nphi-1),trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4),5));
-                tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2));
+                tmp = squeeze(trapz(dphi*nphi/(nphi-1),trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4),5)); %Integral over energy, z and phi
+                tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2)); %Integral over r with jacobian
             else
                 tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4))*2*pi;
                 tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2));
+            end
+            if lmean
+                tmp=tmp./ sum(vol2d,'all');
             end
             fprintf('Total fast ions in %s: %3.2e\n',filename,n_fida);
             if fac == 1
@@ -387,6 +413,9 @@ for i = 1:size(plot_type,2)
                 rtmp = permute(repmat(dist.r,1,size(dist.f,1),size(dist.f,2),1),[2,3,1]);
             end
             tmp = squeeze(trapz(dist.r,rtmp.*tmp,3));
+            if lmean
+                tmp=tmp./sum(vol2d,'all');
+            end
             if lcontour
                 contour(dist.energy,dist.pitch,tmp',levels,linestyle,'DisplayName',name)
             else
@@ -453,7 +482,7 @@ for i = 1:size(plot_type,2)
                 plot(ax{i},dist.r, fac*squeeze(dist.denf(:,z0_ind,1)),linestyle, 'DisplayName',['Denf - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [m]')
-            ylabel('Fast ion density [m^{-3}]')
+            ylabel('Fast ion density [cm^{-3}]')
             %title(sprintf('FI density profile at z= %.2f',dist.z(z0_ind)))
         case 'fdenf'
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
@@ -464,19 +493,19 @@ for i = 1:size(plot_type,2)
                 plot(ax{i},dist.r, fac*tmp(:,z0_ind,1),linestyle, 'DisplayName',['Denf from f - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [m]')
-            ylabel('Fast ion density [m^{-3}]')
+            ylabel('Fast ion density [cm^{-3}]')
             %title('Fast ion density profile at z=0')
         case 'denf2d'
             r = dist.r;
             z = dist.z;
             phi=dist.phi;
             tmp = dist.denf;
-            cstring = 'Fast ion density [m^{-3}]';
+            cstring = 'Fast ion density [cm^{-3}]';
         case 'fdenf2d'
             r = dist.r;
             z = dist.z;
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
-            cstring = 'Fast ion density [m^{-3}]';
+            cstring = 'Fast ion density [cm^{-3}]';
         case 'br2d'
             r = eq.fields.r;
             z = eq.fields.z;
@@ -525,6 +554,7 @@ for i = 1:size(plot_type,2)
         case 'ndens'
             neut_r = sqrt(neut.grid.x_grid(:).^2+neut.grid.y_grid(:).^2);
             [discr,redges]=discretize(neut_r,128);
+            r = neut_r;
             tmp = accumarray(discr,neut.nparts(:));
             plot(redges(1:end-1),tmp./diff(redges));
             xlabel('R [m]')
@@ -540,10 +570,11 @@ for i = 1:size(plot_type,2)
             neut_r = sqrt(neut.grid.x_grid(:).^2+neut.grid.y_grid(:).^2);
             neut_phi= atan2(neut.grid.y_grid(:),neut.grid.x_grid(:));
             neut_z = neut.grid.z_grid(:);
-            [discphi,phiedges]=discretize(neut_phi,8);
+            [discphi,phiedges]=discretize(neut_phi,16);
             [discr,redges]=discretize(neut_r,64);
-            [discz,zedges]=discretize(neut_z,32);
+            [discz,zedges]=discretize(neut_z,128);
             r = redges(1:end-1)+mean(diff(redges))/2;
+            phi = phiedges(1:end-1)+mean(diff(phiedges))/2;
             z = zedges(1:end-1)+mean(diff(zedges))/2;
             tmp = accumarray([discr,discz,discphi],neut_r.*neut.dens(:));
             tmp=sum(tmp,3)*(phiedges(2)-phiedges(1));%Sum over phi
@@ -553,23 +584,42 @@ for i = 1:size(plot_type,2)
             %             ndens = ndens_F(uvw);
             %             tmp=reshape(ndens,size(r));
             cstring='Neutral Density [neutrals/cm^3]';
+            index=1;
+        case 'ndenstor'
+            neut_r = sqrt(neut.grid.x_grid(:).^2+neut.grid.y_grid(:).^2);
+            neut_phi= atan2(neut.grid.y_grid(:),neut.grid.x_grid(:));
+            neut_z = neut.grid.z_grid(:);
+            [discphi,phiedges]=discretize(neut_phi,8);
+            [discr,redges]=discretize(neut_r,64);
+            [discz,zedges]=discretize(neut_z,32);
+            r = redges(1:end-1)+mean(diff(redges))/2;
+            phi = phiedges(1:end-1)+mean(diff(phiedges))/2;
+            z = zedges(1:end-1)+mean(diff(zedges))/2;
+            tmp = accumarray([discr,discz,discphi],neut_r.*neut.dens(:));
+            %tmp=sum(tmp,3)*(phiedges(2)-phiedges(1));%Sum over phi
+            %             ndens_F = scatteredInterpolant(ngrid,neut.dens(:));
+            %             ndens_F.Method = 'linear';
+            %             ndens_F.ExtrapolationMethod = 'none';
+            %             ndens = ndens_F(uvw);
+            %             tmp=reshape(ndens,size(r));
+            cstring='Neutral Density [neutrals/cm^3]';
 
         case 'ndensvert'
-            pixplot(neut.grid.x, neut.grid.z, squeeze(sum(neut.tdens(:,:,20,:) + neut.hdens(:,:,20,:) + neut.fdens(:,:,20,:), 1)))
+            pixplot(neut.grid.x, neut.grid.z, squeeze(sum(neut.tdens(:,:,index,:) + neut.hdens(:,:,index,:) + neut.fdens(:,:,index,:), 1)))
             xlabel('Beam Grid X [cm]')
             ylabel('Beam Grid Z [cm]')
             cstring = 'Beam neutral density [1/cm^3]';
             c = colorbar;
             c.Label.String = cstring;
         case 'ndenshorz'
-            pixplot(neut.grid.x, neut.grid.y, squeeze(sum(neut.tdens(:,:,:,20) + neut.hdens(:,:,:,20)+ neut.fdens(:,:,:,20), 1)))
+            pixplot(neut.grid.x, neut.grid.y, squeeze(sum(neut.tdens(:,:,:,index) + neut.hdens(:,:,:,index)+ neut.fdens(:,:,:,index), 1)))
             xlabel('Beam Grid X [cm]')
             ylabel('Beam Grid Y [cm]')
             cstring = 'Beam neutral density [1/cm^3]';
             c = colorbar;
             c.Label.String = cstring;
         case 'ndenscross'
-            pixplot(neut.grid.y, neut.grid.z, squeeze(sum(neut.tdens(:,40,:,:) + neut.hdens(:,40,:,:)+ neut.fdens(:,40,:,:), 1)))
+            pixplot(neut.grid.y, neut.grid.z, squeeze(sum(neut.tdens(:,index,:,:) + neut.hdens(:,index,:,:)+ neut.fdens(:,index,:,:), 1)))
             xlabel('Beam Grid Y [cm]')
             ylabel('Beam Grid Z [cm]')
             cstring = 'Beam neutral density [1/cm^3]';
@@ -756,8 +806,10 @@ for i = 1:size(plot_type,2)
             c = colorbar;
             c.Label.String = cstring;
         end
-        if ndims(dist.f) == 5
-            title(sprintf('Phi=%.2f',phi(index)))
+        if ~isempty(dist)
+            if ndims(dist.f) == 5
+                title(sprintf('Phi=%.2f',phi(index)))
+            end
         end
         xlim([r(1)*fac r(end)*fac])
         ylim([z(1)*fac z(end)*fac])

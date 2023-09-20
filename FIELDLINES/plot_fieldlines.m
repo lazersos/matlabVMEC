@@ -166,6 +166,7 @@ switch plottype
         Z=zeros(data.nlines,length(phi2));
         for i=1:data.nlines
             n = find(data.R_lines(i,:)==0,1,'first')-1;
+            if isempty(n), n=data.nsteps; end
             phi = data.PHI_lines(i,1:n);
             n2 = find(phi2 > max(phi),1,'first')-1;
             if isempty(n2); n2=length(phi2)-1; end

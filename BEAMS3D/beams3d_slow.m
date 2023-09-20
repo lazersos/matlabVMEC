@@ -609,6 +609,7 @@ jb = zeros(1,length(W_BEAM));
 dist = zeros(1,length(W_BEAM));
 t=0;
 while any(V > v_sound)
+    disp([num2str(t*1000) ' ms : ' num2str(max(V)./1E3) ' km/s']);
     t = t+dt;
     dex = V > v_sound;
     dve = C1(dex).*V(dex);
@@ -620,7 +621,7 @@ while any(V > v_sound)
     jb(dex) = jb(dex) + V(dex).*PITCH(dex).*dt;
     dist(dex)=dist(dex)+W_BEAM(dex)*dt;
     V = max(V2,v_sound);
-    disp([num2str(t) ' ' num2str(V(1:3))]);
+    %disp([num2str(t) ' ' num2str(V(1:3))]);
 end
 Pe = MASS.*W_BEAM.*Ee;
 Pi = MASS.*W_BEAM.*Ei;
@@ -731,6 +732,7 @@ data.E_BEAM=E_BEAM;
 data.ZMEAN=ZMEAN;
 data.ZEFF=mean(ZE_BEAM,'omitnan');
 
+%data.nu0_fe = nu0_fe;
 if ~isempty(vp)
     data.VP = vp;
     data.QE = PE_RHO./vp;

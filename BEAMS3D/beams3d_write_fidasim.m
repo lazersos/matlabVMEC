@@ -17,6 +17,8 @@ function [f, denf] = beams3d_write_fidasim(data, name,varargin)
 ec  = 1.60217662E-19; % electron charge [C]
 amu = 1.66053906660E-27; % Dalton [kg]
 lmovie = 0;
+lrecalc=0;
+inputs=0;
 
 filename_dist = [name,'_distribution.h5'];
 filename_eq = [name,'_equilibrium.h5'];
@@ -64,6 +66,10 @@ if ~isempty(varargin)
                 np = varargin{i};
             case{'movie'}
                 lmovie = 1;
+            case{'recalc_dist'}
+                lrecalc=1;
+                i=i+1;
+                inputs=varargin{i};
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -76,8 +82,12 @@ Emax = ceil(0.5.*mass.*data.partvmax.^2./ec/1e4)*1e4;
 Eaxis   = 0.5*max(Emax)/nE:max(Emax)/nE:max(Emax);%linspace(0,Emax,nE);%%0:10E3:100E3;
 pitchaxis = -1+1/np:2/np:1;%linspace(-1,1,np);%-1:0.1:1;
 [R,P,Z,E,PITCH] = ndgrid(raxis,paxis,zaxis,Eaxis,pitchaxis);
+dr=raxis(2)-raxis(1);
+dz=zaxis(2)-zaxis(1);
+dphi=paxis(2)-paxis(1);
 [R3,P3,Z3] = ndgrid(raxis,paxis,zaxis);
 [Rd,Pd,Zd] = ndgrid(data.raxis,data.phiaxis,data.zaxis);
+P3_mod=mod(P3,max(data.phiaxis));
 %nsave = size(R);
 ntotal = numel(R);
 R = reshape(R,[1 ntotal]);
@@ -85,21 +95,6 @@ P = reshape(P,[1 ntotal]);
 Z = reshape(Z,[1 ntotal]);
 E = reshape(E,[1 ntotal]);
 PITCH = reshape(PITCH,[1 ntotal]);
-
-
-% V = sqrt(ec.*2.*E./mass);
-% jac = 1.0./(mass.*sqrt(1-PITCH.*PITCH));
-% jac = V ./ mass .* ec / 1000;
-% f=squeeze(sum(data.dist_prof,1));
-% f = f.*jac;
-f=beams3d_getdistrpzEpitch(data,R,P,Z,E,PITCH);
-f = sum(f,1);%.*ec/1000*1e6;%*1e6/2/pi/100; %keV and cm^-3;
-f = reshape(f,[numel(raxis), numel(paxis), numel(zaxis), numel(Eaxis), numel(pitchaxis)]);
-f= permute(f,[4, 5, 1, 3, 2]); %Align with FIDASIM axis order
-
-%Quick fix
-f(isnan(f))=0;
-f(isinf(f))=0;
 
 %Convert to cm
 raxis   = raxis.*100;
@@ -109,16 +104,55 @@ zaxis   = zaxis.*100;
 Eaxis = Eaxis./1000;
 %E = E/1000;
 
-denf = squeeze(trapz(Eaxis, f,1));
-denf = squeeze(trapz(pitchaxis, denf,1));%Integration in velocity space
+if lrecalc
+    if numel(inputs)==0
+        inputs{1}=3; %Indices for orbit source (S(rho,xi)), for npoinc=5 combined runs, this should be 3 or 3:4
+        inputs{2} = 75; %npitch
+        inputs{3} = 50; %nv
+        inputs{4}=50; %norder, Order up to which to calculate the legendre polynomials
+        inputs{5}=[1.0 1.0];%mi/ Ai, in amu
+        inputs{6}=[1.0 1.0];%Zi in ec
+    end
+    [data, rho, pitchaxis, Eaxis, f2D] = mRabbit(data, inputs{1}, inputs{2}, inputs{3}, inputs{4},inputs{5},inputs{6});
+    f2D=squeeze(sum(f2D,3,'omitnan'));
+
+    n=squeeze(trapz(pitchaxis,trapz(Eaxis,f2D,1),2));
+    F = griddedInterpolant(Rd-dr/2,Pd-dphi/2,Zd-dz/2,sqrt(data.S_ARR), 'spline');
+    RHO_ARR = F(R3, P3_mod, Z3);
+
+    %RHO_ARR=sqrt(data.S_ARR(:,1:5,:));
+
+    denf=interp1(rho,n,RHO_ARR(:),'linear',0);
+    denf=reshape(denf,size(RHO_ARR));
+    denf=permute(denf,[1 3 2]);
+
+    f=interp1(rho,reshape(f2D,[inputs{3}*inputs{2} numel(rho)])',RHO_ARR(:),'linear',0);
+    f=reshape(f,[size(RHO_ARR), inputs{3} inputs{2}]);
+    f=permute(f,[4 5 1 3 2]);
+    %Quick fix
+    f(isnan(f))=0;
+    f(isinf(f))=0;
+else
+    f=beams3d_getdistrpzEpitch(data,R,P,Z,E,PITCH);
+    f = sum(f,1);%.*ec/1000*1e6;%*1e6/2/pi/100; %keV and cm^-3;
+    f = reshape(f,[numel(raxis), numel(paxis), numel(zaxis), numel(Eaxis), numel(pitchaxis)]);
+    f= permute(f,[4, 5, 1, 3, 2]); %Align with FIDASIM axis order
+
+    %Quick fix
+    f(isnan(f))=0;
+    f(isinf(f))=0;
+
+    denf = squeeze(trapz(Eaxis, f,1));
+    denf = squeeze(trapz(pitchaxis, denf,1));%Integration in velocity space
+end
 
 
 F = griddedInterpolant(Rd,Pd,Zd, data.B_R, 'spline');
-br = F(R3, mod(P3,max(data.phiaxis)), Z3);
+br = F(R3, P3_mod, Z3);
 F = griddedInterpolant(Rd,Pd,Zd, data.B_PHI, 'spline');
-bt = F(R3, mod(P3,max(data.phiaxis)), Z3);
+bt = F(R3, P3_mod, Z3);
 F = griddedInterpolant(Rd,Pd,Zd, data.B_Z, 'spline');
-bz = F(R3, mod(P3,max(data.phiaxis)), Z3);
+bz = F(R3, P3_mod, Z3);
 
 vr = zeros(size(br));
 vt = vr;
@@ -126,20 +160,20 @@ vz = vr;
 
 [er, et, ez] = gradient(data.POT_ARR,mean(diff(raxis)),mean(diff(paxis)),mean(diff(zaxis))); %first output corresponds to gradient along 2nd dimension???
 F = griddedInterpolant(Rd,Pd,Zd, er, 'spline');
-er = F(R3, mod(P3,max(data.phiaxis)), Z3);
+er = F(R3, P3_mod, Z3);
 F = griddedInterpolant(Rd,Pd,Zd, et, 'spline');
-et = F(R3, mod(P3,max(data.phiaxis)), Z3);
+et = F(R3, P3_mod, Z3);
 F = griddedInterpolant(Rd,Pd,Zd, ez, 'spline');
-ez = F(R3, mod(P3,max(data.phiaxis)), Z3);
+ez = F(R3, P3_mod, Z3);
 
 F = griddedInterpolant(Rd,Pd,Zd, data.NE/1e6, 'spline');
-ne = F(R3, mod(P3,max(data.phiaxis)), Z3);
+ne = F(R3, P3_mod, Z3);
 F = griddedInterpolant(Rd,Pd,Zd, data.TE/1000, 'spline');
-te = F(R3, mod(P3,max(data.phiaxis)), Z3);
+te = F(R3, P3_mod, Z3);
 F = griddedInterpolant(Rd,Pd,Zd, data.TI/1000, 'spline');
-ti = F(R3, mod(P3,max(data.phiaxis)), Z3);
+ti = F(R3, P3_mod, Z3);
 F = griddedInterpolant(Rd,Pd,Zd, data.ZEFF_ARR, 'spline');
-zeff = F(R3, mod(P3,max(data.phiaxis)), Z3);
+zeff = F(R3, P3_mod, Z3);
 %denn = zeros(size(zeff));
 
 
