@@ -12,6 +12,7 @@ function birth = beams3d_calc_depo(beam_data, varargin)
 %   Version:       1.0
 
 nrho = [];
+ldepo_only=0;
 
 % Handle varargin
 if ~isempty(varargin)
@@ -20,6 +21,9 @@ if ~isempty(varargin)
         switch varargin{i}
             case 'nrho'
                 nrho = varargin{i+1};
+            case 'depo_only'
+                ldepo_only=1;
+                dexd=(beam_data.end_state==0|beam_data.end_state==1);
         end
         i=i+1;
     end
@@ -47,6 +51,9 @@ birth = zeros(beam_data.nbeams,length(rho_out));
 rho_lines = ones(1,beam_data.nparticles);
 for i=1:beam_data.nbeams
     dexb = beam_data.Beam == i;
+    if ldepo_only
+        dexb=and(dexb,dexd);
+    end
     rho_lines(:) = 1.5;
     rho_lines(dexb) = sqrt(beam_data.S_lines(dexs,dexb));
     for j=1:nrho
