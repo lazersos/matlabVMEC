@@ -75,7 +75,7 @@ namelist0.geometry_file = '';
 namelist0.distribution_file = '';
 namelist0.neutrals_file = '';
 switch_names={'bes','dcx','halo','cold','brems','fida','npa','pfida',...
-        'pnpa','neutron','birth','fida_wght','npa','wght'};
+        'pnpa','neutron','birth','fida_wght','npa_wght'};
 for i=1:length(switch_names)
     namelist0.(['calc_' switch_names{i}]) = 0;
 end
@@ -114,7 +114,7 @@ namelist0.focy = 50.0;
 namelist0.focz = 70.0;
 namelist0.divy = [0,0,0];
 namelist0.divz = [0,0,0];
-namelist0.naperature = 1;
+namelist0.naperture = 1;
 namelist0.ashape = 2;
 namelist0.awidy = 2;
 namelist0.awidz = 2;
@@ -225,7 +225,7 @@ for i = 1:numfields
 end
 
 % Output values to screen
-fprintf(fid, '&FIADASIM_INPUTS_B3D\n');
+fprintf(fid, '&FIDASIM_INPUTS_B3D\n');
 fprintf(fid, '!--------Run Information -------\n');
 fprintf(fid,'  SHOT = %d\n',namelist.shot);
 fprintf(fid,'  TIME = %5.2d\n',namelist.time);
@@ -233,7 +233,7 @@ fprintf(fid,'  RUNID = "%s"\n',namelist.runid);
 fprintf(fid,'  COMMENT = "%s"\n',namelist.comment);
 fprintf(fid,'  DEVICE = "%s"\n',namelist.device);
 fprintf(fid, '!--------File Locations -------\n');
-fprintf(fid,'  RESULTS_DIR = "%s"\n',namelist.result_dir);
+fprintf(fid,'  RESULT_DIR = "%s"\n',namelist.result_dir);
 fprintf(fid,'  TABLES_FILE = "%s"\n',namelist.tables_file);
 fprintf(fid,'  EQUILIBRIUM_FILE = "%s"\n',namelist.equilibrium_file);
 fprintf(fid,'  GEOMETRY_FILE = "%s"\n',namelist.geometry_file);
@@ -286,7 +286,7 @@ fprintf(fid,'  WIDY = %20.10E  WIDZ = %20.10E\n',namelist.widy,namelist.widz);
 fprintf(fid,'  FOCY = %20.10E  FOCZ = %20.10E\n',namelist.focy,namelist.focz);
 fprintf(fid,'  DIVY = %20.10E %20.10E %20.10E\n',namelist.divy);
 fprintf(fid,'  DIVZ = %20.10E %20.10E %20.10E\n',namelist.divz);
-fprintf(fid,'  NAPERATURE = %d\n',namelist.naperature);
+fprintf(fid,'  NAPERTURE = %d\n',namelist.naperture);
 for i = 1:namelist.naperature
     fprintf(fid,'    ASHAPE(%3.3d) = %d\n',i,namelist.ashape(i));
     fprintf(fid,'    ADIST(%3.3d) = %20.10E\n',i,namelist.adist(i));
