@@ -70,6 +70,8 @@ if ~isempty(varargin)
                 lrecalc=1;
                 i=i+1;
                 inputs=varargin{i};
+                i=i+1;
+                type=varargin{i};
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -113,7 +115,7 @@ if lrecalc
         inputs{5}=[1.0 1.0];%mi/ Ai, in amu
         inputs{6}=[1.0 1.0];%Zi in ec
     end
-    [data, rho, pitchaxis, Eaxis, f2D] = mRabbit(data, inputs{1}, inputs{2}, inputs{3}, inputs{4},inputs{5},inputs{6});
+    [data, rho, pitchaxis, Eaxis, f2D,~,~,~] = mRabbit(data, inputs{1}, inputs{2}, inputs{3}, inputs{4},inputs{5},inputs{6},type);
     f2D=squeeze(sum(f2D,3,'omitnan'));
 
     n=squeeze(trapz(pitchaxis,trapz(Eaxis,f2D,1),2));

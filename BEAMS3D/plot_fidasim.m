@@ -697,6 +697,9 @@ for i = 1:size(plot_type,2)
             plot3(ax{i},squeeze(los_nbi(1,:))'*fac,squeeze(los_nbi(2,:))'*fac,squeeze(los_nbi(3,:))'*fac,'-r');
             plot3(ax{i},squeeze(los_nbi(1,1))'*fac,squeeze(los_nbi(2,1))'*fac,squeeze(los_nbi(3,1))'*fac,'+k');
             sname = [filename, '_', plot_type{i}];
+            xlabel('X [cm]')
+            ylabel('Y [cm]')
+            zlabel('Z [cm]')
             %writematrix(los_nbi,sname,linestyle);
             % set(h, {'DisplayName'}, cellstr(deblank(geom.spec.id(channel))))
             %legend(h,'Location','bestoutside');

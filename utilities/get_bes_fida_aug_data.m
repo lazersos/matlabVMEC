@@ -31,7 +31,7 @@ function [plot_data,sim_data] = get_bes_fida_aug_data(filename,varargin)
 %      get_bes_fida_aug_data(filename,'t_point',3.5,'avg_time',0.010,'t_passive',3.6,'channels','CER','fidabes','fida','bes');
 
 
-shotid = str2double(filename(1:5));
+
 plot_type = {};
 ax = {};
 lsave = 0;
@@ -44,6 +44,8 @@ calibration=1.0;
 dex_in = '';
 lpoints=0;
 
+
+shotid = str2double(filename(1:5));
 R = h5read(filename,'/r_pos');
 
 spec_err_in= h5read(filename,'/intenserr');
@@ -334,13 +336,13 @@ for i = 1:size(plot_type,2)
             ylabel(ax{i},['Integrated BES: ', num2str(bes_range(channel,1)), '-',num2str(bes_range(channel,end)), 'nm']);
             legend(ax{i},deblank(names(channel)'))
         case 'timetrace_fidabes'
-            plot(ax,repmat(time(2:end),1,numel(channel)),(fida(channel,2:end)./bes(channel,2:end))')
+            plot(ax{i},repmat(time(2:end),1,numel(channel)),(fida(channel,2:end)./bes(channel,2:end))')
             tmp = (fida(channel,:)./bes(channel,:))';
-            plot(ax,repmat(time(:),1,numel(channel)),tmp)
-            xlabel(ax,'Time [s]')
-            ylabel(ax,['Integrated FIDA/BES: ', num2str(fida_range(1)), '-',num2str(fida_range(end)), 'nm']);
+            plot(ax{i},repmat(time(:),1,numel(channel)),tmp)
+            xlabel(ax{i},'Time [s]')
+            ylabel(ax{i},['Integrated FIDA/BES: ', num2str(fida_range(1)), '-',num2str(fida_range(end)), 'nm']);
             ylim([0,0.16])
-            legend(ax,deblank(names(channel)'))
+            legend(ax{i},deblank(names(channel)'))
             sname = [filename(1:end-3), '_', plot_type{i},'.txt'];
             fid=fopen(sname,'w');
             fprintf(fid,'%s created on %s\n',plot_type{i}, datestr(now));

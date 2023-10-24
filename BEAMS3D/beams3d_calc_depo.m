@@ -31,7 +31,7 @@ end
 
 % Setup rho array
 if isempty(nrho)
-    nrho = beam_data.ns_prof1;
+    nrho = double(beam_data.ns_prof1);
 end
 edges = 0:1.0/nrho:1;
 rho_out = 0.5.*(edges(1:end-1)+edges(2:end));
