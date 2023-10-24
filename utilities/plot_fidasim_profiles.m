@@ -157,6 +157,9 @@ for i = 1:size(plot_type,2)
         case 'fidabes'
             tmp = fida(dex)./bes(dex);
             ystr = 'FIDA/BES';
+            if lsave
+                legend(ax{i},'Location','southwest');
+            end
 
     end
 
@@ -170,7 +173,7 @@ for i = 1:size(plot_type,2)
     xlabel(ax{i},'R [cm]')
     ylabel(ax{i},ystr)
     if lsave
-        legend(ax{i},'Location','best');
+        
         sname = [name, '_', plot_type{i}];
         savefig(gcf,sname)
         exportgraphics(gcf,[sname,'.eps'],'Resolution',300);
