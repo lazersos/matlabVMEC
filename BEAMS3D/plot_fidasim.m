@@ -77,7 +77,7 @@ dist={};
 channel = 0;
 linestyle = '-';
 color='k';
-index=0;
+index=1;
 rotation=0;
 lpassive=0;
 if nargin > 1
@@ -257,7 +257,7 @@ if lneut
         *( input.current_fractions(1)      ...
         +  input.current_fractions(2)/2.d0 ...
         +  input.current_fractions(3)/3.d0 ) );
-    if index==0
+    if index==1
         [~,index]=min(abs(neut.grid.z));
     end
 end
@@ -334,6 +334,7 @@ for i = 1:size(plot_type,2)
     %figure('Color','white','Position',[1 -100 1024 768])
     switch lower(plot_type{i})
         case 'energy'
+            if index==1
             if ndims(dist.f) == 5
                 tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.pitch,dist.f,2),4)); %Integral over pitch and z
                 tmp =squeeze(trapz(dr*nr/(nr-1),trapz(dphi*nphi/(nphi-1),repmat(dist.r',size(dist.f,1),1,size(dist.f,5)).*tmp,3),2)); %Integral over phi and r with jacobian
@@ -344,6 +345,14 @@ for i = 1:size(plot_type,2)
             if lmean
                 tmp=tmp./ sum(vol2d,'all');
             end
+            elseif numel(index)==3
+                [~,r0_ind]=min(abs(eq.fields.r-index(1)));
+                [~,phi0_ind]=min(abs(eq.fields.phi-index(2)));
+                [~,z0_ind]=min(abs(eq.fields.z-index(3)));
+                fprintf('R=%.2f, Phi=%.2f, Z=%.2f\n',eq.fields.r(r0_ind),eq.fields.phi(phi0_ind),eq.fields.z(z0_ind))
+                tmp=squeeze(dist.f(:,:,r0_ind,z0_ind,phi0_ind));   
+                tmp=squeeze(trapz(dist.pitch,tmp,2));
+            end
             if fac == 1
                 % plot(ax,dist.energy(2:end), tmp(1:end-1),'DisplayName',['Energy - ' name] );
                 plot(ax{i},dist.energy, tmp,linestyle,'DisplayName',['Energy - ' name] );
@@ -353,6 +362,7 @@ for i = 1:size(plot_type,2)
             xlabel('Energy [keV]')
             ylabel('Fast Ion Distribution [1/keV]')
         case 'pitch'
+            if index==1
             if ndims(dist.f) == 5
                 tmp = squeeze(trapz(dphi*nphi/(nphi-1),trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4),5)); %Integral over energy, z and phi
                 tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2)); %Integral over r with jacobian
@@ -364,6 +374,14 @@ for i = 1:size(plot_type,2)
                 tmp=tmp./ sum(vol2d,'all');
             end
             fprintf('Total fast ions in %s: %3.2e\n',filename,n_fida);
+            elseif numel(index)==3
+                [~,r0_ind]=min(abs(eq.fields.r-index(1)));
+                [~,phi0_ind]=min(abs(eq.fields.phi-index(2)));
+                [~,z0_ind]=min(abs(eq.fields.z-index(3)));
+                fprintf('R=%.2f, Phi=%.2f, Z=%.2f\n',eq.fields.r(r0_ind),eq.fields.phi(phi0_ind),eq.fields.z(z0_ind))
+                tmp=squeeze(dist.f(:,:,r0_ind,z0_ind,phi0_ind));   
+                tmp=squeeze(trapz(dist.energy,tmp,1));
+            end
             if fac == 1
                 plot(ax{i},dist.pitch, tmp,linestyle,'DisplayName',['Pitch - ' name] );
                 fprintf('Total from pitch: %3.2e\n',trapz(dist.pitch, tmp));
@@ -405,6 +423,7 @@ for i = 1:size(plot_type,2)
             yline([-minb minb])
             yline([-modb(floor(dist.nr/2),floor(dist.nz/2),1) modb(floor(dist.nr/2),floor(dist.nz/2),1)])
         case 'ep2d'
+            if index==1
             if ndims(dist.f) == 5
                 tmp = squeeze(trapz(dist.phi,trapz(dist.z,dist.f,4),5));
                 rtmp = permute(repmat(dist.r,1,size(dist.f,1),size(dist.f,2),1),[2,3,1]);
@@ -415,6 +434,13 @@ for i = 1:size(plot_type,2)
             tmp = squeeze(trapz(dist.r,rtmp.*tmp,3));
             if lmean
                 tmp=tmp./sum(vol2d,'all');
+            end
+            elseif numel(index)==3
+                [~,r0_ind]=min(abs(eq.fields.r-index(1)));
+                [~,phi0_ind]=min(abs(eq.fields.phi-index(2)));
+                [~,z0_ind]=min(abs(eq.fields.z-index(3)));
+                fprintf('R=%.2f, Phi=%.2f, Z=%.2f\n',eq.fields.r(r0_ind),eq.fields.phi(phi0_ind),eq.fields.z(z0_ind))
+                tmp=squeeze(dist.f(:,:,r0_ind,z0_ind,phi0_ind));
             end
             if lcontour
                 contour(dist.energy,dist.pitch,tmp',levels,linestyle,'DisplayName',name)
@@ -429,7 +455,7 @@ for i = 1:size(plot_type,2)
             xlim([dist.energy(1) dist.energy(end)])
             ylim([dist.pitch(1) dist.pitch(end)])
             if lsave
-                %legend('Location','best')
+                legend(ax{i},'Interpreter','none');
                 sname = [filename, '_', name,'_', plot_type{i} ,'.fig'];
                 savefig(ax{i}.Parent,sname)
                 %exportgraphics(ax{i}.Parent,[sname,'.eps'],'Resolution',300);
@@ -443,7 +469,7 @@ for i = 1:size(plot_type,2)
             plot(ax{i},eq.plasma.r, squeeze(eq.plasma.ti(:,z0_ind,1)), 'DisplayName',['T_i - ' name] );
             plot(ax{i},eq.plasma.r, squeeze(eq.plasma.zeff(:,z0_ind,1)), 'DisplayName',['Zeff [-] - ' name] );
             ylabel(ax{i},'T [keV]')
-            legend(ax{i},'Location','best')
+            legend(ax{i},'Interpreter','none');
             yyaxis(ax{i},'right')
             plot(ax{i},eq.plasma.r, squeeze(eq.plasma.dene(:,z0_ind,1)), 'DisplayName',['n_e - ' name] );
             xlabel(ax{i},'R [cm]')
@@ -463,7 +489,7 @@ for i = 1:size(plot_type,2)
             plot(ax{i},eq.plasma.r, squeeze(eq.fields.bz(:,z0_ind,1)),linestyle, 'DisplayName','B_z');
             xlabel(ax{i},'R [cm]')
             ylabel(ax{i},'Magnetic Field [T]')
-            legend()
+            legend(ax{i},'Interpreter','none');
         case 'fslice'
             [~,e_ind]=min(abs(dist.energy-20));
             [~,p_ind]=min(abs(dist.pitch));
@@ -474,7 +500,7 @@ for i = 1:size(plot_type,2)
             end
             xlabel('R [cm]')
             ylabel('Fast ion distribution slice [1/cm^3/keV/dp]')
-            legend()
+            legend(ax{i},'Interpreter','none');
         case 'denf'
             if fac == 1
                 plot(ax{i},dist.r, squeeze(dist.denf(:,z0_ind,1)),linestyle, 'DisplayName',['Denf - ' name] );
@@ -681,7 +707,7 @@ for i = 1:size(plot_type,2)
                 disp(['Channel: ', char(geom.spec.id(channel))])
                 disp(['R= ', num2str(geom.spec.radius(channel))])
             end
-            legend(ax{i},'Location','best');
+            legend(ax{i},'Interpreter','none','Location','northeast');
         case 'los3d'
             vec = [0, 0, -1];
             rotation = 0;% 67.5;
@@ -842,11 +868,8 @@ for i = 1:size(plot_type,2)
         c.Label.String = cstring;
         xlim([r(1) r(end)])
     end
-    %end
     if lsave
-        %caxis([0 3e11])
-        colorbar
-        %legend(ax{i},'Location','best');
+        legend(ax{i},'Interpreter','none');
         sname = [filename, '_', name,  '_', plot_type{i}];
         savefig(ax{i}.Parent,[sname,'.fig'])
         set(ax{i}.Parent, 'Renderer', 'painters');
