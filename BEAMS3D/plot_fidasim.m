@@ -660,7 +660,7 @@ for i = 1:size(plot_type,2)
             else
                 disp('No passive FIDA signal found!')
             end
-            specr = specr.*fac;
+            specr = specr.*fac;            
             if lmean
                 k = 12;
                 specr = movmean(specr,k);
@@ -677,6 +677,7 @@ for i = 1:size(plot_type,2)
                 cwav_mid=mean(spec.lambda);
                 instfu = box_gauss_funct(spec.lambda,0.,1.,cwav_mid,sim_data.instfu_gamma,sim_data.instfu_box_nm);
                 plot(spec.lambda,conv(specr(:,channel),instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
+                %plot(spec.lambda,specr(:,channel), 'DisplayName', ['Spectrum - ' name] );
                 % plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
                 % plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
                 %plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );

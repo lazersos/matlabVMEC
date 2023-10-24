@@ -42,7 +42,8 @@ t_point = 0;
 calibration=1.0;
 dex_in = '';
 lpoints=0;
-
+ldebug=0;
+fida_range=[0, 0];
 
 shotid = str2double(filename(1:5));
 R = h5read(filename,'/r_pos');
@@ -52,7 +53,7 @@ spec_err_in= h5read(filename,'/intenserr');
 spec_in= h5read(filename,'/intens');
 names_unsorted = h5read(filename,'/los_name');
 dispersion_in=h5read(filename,'/dispersion');
-lambda = h5read(filename,'/cor_wavel')-2*dispersion_in;%-0.104;%-0.055;
+lambda = h5read(filename,'/cor_wavel');%-2*dispersion_in;%-0.104;%-0.055;
 time = h5read(filename,'/time_arr');
 instfu_gamma = h5read(filename,'/instfu_gamma')';
 instfu_box_nm = h5read(filename,'/instfu_box_nm')';
@@ -121,6 +122,8 @@ if nargin > 2
                 lmovie=1;
                 i = i+1;
                 t = varargin{i};
+            case 'debug'
+                ldebug=1;
             case 'calib'
                 i = i+1;
                 calibration = varargin{i};
@@ -240,11 +243,10 @@ fida_dex = repmat(fida_dex,1,1,numel(time));
 bg_dex = repmat(bg_dex,1,1,numel(time));
 dispersion = repmat(dispersion_in,1,1,numel(time));
 
-bg = sum(spec_in.*bg_dex,1)./sum(bg_dex,1);
+spec = spec_in;
+bg = sum(spec.*bg_dex,1)./sum(bg_dex,1);
 bg(bg<0) = 0;
-spec = spec_in - repmat(bg,size(spec_in,1),1);%Background subtraction
-%spec=spec_in;
-spec(spec<0) = 0;
+spec = spec - repmat(bg,size(spec_in,1),1);%Background subtraction
 if t_passive~=0
     for k = 1:size(time_dex_passive,4)
         spec_passive(:,:,k) = sum(spec.*squeeze(time_dex_passive(:,:,:,k)),3)./sum(squeeze(time_dex_passive(:,:,:,k)),3);
@@ -254,6 +256,8 @@ if t_passive~=0
     spec = spec - spec_passive(:,:,closest_to_passive);
 end
 
+%spec=spec_in;
+spec(spec<0) = 0;
 spec(spec<0) = 0;
 
 %plot(squeeze(spec(:,16,1000)))
@@ -354,6 +358,12 @@ for i = 1:size(plot_type,2)
             time_dex_spec = permute(repmat(time_dex,1,1,size(spec,1)),[3,1,2]);
             tmp =squeeze(sum(spec.*time_dex_spec,3)./sum(time_dex_spec,3));
             plot(ax{i},lambda(:,channel),tmp(:,channel).*calibration, 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Calib=', num2str(calibration)], 'LineWidth',2.0);%, Chan: ', names{channel}
+            if ldebug
+            tmp2 =squeeze(sum((spec_in).*time_dex_passive,3)./sum(time_dex_passive,3));
+            plot(ax{i},lambda(:,channel),tmp2(:,channel).*calibration, 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Calib=', num2str(calibration)], 'LineWidth',2.0);%, Chan: ', names{channel}
+            tmp2 =squeeze(sum((spec_in-(sum(spec_in.*bg_dex,1)./sum(bg_dex,1))).*time_dex_passive,3)./sum(time_dex_passive,3));
+            plot(ax{i},lambda(:,channel),tmp2(:,channel).*calibration, 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Calib=', num2str(calibration)], 'LineWidth',2.0);%, Chan: ', names{channel}
+            end   
             tmp_err=sqrt(sum(spec_err.*time_dex_spec,3).^2)./sum(time_dex_spec,3);
             if lpoints
                 tmp =spec(:,:,time_dex_inds);
