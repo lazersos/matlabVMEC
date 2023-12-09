@@ -9,7 +9,8 @@ function [s, pot, dpotds] = beams3d_er(beam_data)
 %       [s, pot, dpotds] = beams3d_er(beam_data);
 %
 %   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
-%   Version:       1.0
+%   Version:       1.5
+%        Note earlier versions had incorrectly added a negative sign.
 
 
 ns = 128;
@@ -31,7 +32,7 @@ pot_temp = [flipud(pot_temp); pot_temp];
 [C, IA, ~] = unique(C);
 pot = pchip(C,pot_temp(IA),s);
 shalf = 0.5.*(s(1:ns1)+s(2:ns));
-dEds = -(pot(2:ns)-pot(1:ns1))./(s(2:ns)-s(1:ns1));
+dEds = (pot(2:ns)-pot(1:ns1))./(s(2:ns)-s(1:ns1));
 dpotds = [0 pchip(shalf,dEds,s(2:end))];
 
 end
