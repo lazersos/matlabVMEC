@@ -93,17 +93,17 @@ yg = rg .* sin(phig);
 %by = br.* sin(bphi);
 
 fluxphi = zeros(size(rhoarr));
-for i = 1:numel(fluxi0)
+i=1;
 %Quadratic/analytical form:
 %fluxir = fluxi0(i) * (rhoarr.^2) .*  (1- rhoarr).^2;
 %Strumberger 2008, Perturbation 2:
-%fluxir= fluxi0(i)*(sarr).^(2/2) .* (1-(sarr)).^4;
+fluxir= fluxi0(i).*(sarr).^(2/2) .* (1-(sarr)).^4;
 
-c1=2;
-c2=4;
-c3=1;
-f=@(x) x.^(c1/2).*(1-x).^c2;
-fluxir= fluxi0(i)*f(sarr).^c3;
+%c1=2;
+%c2=4;
+%c3=1;
+%f=@(x) x.^(c1/2).*(1-x).^c2;
+%fluxir= fluxi0(i)*f(sarr).^c3;
 if lplot
     figure
     x=linspace(0,1,100);
@@ -118,12 +118,12 @@ ylabel('Perturbation Amplitude');
 end
 fluxphi = fluxphi + fluxir .* cos(mi.*uarr + ni .* phig);
 %fluxphi = fluxphi + ones(size(rhoarr))*fluxi0(i);
-end
+%end
 %fluxphi(rhoarr<0.2)=0;
 %fluxphi(rhoarr>0.5)=0;
 
 
-fluxphi(sarr>1)=0;
+%fluxphi(sarr>1)=0;
 
 % brc = br.* fluxphi;
 % bphic = bphi.* fluxphi;
