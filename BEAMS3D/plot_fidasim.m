@@ -455,7 +455,7 @@ for i = 1:size(plot_type,2)
             xlim([dist.energy(1) dist.energy(end)])
             ylim([dist.pitch(1) dist.pitch(end)])
             if lsave
-                legend(ax{i},'Interpreter','none');
+                %legend(ax{i},'Interpreter','none');
                 sname = [filename, '_', name,'_', plot_type{i} ,'.fig'];
                 savefig(ax{i}.Parent,sname)
                 %exportgraphics(ax{i}.Parent,[sname,'.eps'],'Resolution',300);
@@ -556,12 +556,12 @@ for i = 1:size(plot_type,2)
             r = eq.fields.r;
             phi = eq.fields.phi;
             tmp = dist.denf;
-            cstring = 'Fast ion density [m^{-3}]';
+            cstring = 'Fast ion density [cm^{-3}]';
         case 'fdenftor'
             r = eq.fields.r;
             phi = eq.fields.phi;
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
-            cstring = 'Fast ion density [m^{-3}]';
+            cstring = 'Fast ion density [cm^{-3}]';
         case 'brtor'
             r = eq.fields.r;
             phi = eq.fields.phi;
@@ -678,17 +678,17 @@ for i = 1:size(plot_type,2)
                 instfu = box_gauss_funct(spec.lambda,0.,1.,cwav_mid,sim_data.instfu_gamma,sim_data.instfu_box_nm);
                 plot(spec.lambda,conv(specr(:,channel),instfu(:,channel),'same'), 'DisplayName', ['Spectrum - ' name] );
                 %plot(spec.lambda,specr(:,channel), 'DisplayName', ['Spectrum - ' name] );
-                % plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
-                % plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
-                %plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
-                % if ( isfield(spec,'pfida') && lpassive)
-                %     plot(spec.lambda, conv(spec.pfida(:,channel),instfu(:,channel),'same'),  'DisplayName',['Passive FIDA - ' name] );
-                % end
-                %plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
+                plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
+                plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
+                plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
+                if ( isfield(spec,'pfida') && lpassive)
+                    plot(spec.lambda, conv(spec.pfida(:,channel),instfu(:,channel),'same'),  'DisplayName',['Passive FIDA - ' name] );
+                end
+                plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
                 %plot(spec.lambda, conv(spec.halo(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo only - ' name] ); %+spec.brems(:,channel)
                 %plot(spec.lambda, conv(spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['DCX only - ' name] ); %+spec.brems(:,channel)
-                %fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
-                % plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
+                fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
+                plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
             else
                 plot(spec.lambda,specr(:,channel),linestyle, 'DisplayName', ['Spectrum - ' name] );
                 if (isfield(spec,'pfida' ) && lpassive)
@@ -860,9 +860,12 @@ for i = 1:size(plot_type,2)
         ylabel('Phi [rad]')
         c = colorbar;
         c.Label.String = cstring;
-        xlim([r(1) r(end)])
+        xlim([r(1) r(end)+dr])
+        ylim([phi(1) phi(end)+dphi])
     elseif strcmp(plot_type{i}(end-2:end),'tor')
         pixplot(r,phi,squeeze(tmp(:,z0_ind,:)))
+        xticks(round(r))
+        yticks(round(phi))
         xlabel('R [cm]')
         ylabel('Phi [rad]')
         c = colorbar;
@@ -870,7 +873,7 @@ for i = 1:size(plot_type,2)
         xlim([r(1) r(end)])
     end
     if lsave
-        legend(ax{i},'Interpreter','none');
+        %legend(ax{i},'Interpreter','none');
         sname = [filename, '_', name,  '_', plot_type{i}];
         savefig(ax{i}.Parent,[sname,'.fig'])
         set(ax{i}.Parent, 'Renderer', 'painters');
