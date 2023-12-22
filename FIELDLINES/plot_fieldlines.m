@@ -145,6 +145,8 @@ switch plottype
         axis equal
         xlabel('R [m]')
         ylabel('Z [m]')
+        xlim([data.raxis(1) data.raxis(end)])
+        ylim([data.zaxis(1) data.zaxis(end)])
     case{101}
         line_dex = nphi:npoinc:nsteps;
         R = data.R_lines(1:skip:nlines,line_dex);
