@@ -3,7 +3,7 @@ function [s, deposition] = beams3d_deposition(beam_data)
 %   The BEAMS3D_DEPOSITION routine calculates the neutral beam deposition
 %   given a BEAMS3D data structure as returned by the routine READ_BEAMS3D.
 %   The routine returns the normalized toroidal flux grid and an array for
-%   the number of deposited particles in units of part/s.  The array is
+%   the number of deposited particles in units of part*m^-3/s.  The array is
 %   broken down by beam population.
 %
 % Example usage
@@ -15,11 +15,13 @@ function [s, deposition] = beams3d_deposition(beam_data)
 
 s=[];
 deposition=[];
+bdex = 2;
 
 % Check for a neutral beam run
 if ~all(beam_data.neut_lines(1,:))
     disp(' No neutral data found!');
-    return;
+    bdex=1;
+%    return;
 end
 
 %Initialize
@@ -28,25 +30,29 @@ deposition = zeros(beam_data.nbeams,beam_data.ns_prof);
 
 % Get volume elements
 [sv, ~, vp] = beams3d_volume(beam_data);
-vp = 2.*sqrt(sv).*vp; % dV/ds => dV/drho
+drho = 1./beam_data.ns_prof;
+vp = pchip(sqrt(sv),2.*sqrt(sv).*vp,beam_data.rho)'.*drho; % dV/ds => dV=dV/drho*drho
 
 % Downselect to deposited particles
-dex = beam_data.neut_lines(3,:)==0;
+if bdex==2
+    dex = and(beam_data.neut_lines(3,:)==0,beam_data.S_lines(2,:)<1);
+else
+    dex = 1:double(beam_data.nparticles);
+end
 f   = sqrt(beam_data.S_lines(2,dex)); %rho
 w   = beam_data.Weight(dex);
 b   = beam_data.Beam(dex);
 
 % Bin with weight
-dh = beam_data.rho(1);
 for i=1:beam_data.nbeams
-    for j=1:beam_data.ns_prof
-        dex = and(f>=beam_data.rho(i)-dh,f<beam_data.rho(i)+dh);
-        dex = and(b==i,dex);
-        deposition(i,j) = sum(w(dex)).*vp(j);
-    end
+    dex = b==i;
+    w2 = w(dex)';
+    f2 = f(dex)';
+    deposition(i,:) = hist1d_weighted(f2,w2,beam_data.rho).*vp;
 end
 
 % Calc s
+rho = beam_data.rho;
 s = rho.*rho;
 
 
