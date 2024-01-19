@@ -16,9 +16,14 @@ if isempty(wall_in)
 else
     wall_out = wall_in;
 end
+% Area Check
 area = sum(wall_out.FN.^2);
 toosmall = find(area<=0);
+% Inverse denom check
+toosmall = [toosmall find(wall_out.invDenom == Inf)];
+toosmall = unique(toosmall);
 if ~isempty(toosmall)
+    disp(strcat('Found ',num2str(length(toosmall),' %i'),' bad triangles'));
     wall_out.faces(:,toosmall)=[];
     wall_out.A(:,toosmall)=[];
     wall_out.V0(:,toosmall)=[];
