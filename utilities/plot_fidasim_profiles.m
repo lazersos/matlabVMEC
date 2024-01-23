@@ -133,7 +133,7 @@ fida_dex = (lambda > fida_range(1)) & (lambda < fida_range(2));
 % bes = sum(spec.*dispersion_tmp.*bes_dex,1);
 % fida = sum(spec.*dispersion_tmp.*fida_dex,1);
 
-bg = sum(brems.*dispersion_tmp.*bg_dex,1,'omitnan');
+bg = sum(brems.*dispersion_tmp.*bg_dex,1,'omitnan')./sum(dispersion_tmp.*bg_dex,1,'omitnan');
 bes = sum(spec.*dispersion_tmp.*bes_dex,1,'omitnan');
 fida = sum(spec.*dispersion_tmp.*fida_dex,1,'omitnan');
 

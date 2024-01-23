@@ -53,7 +53,10 @@ spec_err_in= h5read(filename,'/intenserr');
 spec_in= h5read(filename,'/intens');
 names_unsorted = h5read(filename,'/los_name');
 dispersion_in=h5read(filename,'/dispersion');
-lambda = h5read(filename,'/cor_wavel');%-2*dispersion_in;%-0.104;%-0.055;
+
+lambda = h5read(filename,'/cor_wavel');%-dispersion_in;%-0.104;%-0.055;
+lambda2=h5read('/raven/u/davku/pub/38581_CFR_wavel_3Nov2023.h5','/data');
+lambda2=lambda2.WAVEL;%fliplr(lambda2.WAVEL);
 time = h5read(filename,'/time_arr');
 instfu_gamma = h5read(filename,'/instfu_gamma')';
 instfu_box_nm = h5read(filename,'/instfu_box_nm')';
@@ -80,11 +83,15 @@ if nargin > 2
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
             case 'channels'
                 i=i+1;
+                if strcmp(varargin{i},'all')
+                dex_in = true(size(tmp,1),1);
+                else
                 dex_in = strcmp(tmp(:,1:3),string(varargin{i}));
-                if strcmp("F50",string(varargin{i}))
+                end
+                if strcmp("F50",string(varargin{i})) | strcmp("F85",string(varargin{i}))
                     fida_range = [652.5,653.5];
                 else
-                    fida_range = [660,661];%[661.5, 662.5];
+                    fida_range = [660, 661];%[660.3,660.8];%[661.5, 662.5];
                 end
             case{'spectrum', 'timetrace_fida', 'timetrace_bes', 'timetrace_fidabes'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
@@ -99,6 +106,7 @@ if nargin > 2
                     %channel =find(~(I-varargin{i}));% I(varargin{i}); %Inverse lookup,
                     channel = varargin{i};
                 end
+                channel=channel+1;
             case 't_point'
                 i=i+1;
                 t_point = varargin{i};
@@ -165,7 +173,7 @@ bes_range = [ 654.56110	655.05627
     657.56232	658.05450
     657.46442	657.94891
     658.30511	658.81262
-    658.89917	659.41998];
+    658.89917	659.41998];%+0.6;
 
 if shotid < 32000
     bes_range = [658.906      658.906
@@ -244,7 +252,7 @@ bg_dex = repmat(bg_dex,1,1,numel(time));
 dispersion = repmat(dispersion_in,1,1,numel(time));
 
 spec = spec_in;
-bg = sum(spec.*bg_dex,1)./sum(bg_dex,1);
+bg = sum(spec.*dispersion.*bg_dex,1)./sum(dispersion.*bg_dex,1);
 bg(bg<0) = 0;
 spec = spec - repmat(bg,size(spec_in,1),1);%Background subtraction
 if t_passive~=0
@@ -258,7 +266,7 @@ end
 
 %spec=spec_in;
 spec(spec<0) = 0;
-spec(spec<0) = 0;
+%spec(spec<0) = 0;
 
 %plot(squeeze(spec(:,16,1000)))
 
@@ -355,9 +363,11 @@ for i = 1:size(plot_type,2)
             fprintf(fid,[format, '\n'],[time, tmp]');
             fclose(fid);
         case 'spectrum'
+            
             time_dex_spec = permute(repmat(time_dex,1,1,size(spec,1)),[3,1,2]);
             tmp =squeeze(sum(spec.*time_dex_spec,3)./sum(time_dex_spec,3));
             plot(ax{i},lambda(:,channel),tmp(:,channel).*calibration, 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Calib=', num2str(calibration)], 'LineWidth',2.0);%, Chan: ', names{channel}
+            plot(ax{i},lambda2(:,channel),tmp(:,channel).*calibration,'--','DisplayName','Corr Wavel. ');%, Chan: ', names{channel}
             if ldebug
             tmp2 =squeeze(sum((spec_in).*time_dex_passive,3)./sum(time_dex_passive,3));
             plot(ax{i},lambda(:,channel),tmp2(:,channel).*calibration, 'DisplayName',['Data ',  num2str(t_point - avg_time/2),' - ',num2str(t_point + avg_time/2), 's, Calib=', num2str(calibration)], 'LineWidth',2.0);%, Chan: ', names{channel}

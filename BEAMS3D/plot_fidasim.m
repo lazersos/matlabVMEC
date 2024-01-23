@@ -1,4 +1,4 @@
-function [ ax, n_fida ] = plot_fidasim(filename,varargin)
+function [ ax, n_fida ] = plot_fidasim(file,varargin)
 %PLOT_FIDASIM Makes plots of FIDASIM data generated with the BEAMS3D
 %Interface.
 %The PLOT_FIDASIM function creates various canned plots of the files used
@@ -44,23 +44,23 @@ function [ ax, n_fida ] = plot_fidasim(filename,varargin)
 
 ec=1.6021773300E-19; % Charge of an electron (leave alone)
 
-if (strcmp(filename(end-1:end),'h5'))
+if (strcmp(file(end-1:end),'h5'))
     disp('ERROR: Only give runid (dist and eq files are loaded automatically!');
-    disp(['       Filename: ' filename]);
+    disp(['       Filename: ' file]);
 end
 
-dist_name = [filename, '_distribution.h5'];
-eq_name = [filename,'_equilibrium.h5'];
-neut_name = [filename, '_neutrals.h5'];
-spec_name = [filename,'_spectra.h5'];
-geom_name = [filename,'_geometry.h5'];
-birth_name = [filename,'_birth.h5'];
+dist_name = [file, '_distribution.h5'];
+eq_name = [file,'_equilibrium.h5'];
+neut_name = [file, '_neutrals.h5'];
+spec_name = [file,'_spectra.h5'];
+geom_name = [file,'_geometry.h5'];
+birth_name = [file,'_birth.h5'];
 
 lsave = 0;
 plot_type = {};
 ax = {};
 fac = 1;
-name = filename;
+name = file;
 leq = 0;
 ldist = 0;
 lspec = 0;
@@ -80,6 +80,7 @@ color='k';
 index=1;
 rotation=0;
 lpassive=0;
+lbrems=0;
 if nargin > 1
     i = 1;
     while i < nargin
@@ -95,9 +96,10 @@ if nargin > 1
                         index = varargin{i};
                     end
                 end
-            case {'fslice','denf2d','denf','fdenf','fdenf2d',...
+            case {'fslice','denf2d','denf','denftor',...
+                    'fdenf','fdenf2d','fdenftor','fdenf3d',...
                     'pitch','energy','ep2d',...
-                    'fdenftor','denftor','bmir'}
+                    'bmir'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
                 ldist = 1;
                 leq=1;
@@ -171,6 +173,8 @@ if nargin > 1
                 lsave = 1;
             case 'passive'
                 lpassive=1;
+            case 'brems'
+                lbrems=1;
             case 'ax'
                 i=i+1;
                 ax = varargin{i};
@@ -191,14 +195,14 @@ if nargin > 1
 end
 
 if linput
-    input=read_namelist([filename,'_inputs.dat'],'fidasim_inputs');
+    input=read_namelist([file,'_inputs.dat'],'fidasim_inputs');
 end
 
 if ldist
     dist = read_hdf5(dist_name);
     if ~isstruct(dist)
         disp('ERROR: Distribution file not found, check filename!');
-        disp(['       Filename: ' filename]);
+        disp(['       Filename: ' file]);
     end
     dr = dist.r(2)-dist.r(1);
     dz = dist.z(2)-dist.z(1);
@@ -235,7 +239,7 @@ if leq
     eq = read_hdf5(eq_name);
     if ~isstruct(eq)
         disp('ERROR: Equilbirium file not found, check filename!');
-        disp(['       Filename: ' filename]);
+        disp(['       Filename: ' file]);
         eq={};
         eq.fields.z=dist.z;
         eq.fields.r=dist.r;
@@ -247,7 +251,7 @@ if lneut
     neut = read_hdf5(neut_name);
     if ~isstruct(neut)
         disp('ERROR: Neutrals file not found, check filename!');
-        disp(['       Filename: ' filename]);
+        disp(['       Filename: ' file]);
     end
     neut.dens = neut.fdens+neut.hdens+neut.tdens;%+neut.dcxdens+neut.halodens;
     neut.dens=squeeze(sum(neut.dens,1));%Sum over all levels
@@ -266,7 +270,7 @@ if lspec
     spec = read_hdf5(spec_name);
     if ~isstruct(spec)
         disp('ERROR: Spectra file not found, check filename!');
-        disp(['       Filename: ' filename]);
+        disp(['       Filename: ' file]);
     end
     %[~,I] = sort(spec.radius);
 
@@ -275,7 +279,7 @@ if lgeom
     geom = read_hdf5(geom_name);
     if ~isstruct(geom)
         disp('ERROR: Geometry file not found, check filename!');
-        disp(['       Filename: ' filename]);
+        disp(['       Filename: ' file]);
         lgeom=0;
     end
 end
@@ -284,7 +288,7 @@ if lbirth
     birth = read_hdf5(birth_name);
     if ~isstruct(birth)
         disp('ERROR: Birth file not found, check filename!');
-        disp(['       Filename: ' filename]);
+        disp(['       Filename: ' file]);
         lgeom=0;
     end
 end
@@ -335,22 +339,23 @@ for i = 1:size(plot_type,2)
     switch lower(plot_type{i})
         case 'energy'
             if index==1
-            if ndims(dist.f) == 5
-                tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.pitch,dist.f,2),4)); %Integral over pitch and z
-                tmp =squeeze(trapz(dr*nr/(nr-1),trapz(dphi*nphi/(nphi-1),repmat(dist.r',size(dist.f,1),1,size(dist.f,5)).*tmp,3),2)); %Integral over phi and r with jacobian
-            else
-                tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.pitch,dist.f,2),4))*2*pi;
-                tmp=squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,1),1).*tmp,2));
-            end
-            if lmean
-                tmp=tmp./ sum(vol2d,'all');
-            end
+                if ndims(dist.f) == 5
+                    tmp=trapz(dist.pitch,dist.f,2);
+                    tmp = squeeze(trapz(dz*nz/(nz-1),tmp,4)); %Integral over pitch and z
+                    tmp =squeeze(trapz(dr*nr/(nr-1),trapz(dphi*nphi/(nphi-1),repmat(dist.r',size(dist.f,1),1,size(dist.f,5)).*tmp,3),2)); %Integral over phi and r with jacobian
+                else
+                    tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.pitch,dist.f,2),4))*2*pi;
+                    tmp=squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,1),1).*tmp,2));
+                end
+                if lmean
+                    tmp=tmp./ sum(vol2d,'all');
+                end
             elseif numel(index)==3
                 [~,r0_ind]=min(abs(eq.fields.r-index(1)));
                 [~,phi0_ind]=min(abs(eq.fields.phi-index(2)));
                 [~,z0_ind]=min(abs(eq.fields.z-index(3)));
                 fprintf('R=%.2f, Phi=%.2f, Z=%.2f\n',eq.fields.r(r0_ind),eq.fields.phi(phi0_ind),eq.fields.z(z0_ind))
-                tmp=squeeze(dist.f(:,:,r0_ind,z0_ind,phi0_ind));   
+                tmp=squeeze(dist.f(:,:,r0_ind,z0_ind,phi0_ind));
                 tmp=squeeze(trapz(dist.pitch,tmp,2));
             end
             if fac == 1
@@ -363,23 +368,23 @@ for i = 1:size(plot_type,2)
             ylabel('Fast Ion Distribution [1/keV]')
         case 'pitch'
             if index==1
-            if ndims(dist.f) == 5
-                tmp = squeeze(trapz(dphi*nphi/(nphi-1),trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4),5)); %Integral over energy, z and phi
-                tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2)); %Integral over r with jacobian
-            else
-                tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4))*2*pi;
-                tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2));
-            end
-            if lmean
-                tmp=tmp./ sum(vol2d,'all');
-            end
-            fprintf('Total fast ions in %s: %3.2e\n',filename,n_fida);
+                if ndims(dist.f) == 5
+                    tmp = squeeze(trapz(dphi*nphi/(nphi-1),trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4),5)); %Integral over energy, z and phi
+                    tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2)); %Integral over r with jacobian
+                else
+                    tmp = squeeze(trapz(dz*nz/(nz-1),trapz(dist.energy,dist.f,1),4))*2*pi;
+                    tmp = squeeze(trapz(dr*nr/(nr-1),repmat(dist.r',size(dist.f,2),1).*tmp,2));
+                end
+                if lmean
+                    tmp=tmp./ sum(vol2d,'all');
+                end
+                fprintf('Total fast ions in %s: %3.2e\n',file,n_fida);
             elseif numel(index)==3
                 [~,r0_ind]=min(abs(eq.fields.r-index(1)));
                 [~,phi0_ind]=min(abs(eq.fields.phi-index(2)));
                 [~,z0_ind]=min(abs(eq.fields.z-index(3)));
                 fprintf('R=%.2f, Phi=%.2f, Z=%.2f\n',eq.fields.r(r0_ind),eq.fields.phi(phi0_ind),eq.fields.z(z0_ind))
-                tmp=squeeze(dist.f(:,:,r0_ind,z0_ind,phi0_ind));   
+                tmp=squeeze(dist.f(:,:,r0_ind,z0_ind,phi0_ind));
                 tmp=squeeze(trapz(dist.energy,tmp,1));
             end
             if fac == 1
@@ -424,17 +429,17 @@ for i = 1:size(plot_type,2)
             yline([-modb(floor(dist.nr/2),floor(dist.nz/2),1) modb(floor(dist.nr/2),floor(dist.nz/2),1)])
         case 'ep2d'
             if index==1
-            if ndims(dist.f) == 5
-                tmp = squeeze(trapz(dist.phi,trapz(dist.z,dist.f,4),5));
-                rtmp = permute(repmat(dist.r,1,size(dist.f,1),size(dist.f,2),1),[2,3,1]);
-            else
-                tmp = squeeze(trapz(dist.z,dist.f,4))*2*pi;
-                rtmp = permute(repmat(dist.r,1,size(dist.f,1),size(dist.f,2),1),[2,3,1]);
-            end
-            tmp = squeeze(trapz(dist.r,rtmp.*tmp,3));
-            if lmean
-                tmp=tmp./sum(vol2d,'all');
-            end
+                if ndims(dist.f) == 5
+                    tmp = squeeze(trapz(dist.phi,trapz(dist.z,dist.f,4),5));
+                    rtmp = permute(repmat(dist.r,1,size(dist.f,1),size(dist.f,2),1),[2,3,1]);
+                else
+                    tmp = squeeze(trapz(dist.z,dist.f,4))*2*pi;
+                    rtmp = permute(repmat(dist.r,1,size(dist.f,1),size(dist.f,2),1),[2,3,1]);
+                end
+                tmp = squeeze(trapz(dist.r,rtmp.*tmp,3));
+                if lmean
+                    tmp=tmp./sum(vol2d,'all');
+                end
             elseif numel(index)==3
                 [~,r0_ind]=min(abs(eq.fields.r-index(1)));
                 [~,phi0_ind]=min(abs(eq.fields.phi-index(2)));
@@ -445,7 +450,7 @@ for i = 1:size(plot_type,2)
             if lcontour
                 contour(dist.energy,dist.pitch,tmp',levels,linestyle,'DisplayName',name)
             else
-                pixplot(dist.energy,dist.pitch,tmp)
+                imagesc(dist.energy,dist.pitch,tmp')
             end
             cstring='Fast Ion Distribution [1/keV]';
             c = colorbar;
@@ -456,7 +461,7 @@ for i = 1:size(plot_type,2)
             ylim([dist.pitch(1) dist.pitch(end)])
             if lsave
                 legend(ax{i},'Interpreter','none');
-                sname = [filename, '_', name,'_', plot_type{i} ,'.fig'];
+                sname = [file, '_', name,'_', plot_type{i} ,'.fig'];
                 savefig(ax{i}.Parent,sname)
                 %exportgraphics(ax{i}.Parent,[sname,'.eps'],'Resolution',300);
                 exportgraphics(ax{i}.Parent,[sname,'.png'],'Resolution',600);
@@ -475,12 +480,21 @@ for i = 1:size(plot_type,2)
             xlabel(ax{i},'R [cm]')
             ylabel(ax{i},'n_e [cm^{-3}]')
         case 'ne2d'
+            r = eq.plasma.r;
+            z = eq.plasma.z;
+            phi=eq.plasma.phi;
             tmp = eq.plasma.dene;
             cstring = 'Electron density [m^{-3}]';
         case 'te2d'
+                        r = eq.plasma.r;
+            z = eq.plasma.z;
+            phi=eq.plasma.phi;
             tmp = eq.plasma.te;
             cstring = 'Electron temperature [keV]';
         case 'ti2d'
+                        r = eq.plasma.r;
+            z = eq.plasma.z;
+            phi=eq.plasma.phi;
             tmp = eq.plasma.ti;
             cstring = 'Ion temperature [keV]';
         case 'ba'
@@ -513,10 +527,10 @@ for i = 1:size(plot_type,2)
         case 'fdenf'
             tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
             if fac == 1
-                plot(ax{i},dist.r, tmp(:,z0_ind,1),linestyle, 'DisplayName',['Denf from f - ' name] );
+                plot(ax{i},dist.r, tmp(:,z0_ind,index),linestyle, 'DisplayName',['Denf from f - ' name] );
                 %plot(ax{i},dist.r, movmean(tmp(:,z0_ind,1),15),linestyle, 'DisplayName',['Movmean Denf from f - ' name] );
             else
-                plot(ax{i},dist.r, fac*tmp(:,z0_ind,1),linestyle, 'DisplayName',['Denf from f - ' name ', scaling factor: ' num2str(fac)]);
+                plot(ax{i},dist.r, fac*tmp(:,z0_ind,index),linestyle, 'DisplayName',['Denf from f - ' name ', scaling factor: ' num2str(fac)]);
             end
             xlabel('R [m]')
             ylabel('Fast ion density [cm^{-3}]')
@@ -529,8 +543,20 @@ for i = 1:size(plot_type,2)
             cstring = 'Fast ion density [cm^{-3}]';
         case 'fdenf2d'
             r = dist.r;
+            phi = eq.fields.phi;
             z = dist.z;
-            tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
+
+            if index==1
+                tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
+            else
+
+                [~,e_min]=min(abs(dist.energy-index(1)));
+                [~,e_max]=min(abs(dist.energy-index(2)));
+                [~,p_min]=min(abs(dist.pitch-index(3)));
+                [~,p_max]=min(abs(dist.pitch-index(4)));
+                tmp = squeeze(trapz(dist.pitch(p_min:p_max),trapz(dist.energy(e_min:e_max),dist.f(e_min:e_max,p_min:p_max,:,:,:),1),2));
+                index=index(5);
+            end
             cstring = 'Fast ion density [cm^{-3}]';
         case 'br2d'
             r = eq.fields.r;
@@ -558,10 +584,51 @@ for i = 1:size(plot_type,2)
             tmp = dist.denf;
             cstring = 'Fast ion density [m^{-3}]';
         case 'fdenftor'
-            r = eq.fields.r;
+            r = dist.r;
             phi = eq.fields.phi;
-            tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
+            z = dist.z;
+
+            if index==1
+                tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
+            else
+
+                [~,e_min]=min(abs(dist.energy-index(1)));
+                [~,e_max]=min(abs(dist.energy-index(2)));
+                [~,p_min]=min(abs(dist.pitch-index(3)));
+                [~,p_max]=min(abs(dist.pitch-index(4)));
+                tmp = squeeze(trapz(dist.pitch(p_min:p_max),trapz(dist.energy(e_min:e_max),dist.f(e_min:e_max,p_min:p_max,:,:,:),1),2));
+                index=index(5);
+            end
             cstring = 'Fast ion density [m^{-3}]';
+        case 'fdenf3d'
+            r = dist.r;
+            phi = eq.fields.phi;
+            z = dist.z;
+
+            if index==1
+                tmp = squeeze(trapz(dist.pitch,trapz(dist.energy,dist.f,1),2));
+            else
+
+                [~,e_min]=min(abs(dist.energy-index(1)));
+                [~,e_max]=min(abs(dist.energy-index(2)));
+                [~,p_min]=min(abs(dist.pitch-index(3)));
+                [~,p_max]=min(abs(dist.pitch-index(4)));
+                tmp = squeeze(trapz(dist.pitch(p_min:p_max),trapz(dist.energy(e_min:e_max),dist.f(e_min:e_max,p_min:p_max,:,:,:),1),2));
+                index=index(5);
+            end
+
+    [x_fida,y_fida,z_fida] = meshgrid(dist.r./100+dr/200,dist.z./100+dz/200,mod(dist.phi(2:end-1),2*pi/5)+dphi/2);
+
+%denf=permute(tmp(:,:,2:end-1),[2 1 3]);
+%isosurface(x_fida,y_fida,z_fida,denf,index); 
+denf=permute(tmp(:,:,2:end-1),[3 1 2]);
+isosurface(denf,index); 
+rotate3d on
+%view(2)
+%camlight left
+view(3)
+camlight left
+            cstring = 'Fast ion density [m^{-3}]';            
         case 'brtor'
             r = eq.fields.r;
             phi = eq.fields.phi;
@@ -660,11 +727,11 @@ for i = 1:size(plot_type,2)
             else
                 disp('No passive FIDA signal found!')
             end
-            specr = specr.*fac;            
+            specr = specr.*fac;
             if lmean
                 k = 12;
                 specr = movmean(specr,k);
-                disp(['Applying moving mean with length ', num2str(k), ' to FIDASIM data: ', filename]);
+                disp(['Applying moving mean with length ', num2str(k), ' to FIDASIM data: ', file]);
             end
             if ~isempty(sim_data)
                 %                 for j = 1:size(sim_data.lambda,2)
@@ -681,9 +748,12 @@ for i = 1:size(plot_type,2)
                 % plot(spec.lambda, conv(spec.full(:,channel),instfu(:,channel),'same'), 'DisplayName',['Full - ' name] );
                 % plot(spec.lambda, conv(spec.half(:,channel),instfu(:,channel),'same'),  'DisplayName',['Half - ' name] );
                 %plot(spec.lambda, conv(spec.third(:,channel),instfu(:,channel),'same'),  'DisplayName',['Third - ' name] );
-                % if ( isfield(spec,'pfida') && lpassive)
-                %     plot(spec.lambda, conv(spec.pfida(:,channel),instfu(:,channel),'same'),  'DisplayName',['Passive FIDA - ' name] );
-                % end
+                if ( isfield(spec,'pfida') && lpassive)
+                    plot(spec.lambda, conv(spec.pfida(:,channel),instfu(:,channel),'same'),  'DisplayName',['Passive FIDA - ' name] );
+                end
+                if ( isfield(spec,'brems') && lbrems)
+                    plot(spec.lambda, conv(spec.brems(:,channel),instfu(:,channel),'same'),  'DisplayName',['Bremsstrahlung - ' name] );
+                end
                 %plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
                 %plot(spec.lambda, conv(spec.halo(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo only - ' name] ); %+spec.brems(:,channel)
                 %plot(spec.lambda, conv(spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['DCX only - ' name] ); %+spec.brems(:,channel)
@@ -694,6 +764,9 @@ for i = 1:size(plot_type,2)
                 if (isfield(spec,'pfida' ) && lpassive)
                     plot(spec.lambda, spec.pfida(:,channel),  'DisplayName',['Passive FIDA - ' name] );
                 end
+                if ( isfield(spec,'brems') && lbrems)
+                    plot(spec.lambda,spec.brems(:,channel),  'DisplayName',['Bremsstrahlung - ' name] );
+                end
                 plot(spec.lambda,spec.fida(:,channel),linestyle, 'DisplayName', ['FIDA - ' name] );
                 disp('Supply in_data from e.g. get_bes_fida_aug_data for more plots!')
             end
@@ -702,13 +775,13 @@ for i = 1:size(plot_type,2)
             ylabel('Intensity [Ph/(s nm m^2 sr)]')
             set(gca,'YScale','log')
             xlim([650 663]);
-            ylim([1e15, 3e19]);
+            %ylim([1e15, 3e19]);
             if lgeom
                 %title(['Channel: ' geom.spec.id(channel)])
                 disp(['Channel: ', char(geom.spec.id(channel))])
                 disp(['R= ', num2str(geom.spec.radius(channel))])
             end
-            legend(ax{i},'Interpreter','none','Location','northeast');
+            %legend(ax{i},'Interpreter','none','Location','northeast');
         case 'los3d'
             vec = [0, 0, -1];
             rotation = 0;% 67.5;
@@ -723,7 +796,7 @@ for i = 1:size(plot_type,2)
             los_nbi = reshape(los_nbi,3,2);
             plot3(ax{i},squeeze(los_nbi(1,:))'*fac,squeeze(los_nbi(2,:))'*fac,squeeze(los_nbi(3,:))'*fac,'-r');
             plot3(ax{i},squeeze(los_nbi(1,1))'*fac,squeeze(los_nbi(2,1))'*fac,squeeze(los_nbi(3,1))'*fac,'+k');
-            sname = [filename, '_', plot_type{i}];
+            sname = [file, '_', plot_type{i}];
             xlabel('X [cm]')
             ylabel('Y [cm]')
             zlabel('Z [cm]')
@@ -755,6 +828,7 @@ for i = 1:size(plot_type,2)
             %legend(h,'Location','bestoutside');
             xlabel('X [cm]')
             ylabel('Y [cm]')
+            return
         case 'los2d'
             vec = [0, 0, -1];
             %lens = rotate_points(geom.spec.lens',vec,deg2rad(67.5))';
@@ -830,37 +904,37 @@ for i = 1:size(plot_type,2)
     %if numel(plot_type{i}) > 2
     if strcmp(plot_type{i}(end-1:end),'2d')
         if lcontour
-            contour(r*fac,z*fac,squeeze(tmp(:,:,index))',levels,linestyle,'DisplayName',name) %,'LineWidth',4.0
+            contour(ax{i},r*fac,z*fac,squeeze(tmp(:,:,index))',levels,linestyle,'DisplayName',name) %,'LineWidth',4.0
         else
-            pixplot(r*fac,z*fac,tmp(:,:,index));
-            c = colorbar;
+            imagesc(ax{i},r*fac,z*fac,tmp(:,:,index)');
+            c = colorbar(ax{i});
             c.Label.String = cstring;
         end
         if ~isempty(dist)
             if ndims(dist.f) == 5
-                title(sprintf('Phi=%.2f',phi(index)))
+                title(ax{i},sprintf('Phi=%.2f',phi(index)))
             end
         end
-        xlim([r(1)*fac r(end)*fac])
-        ylim([z(1)*fac z(end)*fac])
+        xlim(ax{i},[r(1)*fac r(end)*fac])
+        ylim(ax{i},[z(1)*fac z(end)*fac])
         if fac==1
-            xlabel('R [cm] ')
-            ylabel('Z [cm] ')
+            xlabel(ax{i},'R [cm] ')
+            ylabel(ax{i},'Z [cm] ')
         else
-            xlabel(['R [cm] * ', num2str(fac)])
-            ylabel(['Z [cm] * ', num2str(fac)])
+            xlabel(ax{i},['R [cm] * ', num2str(fac)])
+            ylabel(ax{i},['Z [cm] * ', num2str(fac)])
         end
     elseif strcmp(plot_type{i}(end-2:end),'tor') && ldist
         if ndims(dist.f) < 5
             disp('4D Distribution has no toroidal information')
             return;
         end
-        pixplot(r,phi,squeeze(tmp(:,z0_ind,:)))
-        xlabel('R [cm]')
-        ylabel('Phi [rad]')
-        c = colorbar;
+        imagesc(r,phi,squeeze(tmp(:,z0_ind,:))')
+        xlabel(ax{i},'R [cm]')
+        ylabel(ax{i},'Phi [rad]')
+        c = colorbar(ax{i});
         c.Label.String = cstring;
-        xlim([r(1) r(end)])
+        xlim(ax{i},[r(1) r(end)])
     elseif strcmp(plot_type{i}(end-2:end),'tor')
         pixplot(r,phi,squeeze(tmp(:,z0_ind,:)))
         xlabel('R [cm]')
@@ -871,7 +945,7 @@ for i = 1:size(plot_type,2)
     end
     if lsave
         legend(ax{i},'Interpreter','none');
-        sname = [filename, '_', name,  '_', plot_type{i}];
+        sname = [file, '_', name,  '_', plot_type{i}];
         savefig(ax{i}.Parent,[sname,'.fig'])
         set(ax{i}.Parent, 'Renderer', 'painters');
         set(ax{i}, 'Color', 'none');
