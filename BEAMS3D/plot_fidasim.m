@@ -582,7 +582,7 @@ for i = 1:size(plot_type,2)
             r = eq.fields.r;
             phi = eq.fields.phi;
             tmp = dist.denf;
-            cstring = 'Fast ion density [m^{-3}]';
+            cstring = 'Fast ion density [cm^{-3}]';
         case 'fdenftor'
             r = dist.r;
             phi = eq.fields.phi;
@@ -617,17 +617,17 @@ for i = 1:size(plot_type,2)
                 index=index(5);
             end
 
-    [x_fida,y_fida,z_fida] = meshgrid(dist.r./100+dr/200,dist.z./100+dz/200,mod(dist.phi(2:end-1),2*pi/5)+dphi/2);
+			[x_fida,y_fida,z_fida] = meshgrid(dist.r./100+dr/200,dist.z./100+dz/200,mod(dist.phi(2:end-1),2*pi/5)+dphi/2);
 
-%denf=permute(tmp(:,:,2:end-1),[2 1 3]);
-%isosurface(x_fida,y_fida,z_fida,denf,index); 
-denf=permute(tmp(:,:,2:end-1),[3 1 2]);
-isosurface(denf,index); 
-rotate3d on
-%view(2)
-%camlight left
-view(3)
-camlight left
+			%denf=permute(tmp(:,:,2:end-1),[2 1 3]);
+			%isosurface(x_fida,y_fida,z_fida,denf,index); 
+			denf=permute(tmp(:,:,2:end-1),[3 1 2]);
+			isosurface(denf,index); 
+			rotate3d on
+			%view(2)
+			%camlight left
+			view(3)
+			camlight left
             cstring = 'Fast ion density [m^{-3}]';            
         case 'brtor'
             r = eq.fields.r;
@@ -754,11 +754,10 @@ camlight left
                 if ( isfield(spec,'brems') && lbrems)
                     plot(spec.lambda, conv(spec.brems(:,channel),instfu(:,channel),'same'),  'DisplayName',['Bremsstrahlung - ' name] );
                 end
-                %plot(spec.lambda, conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo+DCX - ' name] ); %+spec.brems(:,channel)
                 %plot(spec.lambda, conv(spec.halo(:,channel),instfu(:,channel),'same'),  'DisplayName',['Halo only - ' name] ); %+spec.brems(:,channel)
                 %plot(spec.lambda, conv(spec.dcx(:,channel),instfu(:,channel),'same'),  'DisplayName',['DCX only - ' name] ); %+spec.brems(:,channel)
-                %fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
-                % plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
+                fprintf('Halo Centered at %.3f nm\n', sum(spec.lambda.*conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same'))./sum(conv(spec.halo(:,channel)+spec.dcx(:,channel),instfu(:,channel),'same')));
+                plot(spec.lambda, conv(spec.fida(:,channel),instfu(:,channel),'same'),  'DisplayName',['FIDA - ' name] );
             else
                 plot(spec.lambda,specr(:,channel),linestyle, 'DisplayName', ['Spectrum - ' name] );
                 if (isfield(spec,'pfida' ) && lpassive)
@@ -937,6 +936,8 @@ camlight left
         xlim(ax{i},[r(1) r(end)])
     elseif strcmp(plot_type{i}(end-2:end),'tor')
         pixplot(r,phi,squeeze(tmp(:,z0_ind,:)))
+        xticks(round(r))
+        yticks(round(phi))
         xlabel('R [cm]')
         ylabel('Phi [rad]')
         c = colorbar;

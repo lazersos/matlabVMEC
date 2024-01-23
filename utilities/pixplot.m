@@ -110,7 +110,7 @@ else
     ytic=yticks;
     ylab=newy(1,1:ny);
 end
-set(gca,'XTick',xtic,'XTickLabel',xlab);
-set(gca,'YTick',ytic,'YTickLabel',ylab);
+set(gca,'XTick',xtic,'XTickLabel',round(xlab,2));
+set(gca,'YTick',ytic,'YTickLabel',round(ylab,2));
 end
 

@@ -1213,7 +1213,7 @@ else
                 ha=pcolor(edges{1},edges{2},vals');
                 set(ha,'LineStyle','none');
                 colormap hot;
-                caxis([0 mean(max(vals))])
+                caxis([0 max(vals,[],'all')])
                 set(gcf,'Color','white','Position',[1 -100 1024 768]);
                 set(gca,'FontSize',24);
                 xlabel('R [m]');
