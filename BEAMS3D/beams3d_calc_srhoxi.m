@@ -1,6 +1,24 @@
 function [srhoxi,beam_data] = beams3d_calc_srhoxi(beam_data,ind,npitch,varargin)
-%beams3d_calc_srhoxi calculates a birth map in radial (rho) and pitch (xi)
-%coordinates to be used as input for slowing down calculation.
+% BEAMS3D_CALC_SRHOXI calculates a birth map in radial (rho) and pitch (xi)
+% coordinates to be used as input for analytic slowing down calculations.
+% The birth map is normalized such that integrating over the pitch
+% direction returns the deposition profile.
+%
+%   Inputs:
+%       beam_data:     BEAMS3D data as returned by read_beams3d
+%       ind:           Index for particle population (npoinc)
+%       npitch:        Number of pitch bins
+%
+%   Options:
+%       'plot':        Plots the 2D birth map after calculation
+%
+%   Usage:
+%   beam_data = read_beams3d('beams3d_test.h5');
+%   shroxi = beams3d_calc_srhoxi(beam_data,3,75);
+%
+%   Written by:     D.Kulla (david.kulla@ipp.mpg.de)
+%   Version:        1.0
+%   Date:           1/24/24
 lplot=0;
 if strcmp(varargin,'plot')
     lplot=1;
