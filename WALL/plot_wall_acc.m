@@ -18,6 +18,9 @@ function plot_wall_acc(wall_data,varargin)
 %       the faces refereced in the block if any data is present in the
 %       block.
 %
+%       PLOT_WALL_ACC(wall_data,'min_faces',200)  Plots only blocks with
+%       more than the minimum number of faces given.
+%
 %   See also READ_WALL.
 %
 %   Written by:     S.Lazerson (samuel.lazerson@ipp.mpg.de)
@@ -29,6 +32,7 @@ lplotgrid = 0;
 lplotsubgrid = 0;
 lplotsubfaces = 0;
 plotblockn = 0;
+minfaces=0;
 
 % Handle Varargin
 if nargin > 1
@@ -44,6 +48,9 @@ if nargin > 1
             case 'block'
                 i = i + 1;
                 plotblockn=varargin{i};
+            case 'min_faces'
+                i = i + 1;
+                minfaces=varargin{i};                
         end
         i=i+1;
     end
@@ -53,7 +60,7 @@ end
 if or(lplotgrid,lplotsubgrid)
     colors = lines(wall_data.nblocks)';
     for i=1:wall_data.nblocks
-        if and(wall_data.nblockfaces(i) <=2000,lplotsubgrid), continue; end
+        if and(wall_data.nblockfaces(i) <=minfaces,lplotsubgrid), continue; end
         xmin = wall_data.blockbounds(1,i);
         xmax = wall_data.blockbounds(2,i);
         ymin = wall_data.blockbounds(3,i);
