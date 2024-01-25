@@ -58,13 +58,6 @@ if nargin > 0
                     NI_AUX_M(1)=varargin{i};
                 case {'BEAMS3D','BEAMS3D_ADV','LOCUST_NUBEAM','LOCUST_ASCOT','RABBIT_NUBEAM','full_logarithm','NRL','NRL_old','legacy'}
                     log_type = varargin{i};
-                    %                     log_type=3;
-                    %                 case 'full_logarithm'
-                    %                     log_type = 2;
-                    %                 case 'NRLions_logarithm'
-                    %                     log_type = 4;
-                    %                 case 'NRLions_logarithm_old'
-                    %                     log_type = 5;
                 case 'boron'
                     lboron=1;
                     log_type=1;
@@ -83,11 +76,6 @@ if isempty(beam_data)
     disp('  You must provide BEAMS3D structure for Modeling');
     return;
 end
-
-%if isempty(vmec_data)
-%    disp('  You must provide VMEC_DATA structure for Vp');
-%    return;
-%end
 
 %Default to all beams
 if isempty(beam_dex)
@@ -114,6 +102,7 @@ vperp = beams3d_calc_vperp(beam_data);
 
 % Calc dV/ds
 if isempty(vmec_data)
+    disp('  Calculating Vp from BEAMS3D_volume');
     [s, ~, dVds] = beams3d_volume(beam_data);
     ra = sqrt(s);
     vp_spl = pchip(ra,2.*ra.*dVds);
@@ -134,7 +123,7 @@ end
 
 % Handle lack of plasma charge
 if isempty(NI_AUX_Z)
-    NI_AUX_Z = 1;%1.6726219E-27;
+    NI_AUX_Z = 1;
     if isfield(beam_data,'plasma_Zmean')
         NI_AUX_Z = beam_data.plasma_Zmean;
     end
@@ -174,12 +163,6 @@ NE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
 
 num_species = sum(sum(beam_data.NI,[2,3,4])~=0);
 
-
-% if strcmp(log_type, 'BEAMS3D') && num_species==1
-%     NI_AUX_Z = CHARGE(1)/ec; %TODO: revise
-%     NI_AUX_M = NI_AUX_M(1);
-% end
-
 for i = 1:num_species
     NI_BEAM(i,:) = interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
         squeeze(NI(i,:,:,:)),R_BEAM,P_BEAM,Z_BEAM);
@@ -198,7 +181,6 @@ if num_species==1 && lboron
     %CALCULATE ZMEAN FROM ZEFF AND ASSUMED BORON IMPURITY, and calculate
     %boron and ion density
     %%%%%%%%
-    %c_B=(max(beam_data.ZEFF_ARR,[],'all')-Z_D^2)/(Z_B^2-Z_B*Z_D^2); %Caution Max of ZEFF
     if NI_AUX_Z(1)~=NI_AUX_Z(2)
         c_B=(ZE_BEAM-NI_AUX_Z(1))/(NI_AUX_Z(2)^2-NI_AUX_Z(2)*NI_AUX_Z(1)); %Caution Max of ZEFF
     else
@@ -210,29 +192,13 @@ if num_species==1 && lboron
     data.c_B=c_B(1);
     NI_BEAM(1,:) = NE_BEAM.*(1-NI_AUX_Z(2).*c_B)/NI_AUX_Z(1);
     NI_BEAM(2,:) = NE_BEAM.*c_B;
-    %     NI_AUX_M(1)=m_1*amu;
-    %     NI_AUX_M(2)=m_2*amu;
-    %     NI_AUX_Z(1)=Z_1;
-    %     NI_AUX_Z(2)=Z_2;
 
     num_species=2;
 
     disp('Adding Boron impurity to single ion run!');
-    %     [s, ne, te, ti, zeff] = beams3d_profiles(beam_data);
-    %     s_out=linspace(0,1,51);
-    %     data.NI_AUX_S=s_out;
-    %     NI_AUX_F(1,:)=ne.*(1-Z_2.*c_B(1));
-    %     NI_AUX_F(2,:) = ne.*c_B(1);
-    %     NI_AUX_F_OUT(1,:)=interp1(s,NI_AUX_F(1,:),s_out);
-    %     NI_AUX_F_OUT(2,:)=interp1(s,NI_AUX_F(2,:),s_out);
-    %     NI_AUX_F_OUT(NI_AUX_F_OUT<0)=0;
-    %     data.NI_AUX_F=NI_AUX_F_OUT;
-    %     data.NI_BEAM=NI_BEAM;
-    %ZEFF_TEST=(NI_BEAM(1,:).*NI_AUX_Z(1).^2+NI_BEAM(2,:).*NI_AUX_Z(2).^2)/NE_BEAM;
-    %ZMEAN_TEST=(NI_BEAM(1,:).*NI_AUX_Z(1).^2/NI_AUX_M(1)*amu+NI_BEAM(2,:).*NI_AUX_Z(2).^2/NI_AUX_M(2)*amu)/NE_BEAM;
+
     data.ZMEAN_set=ZMEAN;
     ZMEAN = NI_AUX_Z(1)^2/NI_AUX_M(1)*amu*(1-NI_AUX_Z(2)*c_B)+c_B*NI_AUX_Z(2)^2/NI_AUX_M(2)*amu;
-    %ZMEAN=(NI_BEAM(1,:).*Z_1.^2/m_1 + NI_BEAM(2,:).*Z_2.^2/m_2) ./ (NE_BEAM);
     ZMEAN=(ZMEAN(1));
     data.ZMEAN =ZMEAN;
 end
@@ -266,18 +232,14 @@ switch lower(log_type)
             rmincli = myZ.*NI_AUX_Z(i).*ec.*ec./(map.*uavi2(i,:));
             rminqui = hbar./(2.*map.*sqrt(uavi2(i,:)));
             rmini(i,:) = max(rmincli,rminqui);
-            %data.bmin(i,:)=rmini(i,:);
+
             % Calculate the plasma frequency for each ion species
             omegapi2 = (NI_AUX_Z(i).*ec.*ec)./(NI_AUX_M(i).*eps0);
             omegaci = ec.*B_BEAM./NI_AUX_M(i);
             omegai2(i,:) = omegapi2+omegaci.*omegaci;
             %omegai2(i,:) = 1.74.* Zi.^2./ai .*NI_BEAM(i,:) + 9.18e15 .* Zi.^2 / ai.^2 .* B_BEAM.^2;
-
         end
-        % data.vrel2=uavi2;
-        %data.omegae2=omegae2;
         % Calculate the ion and electron Coulomb logarithm for each species
-        %data.sm=sum(omegai2./uavi2,1);
         rmax = sqrt(1./(omegae2./uave2 + sum(omegai2./uavi2,1)));
         coulomb_loge = log(rmax./rmine);
         coulomb_loge(coulomb_loge <=1) = 1;
@@ -306,7 +268,6 @@ switch lower(log_type)
         data.rmax=rmax;
         data.zi2_ai= zi2_ai;
         data.zi2= zi2;
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case 'locust_nubeam'
         mae  = me.*MASS./(me+MASS);
         ue    =ec.*TE_BEAM./me; %According to Ward et al. 2021, this should be 3*TE_BEAM, but this leads to disagreement with the other formulations
@@ -327,18 +288,12 @@ switch lower(log_type)
             rmincli = myZ.*NI_AUX_Z(i).*ec.*ec./(4*pi()*eps0.*map.*uavi2(i,:));
             rminqui = hbar.*exp(-.5)./(2.*map.*sqrt(uavi2(i,:)));
             rmini(i,:) = max(rmincli,rminqui);
-            %data.bmin(i,:)=rmini(i,:);
             % Calculate the plasma frequency for each ion species
             omegapi2 = (NI_AUX_Z(i).*ec.*ec)./(NI_AUX_M(i).*eps0);
             omegaci = ec.*B_BEAM./NI_AUX_M(i);
             omegai2(i,:) = omegapi2+omegaci.*omegaci;
-            %omegai2(i,:) = 1.74.* Zi.^2./ai .*NI_BEAM(i,:) + 9.18e15 .* Zi.^2 / ai.^2 .* B_BEAM.^2;
-
         end
-        % data.vrel2=uavi2;
-        %data.omegae2=omegae2;
         % Calculate the ion and electron Coulomb logarithm for each species
-        %data.sm=sum(omegai2./uavi2,1);
         rmax = sqrt(1./(omegae2./uave2 + sum(omegai2./uavi2,1)));
         coulomb_loge = log(rmax./rmine);
         coulomb_loge(coulomb_loge <=1) = 1;
@@ -353,19 +308,10 @@ switch lower(log_type)
         end
         zi2_ai = sum(zi2_ai,1)./(NE_BEAM.*coulomb_loge);
         zi2 = sum(zi2,1)./(NE_BEAM.*coulomb_loge);
-        %zi2_ai2 = data.ZMEAN_set .* mean(coulomb_logi,1)./coulomb_loge;% myZ.^2./ai .*
-        %zi22 = ZE_BEAM .* mean(coulomb_logi,1)./coulomb_loge;
 
         v_crit = 5.33e4 .* sqrt(TE_BEAM) .* zi2_ai.^(1/3);
         vcrit_cube = v_crit.^3;
         tau_spit = 6.32e8 .* (MASS./amu) ./ (myZ.^2 .* coulomb_loge) .* TE_BEAM.^(3/2) ./ (NE_BEAM.*1E-6);
-
-        data.coulomb_loge = coulomb_loge;
-        data.coulomb_logi = coulomb_logi;
-        data.rmax=rmax;
-        data.zi2_ai= zi2_ai;
-        data.zi2= zi2;
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case 'rabbit_nubeam'
         sm = zeros(size(S_BEAM));
         %Ions
@@ -377,9 +323,6 @@ switch lower(log_type)
         %Electrons
         omega2 = 1.74.*1836.1.*NE_BEAM + 9.18e15 .* 1836.1.^2 .* B_BEAM.^2;
         vrel2= 9.58d10*(TE_BEAM./1000.0.*1836.1+SPEED.^2/ec*amu/1000.0/(MASS/amu));
-
-        data.sm=sm;
-
         rmincle=0.13793d0.*abs(CHARGE./ec).*(1/1836.1+MASS./amu)./(1/1836.1.*MASS./amu.*vrel2);
         rminque=1.9121d-8*(MASS./amu+1/1836.1)./(1/1836.1*MASS./amu.*sqrt(vrel2));
         rmine=max(rmincle,rminque);
@@ -418,11 +361,8 @@ switch lower(log_type)
         vcrit_cube = v_crit.^3;
         tau_spit = 6.32e8 .* (MASS./amu) ./ (myZ.^2 .* coulomb_loge) .* TE_BEAM.^(3/2) ./ (NE_BEAM.*1E-6);
         v_s = vcrit_cube./tau_spit.*zi2./zi2_ai./MASS.*amu./(SPEED.^3);
-        % fact_pa=ZMEAN./MASS;
         v_s2 = vcrit_cube./tau_spit.*ZE_BEAM./ZMEAN./MASS.*amu./(SPEED.^3);
         data.v_s2=v_s2;
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case 'beams3d'
         sm = zeros(size(S_BEAM));
         for i = 1:num_species
@@ -433,8 +373,6 @@ switch lower(log_type)
         %Electrons
         omega2 = 1.74.*1836.1.*NE_BEAM + 9.18e15 .* 1836.1.^2 .* B_BEAM.^2;
         vrel2= 9.58d10*(TE_BEAM./1000.0.*1836.1+SPEED.^2/ec*amu/1000.0/(MASS/amu));
-
-        data.sm=sm;
 
         bmincl=0.13793d0.*abs(CHARGE./ec).*(1/1836.1+MASS./amu)./(1/1836.1.*MASS./amu.*vrel2);
         bminqu=1.9121d-8*(MASS./amu+1/1836.1)./(1/1836.1*MASS./amu.*sqrt(vrel2));
@@ -460,8 +398,6 @@ switch lower(log_type)
 
         coulomb_loge(coulomb_loge <=1) = 1;
         coulomb_logi(coulomb_logi <=1) = 1;
-        %ZMEAN=ZMEAN-ZE_BEAM./coulomb_loge;
-        %NI_AUX_Z(1).^2/NI_AUX_M(1)*amu
         zi2_ai = ZMEAN .* coulomb_logi./coulomb_loge;% myZ.^2./ai .*
         zi2 = ZE_BEAM .* coulomb_logi./coulomb_loge;
 
@@ -477,11 +413,8 @@ switch lower(log_type)
         v_crit = fact_crit.*sqrt(TE_BEAM) .*zi2_ai.^(1/3);
         vcrit_cube = v_crit.^3;
         v_s = vcrit_cube./tau_spit.*zi2./zi2_ai./MASS.*amu./(SPEED.^3);
-        % fact_pa=ZMEAN./MASS;
         v_s2 = vcrit_cube./tau_spit.*ZE_BEAM./ZMEAN./MASS.*amu./(SPEED.^3);
         data.v_s2=v_s2;
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case 'beams3d_adv'
         sm = zeros(size(S_BEAM));
         for i = 1:num_species
@@ -524,17 +457,11 @@ switch lower(log_type)
         coulomb_loge(coulomb_loge <=1) = 1;
         coulomb_logi(coulomb_logi <=1) = 1;
 
-        % zi2_ai = ZMEAN .* coulomb_logi./coulomb_loge;% myZ.^2./ai .*
-        % zi2 = ZE_BEAM .* coulomb_logi./coulomb_loge;
-
         data.coulomb_loge = coulomb_loge;
         data.coulomb_logi = coulomb_logi;
         data.rmax=bmax;
         data.zi2_ai= zi2_ai;
         data.zi2= zi2;
-        % fact_crit=sqrt(2*ec./NI_AUX_M(1))*(0.75*sqrt(pi)*sqrt(NI_AUX_M(1)/me)).^(1/3);
-        %v_crit =5.33e4 .*sqrt(TE_BEAM) .* zi2_ai.^(1/3);
-        %tau_spit = 6.32e8 .* (MASS./amu) ./ (myZ.^2 .* coulomb_loge) .* TE_BEAM.^(3/2) ./ (NE_BEAM.*1E-6);
         tau_spit=3.777183e41.*MASS.*TE_BEAM.^(3/2)./(myZ.^2 .* coulomb_loge.*NE_BEAM);
         fact_crit =  sqrt(2*ec./NI_AUX_M(1)).*(0.75.*sqrt(pi.*NI_AUX_M(1)./me)).^(1./3.);%old BEAMS3D
         fact_crit=5.33e4;
@@ -592,17 +519,10 @@ end
 % Integrate
 C1 = 1./tau_spit;
 C2 = vcrit_cube./tau_spit;
-% if lplot
-%     figure
-%     plot(C2,'.')
-% end
 v_sound = 1.5*sqrt(ec.*TI_BEAM./NI_AUX_M(1));
 V  = SPEED;
 V2 = V;
-dt= 1E-4; %Previous setting (W7-X presumably);
-dt = 2E-3; %Gives correct NPART for AUG #38581 benchmark
-%%%dt = 2E-4; %Gives correct NPART for AUG #38581 benchmark
-dt = 2E-4; %Gives correct NPART for AUG #38581 benchmark
+dt= 1E-4;
 Ee = zeros(1,length(W_BEAM));
 Ei = zeros(1,length(W_BEAM));
 jb = zeros(1,length(W_BEAM));
