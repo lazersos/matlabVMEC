@@ -1,60 +1,73 @@
-function [r_out, v,z_out] = beams3d_suv2rzp(s, u, v, S_ARR,U_ARR, raxis,phiaxis,zaxis)
+function [r_out, v, z_out] = beams3d_suv2rzp(s, u, v, S_ARR, U_ARR, raxis, phiaxis, zaxis)
+% BEAMS3D_SUV2RZP Converts (S, U, V) coordinates to (R, Z, Phi) coordinates.
+%
+% The function uses a Newton-Raphson method to iteratively solve for the 
+% (R, Z, Phi) coordinates from the given (S, U, V) coordinates, based on
+% provided grid arrays and axis information.
+%
+% Usage:
+% [r_out, phi_out, z_out] = beams3d_suv2rzp(s, u, v, S_ARR, U_ARR, raxis, phiaxis, zaxis)
+%
 % Input Parameters:
-% s: Normalized Toroidal Flux
-% u: Poloidal Angle
-% v: Toroidal Angle
+% s: Normalized Toroidal Flux (S-coordinate)
+% u: Poloidal Angle (U-coordinate)
+% v: Toroidal Angle (V-coordinate)
+% S_ARR, U_ARR: Grid arrays for the S and U coordinates
+% raxis: Major Radius (R) axis values
+% phiaxis: Toroidal Angle (Phi) axis values
+% zaxis: Vertical Distance (Z) axis values
+%
+% Output Parameters:
 % r_out: Major Radius Distance R
+% phi_out: Toroidal Angle Phi
 % z_out: Vertical Distance Z
-% phi_out: Toroidal Angle (Output)
 
+% Create a grid from the input coordinates
+[s, u, v] = ndgrid(s, u, v);
+[R_ARR, PHI_ARR, Z_ARR] = ndgrid(raxis, phiaxis, zaxis);
 
-[s,u,v]=ndgrid(s,u,v);
-[R_ARR,PHI_ARR,Z_ARR]=ndgrid(raxis,phiaxis,zaxis);
-hr= raxis(2)-raxis(1);
-hphi= phiaxis(2)-phiaxis(1);
-hz= zaxis(2)-zaxis(1);
+% Grid spacing for R, Phi, and Z axes
+hr = raxis(2) - raxis(1);
+hphi = phiaxis(2) - phiaxis(1);
+hz = zaxis(2) - zaxis(1);
 
-% Constants for the splines
+% Constants and parameters for the Newton-Raphson method
 nphi = numel(phiaxis);
 pi2 = 2 * pi;
 fnorm_max = 1e5;
 max_iterations = 1000;
 tolerance = 1e-9;
 
-% Begin Newton Method
-residual = 1.0;
-factor = 1.0;
+% Initial values for R and Z using beams3d_magaxis function
+data.nphi = nphi;
+data.S_ARR = S_ARR;
+data.raxis = raxis;
+data.zaxis = zaxis;
+[r_out, z_out] = beams3d_magaxis(data);
 
-data.nphi=nphi;
-data.S_ARR=S_ARR;
-data.raxis=raxis;
-data.zaxis=zaxis;
-[r_out,z_out] = beams3d_magaxis(data);
-
-%  r_out = ones(size(phiaxis')).*(raxis(1)+(raxis(numel(raxis))-raxis(1))*.75);
-%  z_out=zeros(size(phiaxis'));
-
-% PHI does not change
+% Adjust PHI to be within the valid range
 phi_out = mod(v, max(phiaxis));
 
-r_out=interp1(phiaxis,r_out,squeeze(phi_out(1,1,:)));
-z_out=interp1(phiaxis,z_out,squeeze(phi_out(1,1,:)));
-r_out=permute(repmat(r_out,1,size(phi_out,1),size(phi_out,2)),[2 3 1]);
-z_out=permute(repmat(z_out,1,size(phi_out,1),size(phi_out,2)),[2 3 1]);
+% Interpolate R and Z values based on phi_out
+r_out = interp1(phiaxis, r_out, squeeze(phi_out(1, 1, :)));
+z_out = interp1(phiaxis, z_out, squeeze(phi_out(1, 1, :)));
+r_out = permute(repmat(r_out, 1, size(phi_out, 1), size(phi_out, 2)), [2, 3, 1]);
+z_out = permute(repmat(z_out, 1, size(phi_out, 1), size(phi_out, 2)), [2, 3, 1]);
 
-% Adjust u
+% Adjust U to be within the valid range
 u = mod(u, pi2);
 
+% Convert S and U to Cartesian coordinates for the Newton-Raphson method
 x0 = s .* cos(u);
 y0 = s .* sin(u);
 
-%fnorm = x0.^2 + y0.^2;
-%fnorm = min(1 ./ fnorm, fnorm_max);
-n = 1;
-X_ARR=S_ARR.*cos(U_ARR);
-Y_ARR=S_ARR.*sin(U_ARR);
-X=griddedInterpolant(R_ARR,PHI_ARR,Z_ARR,X_ARR,'linear','nearest');
-Y=griddedInterpolant(R_ARR,PHI_ARR,Z_ARR,Y_ARR,'linear','nearest');
+% Interpolants for the transformation
+X_ARR = S_ARR .* cos(U_ARR);
+Y_ARR = S_ARR .* sin(U_ARR);
+X = griddedInterpolant(R_ARR, PHI_ARR, Z_ARR, X_ARR, 'linear', 'nearest');
+Y = griddedInterpolant(R_ARR, PHI_ARR, Z_ARR, Y_ARR, 'linear', 'nearest');
+
+% Compute gradients needed for the Newton-Raphson method
 
 [~, dXdR_ARR, dXdZ_ARR] = gradient(X_ARR,hr,hphi,hz);
 [~,dYdR_ARR, dYdZ_ARR] = gradient(Y_ARR,hr,hphi,hz);
