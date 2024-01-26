@@ -1,22 +1,38 @@
 function data=beams3d_slow(varargin)
-%BEAMS3D_SLOW(beam_data,vmec_data) Calculates flux surface slowing down
+%BEAMS3D_SLOW(beam_data,varargin) Calculates flux surface slowing down
 %   The BEAMS3D_SLOW routine calculates the slowing down power deposition
 %   assuming that the particles slow down on flux surfaces after being
-%   born.
+%   born. vmec_data can be supplied for volume normalization. Different
+%   slowing down formulations are available.
 %
 %   Optional Arguments
 %       'plots'     : Create plots
 %       'beams'     : Downselect beamlines considered
 %       'mass'      : Plasma mass [kg] (assumes protons otherwise)
-%                       data=beams3d_slow(beam_data,vmec_data,'beams',4:6);
+%       'verbose'   : Outputs individual time steps
+%       'species'   : Define ion species given in NI profile:
+%                     1st argument: mass in amu
+%                     2nd argument: charge in ec
+%       Single ion species formulations:
+%       'nrl'       : NRL19 coulomb logarithm (DEFAULT)
+%       'nrl_old'   : NRL04 coulomb logarithm DEPRECATED
+%       'full_init' : Coulomb logarithm according to impact param. calc.
+%       Multi-Species formulations:
+%       'beams3d'   : BEAMS3D like formulation (e/i coul_log)
+%       'beams3d_adv': BEAMS3D like formulation (e/i coul_log) TO BE MERGED
+%       'nubeam_1'  : NUBEAM forumulation according to  Ward et al. 2021
+%       'nubeam_2'  : NUBEAM forumulation according to  Weiland et al. 2018
+%            
 %
 %   Example usage
 %      vmec_data = read_vmec('wout_test.nc');
 %      beam_data = read_beams3d('beams3d_test.h5');
-%      data=beams3d_slow(beam_data,vmec_data);
+%      data=beams3d_slow(beam_data,vmec_data,'beams',4:6);
+%
+%      data=beams3d_slow(beam_data,'NRL','plots','species',[2.0 10.8], [1.0 5.0]);
 %
 %   Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
-%   Version:       1.00
+%   Version:       2.00
 
 % Helpers
 me = 9.10938356D-31;
@@ -30,8 +46,8 @@ beam_dex = []; % Use to downselect beams
 vmec_data=[];
 beam_data=[];
 data=[];
-log_type = 3;
-lboron=0;
+log_type = 'nrl';
+lspecies=0;
 %NI_AUX_M is in kg, NI_AUX_Z is in ec
 NI_AUX_M = [];
 NI_AUX_Z = [];
@@ -48,7 +64,7 @@ if nargin > 0
                 end
             end
         else
-            switch varargin{i}
+            switch lower(varargin{i})
                 case 'plots'
                     lplot=1;
                 case 'verbose'
@@ -59,16 +75,27 @@ if nargin > 0
                 case 'mass'
                     i=i+1;
                     NI_AUX_M(1)=varargin{i};
-                case {'BEAMS3D','BEAMS3D_ADV','LOCUST_NUBEAM','LOCUST_ASCOT','RABBIT_NUBEAM','NRL','NRL_old','legacy','full_logarithm_initial'}
+                case {'beams3d','beams3d_adv','nubeam_1','nubeam_2'}
+                        log_type = varargin{i};
+                        lspecies=1;
+                case {'nrl','nrl_old','full_init'}
                     log_type = varargin{i};
-                case 'boron'
-                    lboron=1;
-                    log_type=1;
+                case 'species'
+                    lspecies=1;
                     i=i+1;
-                    NI_AUX_M(1)=varargin{i}(1)*amu;
-                    NI_AUX_M(2)=varargin{i}(3)*amu;
-                    NI_AUX_Z(1)=varargin{i}(2);
-                    NI_AUX_Z(2)=varargin{i}(4);
+                    NI_AUX_M=varargin{i}*amu;
+                    i=i+1;
+                    NI_AUX_Z=varargin{i};
+                    if numel(NI_AUX_Z)~=numel(NI_AUX_M)
+                        disp('Same number of masses and charges required!')
+                        return
+                    end
+                    num_species = sum(sum(beam_data.NI,[2,3,4])~=0);
+                    if num_species~=numel(NI_AUX_M)
+                        fprintf('Error! Species in run: %d, supplied species: %d\n', num_species, numel(NI_AUX_M));
+                        return
+                    end                    
+
             end
         end
         i=i+1;
@@ -105,7 +132,7 @@ vperp = beams3d_calc_vperp(beam_data);
 
 % Calc dV/ds
 if isempty(vmec_data)
-    disp('  Calculating Vp from BEAMS3D_volume');
+    disp('  Calculating plasma volume from BEAMS3D_volume');
     [s, ~, dVds] = beams3d_volume(beam_data);
     ra = sqrt(s);
     vp_spl = pchip(ra,2.*ra.*dVds);
@@ -114,22 +141,6 @@ else
     s = 0:1./(vmec_data.ns-1):1;
     ra = sqrt(s);
     vp_spl = pchip(ra,2.*ra.*vmec_data.vp.*vmec_factor);
-end
-
-% Handle lack of plasma mass
-if isempty(NI_AUX_M)
-    NI_AUX_M(1) = 1.6726219E-27;
-    if isfield(beam_data,'plasma_mass')
-        NI_AUX_M(1) = beam_data.plasma_mass;
-    end
-end
-
-% Handle lack of plasma charge
-if isempty(NI_AUX_Z)
-    NI_AUX_Z = 1;
-    if isfield(beam_data,'plasma_Zmean')
-        NI_AUX_Z = beam_data.plasma_Zmean;
-    end
 end
 
 % Check to see what type of run it is and extract information
@@ -164,12 +175,6 @@ MODB   = permute(sqrt(beam_data.B_R.^2+beam_data.B_PHI.^2+beam_data.B_Z.^2),[2 1
 NE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     NE,R_BEAM,P_BEAM,Z_BEAM);
 
-num_species = sum(sum(beam_data.NI,[2,3,4])~=0);
-
-for i = 1:num_species
-    NI_BEAM(i,:) = interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
-        squeeze(NI(i,:,:,:)),R_BEAM,P_BEAM,Z_BEAM);
-end
 TE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     TE,R_BEAM,P_BEAM,Z_BEAM);
 TI_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
@@ -179,31 +184,66 @@ ZE_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
 MODB_BEAM= interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
     MODB,R_BEAM,P_BEAM,Z_BEAM);
 
-if num_species==1 && lboron
-    %%%%%%%%
-    %CALCULATE ZMEAN FROM ZEFF AND ASSUMED BORON IMPURITY, and calculate
-    %boron and ion density
-    %%%%%%%%
-    if NI_AUX_Z(1)~=NI_AUX_Z(2)
-        c_B=(ZE_BEAM-NI_AUX_Z(1))/(NI_AUX_Z(2)^2-NI_AUX_Z(2)*NI_AUX_Z(1)); %Caution Max of ZEFF
+% Handle lack of plasma mass
+if isempty(NI_AUX_M)
+    if isfield(beam_data,'plasma_mass')
+        NI_AUX_M(1) = beam_data.plasma_mass;
     else
-        disp('Same Charge of Plasma species! Assuming 50:50 mix!')
-        c_B=0.5;
+        NI_AUX_M(1) = 1.6726219E-27;
+        disp('Assuming proton mass')
+    end
+    if isfield(beam_data,'plasma_Zmean')
+        NI_AUX_Z = beam_data.plasma_Zmean;
+    else
+        NI_AUX_Z = 1;
+        disp('Assuming hydrogen charge!')
+    end
+    num_species=1;
+    if  lspecies
+        %%%%%%%%
+        %CALCULATE ZMEAN FROM ZEFF AND ASSUMED BORON IMPURITY, and calculate
+        %boron and ion density
+        %%%%%%%%
+        disp('Assuming Boron impurity in deuterium plasma (supply different species if this is unwanted)!');
+        NI_AUX_M(1)=2.0*amu;
+        NI_AUX_Z(1)=1.0;        
+        NI_AUX_M(2)=10.0*amu;
+        NI_AUX_Z(2)=5.0;
+        if NI_AUX_Z(1)~=NI_AUX_Z(2)
+            c_B=(ZE_BEAM-NI_AUX_Z(1))/(NI_AUX_Z(2)^2-NI_AUX_Z(2)*NI_AUX_Z(1)); %Caution Max of ZEFF
+        else
+            disp('Same Charge of Plasma species! Assuming 50:50 mix!')
+            c_B=0.5;
+        end
+        data.c_B=c_B(1);
+        NI_BEAM(1,:) = NE_BEAM.*(1-NI_AUX_Z(2).*c_B)/NI_AUX_Z(1);
+        NI_BEAM(2,:) = NE_BEAM.*c_B;
+        num_species=2;
+        data.ZMEAN_set=ZMEAN;
+        ZMEAN = NI_AUX_Z(1)^2/NI_AUX_M(1)*amu*(1-NI_AUX_Z(2)*c_B)+c_B*NI_AUX_Z(2)^2/NI_AUX_M(2)*amu;
+        ZMEAN=(ZMEAN(1));
+        data.ZMEAN =ZMEAN;
+        disp('Recalculated zmean for self-consistency!');
+        fprintf('Old %.2f, new: %.2f\n', data.ZMEAN_set, ZMEAN);
     end
 
+end
 
-    data.c_B=c_B(1);
-    NI_BEAM(1,:) = NE_BEAM.*(1-NI_AUX_Z(2).*c_B)/NI_AUX_Z(1);
-    NI_BEAM(2,:) = NE_BEAM.*c_B;
 
-    num_species=2;
+for i = 1:num_species
+    NI_BEAM(i,:) = interp3(beam_data.raxis,beam_data.phiaxis,beam_data.zaxis,...
+        squeeze(NI(i,:,:,:)),R_BEAM,P_BEAM,Z_BEAM);
+end
 
-    disp('Adding Boron impurity to single ion run!');
-
-    data.ZMEAN_set=ZMEAN;
-    ZMEAN = NI_AUX_Z(1)^2/NI_AUX_M(1)*amu*(1-NI_AUX_Z(2)*c_B)+c_B*NI_AUX_Z(2)^2/NI_AUX_M(2)*amu;
-    ZMEAN=(ZMEAN(1));
-    data.ZMEAN =ZMEAN;
+%This is the same calculation as the one in beams3d and is only correct for
+%constant zeff
+plasma_mass = sum(NI_BEAM(:,1)'.*NI_AUX_M.^2)./sum(NI_BEAM(:,1)'.*NI_AUX_M);
+plasma_Zmean = sum(NI_BEAM(:,1)'.*NI_AUX_Z.^2.*plasma_mass./NI_AUX_M)./sum(NI_BEAM(:,1)'.*NI_AUX_Z);
+if (abs(beam_data.plasma_mass-plasma_mass)/ plasma_mass > 1e-2 || abs(beam_data.plasma_Zmean-plasma_Zmean)/plasma_Zmean > 1e-2)
+    
+    disp('Detected non-consistent parameters:')
+    fprintf('Input plasma_mass %.2e, calculated: %.2e\n', beam_data.plasma_mass, plasma_mass);
+    fprintf('Input plasma_zmean %.2f, calculated: %.2f\n', beam_data.plasma_Zmean, plasma_Zmean);
 end
 
 % PInj
@@ -215,7 +255,7 @@ Iinj = sum(CHARGE.*W_BEAM);
 TE3=TE_BEAM.^3;
 beta = SPEED./299792458;
 switch lower(log_type)
-    case 'locust_nubeam'
+    case 'nubeam_1'
         mae  = me.*MASS./(me+MASS);
         ue    =ec.*TE_BEAM./me; %According to Ward et al. 2021, this should be 3*TE_BEAM, but this leads to disagreement with the other formulations
         uave2  = SPEED.*SPEED + ue;
@@ -268,7 +308,7 @@ switch lower(log_type)
         v_crit = 5.33e4 .* sqrt(TE_BEAM) .* zi2_ai.^(1/3);
         vcrit_cube = v_crit.^3;
         tau_spit = 6.32e8 .* (MASS./amu) ./ (myZ.^2 .* coulomb_loge) .* TE_BEAM.^(3/2) ./ (NE_BEAM.*1E-6);
-    case 'rabbit_nubeam'
+    case 'nubeam_2'
         sm = zeros(size(S_BEAM));
         %Ions
         for i = 1:num_species
@@ -316,9 +356,9 @@ switch lower(log_type)
         v_crit =5.33e4 .*sqrt(TE_BEAM) .* zi2_ai.^(1/3);
         vcrit_cube = v_crit.^3;
         tau_spit = 6.32e8 .* (MASS./amu) ./ (myZ.^2 .* coulomb_loge) .* TE_BEAM.^(3/2) ./ (NE_BEAM.*1E-6);
-        v_s = vcrit_cube./tau_spit.*zi2./zi2_ai./MASS.*amu./(SPEED.^3);
-        v_s2 = vcrit_cube./tau_spit.*ZE_BEAM./ZMEAN./MASS.*amu./(SPEED.^3);
-        data.v_s2=v_s2;
+        % v_s = vcrit_cube./tau_spit.*zi2./zi2_ai./MASS.*amu./(SPEED.^3);
+        % v_s2 = vcrit_cube./tau_spit.*ZE_BEAM./ZMEAN./MASS.*amu./(SPEED.^3);
+        % data.v_s2=v_s2;
     case 'beams3d'
         sm = zeros(size(S_BEAM));
         for i = 1:num_species
@@ -342,7 +382,7 @@ switch lower(log_type)
         coulomb_loge=log(bmax./bmin); %only last coulomb log is saved - nubeam keeps per-species coulomb log, but not sure what effect this has
         coulomb_logi=zeros(num_species,size(coulomb_loge,2));
         bmini=zeros(num_species,size(coulomb_loge,2));
-        for i = 1:1%num_species
+        for i = 1:num_species
             vrel2= 9.58d10*(3*TI_BEAM./1000.0./(NI_AUX_M(i)/amu)+SPEED.^2./ec.*MASS./1000.0./(MASS/amu));
             bmincl=0.13793d0.*abs(NI_AUX_Z(i).*CHARGE/ec).*(NI_AUX_M(i)/amu+MASS./amu)./(NI_AUX_M(i)/amu)./(MASS/amu)./vrel2;
             bminqu=1.9121d-8.*(NI_AUX_M(i)./amu+MASS./amu)./(NI_AUX_M(i)./amu)./(MASS./amu)./sqrt(vrel2);
@@ -368,9 +408,9 @@ switch lower(log_type)
         fact_crit=5.33e4;
         v_crit = fact_crit.*sqrt(TE_BEAM) .*zi2_ai.^(1/3);
         vcrit_cube = v_crit.^3;
-        v_s = vcrit_cube./tau_spit.*zi2./zi2_ai./MASS.*amu./(SPEED.^3);
-        v_s2 = vcrit_cube./tau_spit.*ZE_BEAM./ZMEAN./MASS.*amu./(SPEED.^3);
-        data.v_s2=v_s2;
+        %v_s = vcrit_cube./tau_spit.*zi2./zi2_ai./MASS.*amu./(SPEED.^3);
+        %v_s2 = vcrit_cube./tau_spit.*ZE_BEAM./ZMEAN./MASS.*amu./(SPEED.^3);
+        %data.v_s2=v_s2;
     case 'beams3d_adv'
         sm = zeros(size(S_BEAM));
         for i = 1:num_species
@@ -438,7 +478,7 @@ switch lower(log_type)
         % nu0_fe = 6.6E-11 .* NE_BEAM .* myZ.*myZ ./ sqrt(at./9.31E-31) ./ (E_BEAM ./ 1.6022E-19).^(3/2) .* (coulomb_log./17);
         % data.nu0_fe = nu0_fe;
         %v_s = vcrit_cube./tau_spit.*zi2./zi2_ai./2./MASS.*amu;
-    case 'full_logarithm_initial' %As in 47c59eb7b47620ac59ab5d2b4631d91772eea98c
+    case 'full_init' %As in 47c59eb7b47620ac59ab5d2b4631d91772eea98c
         map  = NI_AUX_M(1).*MASS./(NI_AUX_M(1)+MASS);
         mae  = me.*MASS./(me+MASS);
         ue    = sqrt(3.*ec.*TE_BEAM./me);
@@ -476,7 +516,7 @@ switch lower(log_type)
     case 'nrl_old'  %As in 18707fd7a328bd6a6156583a45ba8ad5bb9638ab
         coulomb_log = 35 - log(myZ.*ZE_BEAM.*(MASS+NI_AUX_M(1)).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*NI_AUX_M(1).*beta.*beta.*6.02214076208E+26));
         coulomb_log(coulomb_log <=1) = 1;
-        v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./plasma_mass);
+        v_crit = ((0.75.*sqrt(pi.*NI_AUX_M(1)./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./NI_AUX_M(1));
         vcrit_cube = v_crit.^3;
         tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
 end
@@ -611,7 +651,7 @@ data.npart=npart;
 data.tslow = t;
 data.tau_spit = tau_spit;
 data.v_crit=v_crit;
-data.v_s=v_s;
+%data.v_s=v_s;
 data.V=V;
 data.V2=V2;
 data.RHO_BEAM=RHO_BEAM;
