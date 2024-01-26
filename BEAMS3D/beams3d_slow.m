@@ -56,7 +56,7 @@ if nargin > 0
                 case 'mass'
                     i=i+1;
                     NI_AUX_M(1)=varargin{i};
-                case {'BEAMS3D','BEAMS3D_ADV','LOCUST_NUBEAM','LOCUST_ASCOT','RABBIT_NUBEAM','full_logarithm','NRL','NRL_old','legacy'}
+                case {'BEAMS3D','BEAMS3D_ADV','LOCUST_NUBEAM','LOCUST_ASCOT','RABBIT_NUBEAM','NRL','NRL_old','legacy','full_logarithm_initial'}
                     log_type = varargin{i};
                 case 'boron'
                     lboron=1;
@@ -212,68 +212,14 @@ Iinj = sum(CHARGE.*W_BEAM);
 TE3=TE_BEAM.^3;
 beta = SPEED./299792458;
 switch lower(log_type)
-    case 'legacy'
-        mae  = me.*MASS./(me+MASS);
-        ue    = ec.*TE_BEAM./me;
-        uave2  = SPEED.*SPEED + ue;
-        rmincle = myZ.*ZE_BEAM.*ec.*ec./(mae.*uave2);
-        rminque = hbar./(2.*mae.*sqrt(uave2));
-        rmine = max(rmincle,rminque);
-        omegape2 = NE_BEAM.*ec.*ec./(me.*eps0);
-        omegace = ec.*B_BEAM./me;
-        omegae2 = omegape2+omegace.*omegace;
-        for i=1:num_species
-            map  = NI_AUX_M(i).*MASS./(NI_AUX_M(i)+MASS);
-            % Calculate the ion temperature and speed for each species
-            ui =ec.*TI_BEAM./NI_AUX_M(i);
-            uavi2(i,:) = SPEED.*SPEED + ui;
-            % uavi2(i,:)= 9.58d10*(TI_BEAM./1000.0./ai+SPEED.^2/ec*amu/1000.0/at);
-            % Calculate the minimum distance of closest approach for each ion species
-            rmincli = myZ.*NI_AUX_Z(i).*ec.*ec./(map.*uavi2(i,:));
-            rminqui = hbar./(2.*map.*sqrt(uavi2(i,:)));
-            rmini(i,:) = max(rmincli,rminqui);
-
-            % Calculate the plasma frequency for each ion species
-            omegapi2 = (NI_AUX_Z(i).*ec.*ec)./(NI_AUX_M(i).*eps0);
-            omegaci = ec.*B_BEAM./NI_AUX_M(i);
-            omegai2(i,:) = omegapi2+omegaci.*omegaci;
-            %omegai2(i,:) = 1.74.* Zi.^2./ai .*NI_BEAM(i,:) + 9.18e15 .* Zi.^2 / ai.^2 .* B_BEAM.^2;
-        end
-        % Calculate the ion and electron Coulomb logarithm for each species
-        rmax = sqrt(1./(omegae2./uave2 + sum(omegai2./uavi2,1)));
-        coulomb_loge = log(rmax./rmine);
-        coulomb_loge(coulomb_loge <=1) = 1;
-        for i = 1:num_species
-            coulomb_logi(i,:) = log(rmax./rmini(i,:));
-        end
-        coulomb_logi(coulomb_logi <=1) = 1;
-
-        for i = 1:num_species
-            Zi =NI_AUX_Z(i);
-            ai = NI_AUX_M(i)./amu;
-            zi2_ai(i,:) = NI_BEAM(i,:).*Zi.^2./ai .* coulomb_logi(i,:);
-            zi2(i,:) = NI_BEAM(i,:).*Zi.^2 .* coulomb_logi(i,:);
-        end
-        zi2_ai = sum(zi2_ai,1)./(NE_BEAM.*coulomb_loge);
-        zi2 = sum(zi2,1)./(NE_BEAM.*coulomb_loge);
-        %zi2_ai2 = data.ZMEAN_set .* mean(coulomb_logi,1)./coulomb_loge;% myZ.^2./ai .*
-        %zi22 = ZE_BEAM .* mean(coulomb_logi,1)./coulomb_loge;
-
-        v_crit = 5.33e4 .* sqrt(TE_BEAM) .* zi2_ai.^(1/3);
-        vcrit_cube = v_crit.^3;
-        tau_spit = 6.32e8 .* (MASS./amu) ./ (myZ.^2 .* coulomb_loge) .* TE_BEAM.^(3/2) ./ (NE_BEAM.*1E-6);
-
-        data.coulomb_loge = coulomb_loge;
-        data.coulomb_logi = coulomb_logi;
-        data.rmax=rmax;
-        data.zi2_ai= zi2_ai;
-        data.zi2= zi2;
     case 'locust_nubeam'
         mae  = me.*MASS./(me+MASS);
         ue    =ec.*TE_BEAM./me; %According to Ward et al. 2021, this should be 3*TE_BEAM, but this leads to disagreement with the other formulations
         uave2  = SPEED.*SPEED + ue;
         rmincle = myZ.*ec.*ec./(4*pi()*eps0.*mae.*uave2);
+        %LEGACY:  rmincle = myZ.*ZE_BEAM.*ec.*ec./(mae.*uave2);
         rminque = hbar.*exp(-.5)./(2.*mae.*sqrt(uave2));
+        %LEGACY: rminque = hbar./(2.*mae.*sqrt(uave2));
         rmine = max(rmincle,rminque);
         omegape2 = NE_BEAM.*ec.*ec./(me.*eps0);
         omegace = ec.*B_BEAM./me;
@@ -287,6 +233,7 @@ switch lower(log_type)
             % Calculate the minimum distance of closest approach for each ion species
             rmincli = myZ.*NI_AUX_Z(i).*ec.*ec./(4*pi()*eps0.*map.*uavi2(i,:));
             rminqui = hbar.*exp(-.5)./(2.*map.*sqrt(uavi2(i,:)));
+            %LEGACY: rminqui = hbar./(2.*map.*sqrt(uavi2(i,:)));
             rmini(i,:) = max(rmincli,rminqui);
             % Calculate the plasma frequency for each ion species
             omegapi2 = (NI_AUX_Z(i).*ec.*ec)./(NI_AUX_M(i).*eps0);
@@ -301,7 +248,13 @@ switch lower(log_type)
             coulomb_logi(i,:) = log(rmax./rmini(i,:));
         end
         coulomb_logi(coulomb_logi <=1) = 1;
-
+        %LEGACY: 
+        % for i = 1:num_species
+        %     Zi =NI_AUX_Z(i);
+        %     ai = NI_AUX_M(i)./amu;
+        %     zi2_ai(i,:) = NI_BEAM(i,:).*Zi.^2./ai .* coulomb_logi(i,:);
+        %     zi2(i,:) = NI_BEAM(i,:).*Zi.^2 .* coulomb_logi(i,:);
+        % end
         for i = 1:num_species
             zi2_ai(i,:) = NI_BEAM(i,:).*NI_AUX_Z(i).^2./(NI_AUX_M(i)./amu) .* coulomb_logi(i,:);
             zi2(i,:) = NI_BEAM(i,:).*NI_AUX_Z(i).^2 .* coulomb_logi(i,:);
@@ -482,38 +435,47 @@ switch lower(log_type)
         % nu0_fe = 6.6E-11 .* NE_BEAM .* myZ.*myZ ./ sqrt(at./9.31E-31) ./ (E_BEAM ./ 1.6022E-19).^(3/2) .* (coulomb_log./17);
         % data.nu0_fe = nu0_fe;
         %v_s = vcrit_cube./tau_spit.*zi2./zi2_ai./2./MASS.*amu;
-    case 'nrl'
-        coulomb_log = 43 - log(myZ.*ZE_BEAM.*(MASS+NI_AUX_M(1)).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*NI_AUX_M(1).*beta.*beta.*6.02214076208E+26));
-        %coulomb_log=[];
-        %coulomb_log = 35 - log(myZ.*ZE_BEAM.*(MASS+NI_AUX_M(1)).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*NI_AUX_M(1).*beta.*beta.*6.02214076208E+26));
-        coulomb_log(coulomb_log <=1) = 1;
-        coul_fac=1;%21.5/15;
-        zi2_ai = ZMEAN .* coul_fac;% myZ.^2./ai .*
-        zi2 = coul_fac*ZE_BEAM; %1.1 is just a correction factor
-        %v_crit = ((0.75.*sqrt(pi.*NI_AUX_M(1)./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./NI_AUX_M(1)); %Original
-
-        fact_crit=5.33e4;
-        %v_crit = fact_crit.*sqrt(TE_BEAM) .*(ZMEAN.*coulomb_logi./coulomb_loge).^(1/3);
-        v_crit = fact_crit.*sqrt(TE_BEAM) .*zi2_ai.^(1/3);
-
+    case 'full_logarithm_initial' %As in 47c59eb7b47620ac59ab5d2b4631d91772eea98c
+        map  = NI_AUX_M(1).*MASS./(NI_AUX_M(1)+MASS);
+        mae  = me.*MASS./(me+MASS);
+        ue    = sqrt(3.*ec.*TE_BEAM./me);
+        ui    = sqrt(3.*ec.*TI_BEAM./NI_AUX_M(1));
+        uave2  = SPEED.*SPEED + ue.*ue;
+        uavi2  = SPEED.*SPEED + ui.*ui;
+        rmincle = myZ.*ZE_BEAM.*ec.*ec./(mae.*uave2);
+        rmincli = myZ.*ZE_BEAM.*ec.*ec./(map.*uavi2);
+        rminque = hbar./(2.*mae.*sqrt(uave2));
+        rminqui = hbar./(2.*map.*sqrt(uavi2));
+        rmine = max(rmincle,rminque);
+        rmini = max(rmincli,rminqui);
+        omegape2 = NE_BEAM.*ec.*ec./(me.*eps0);
+        omegapi2 = (NE_BEAM./ZE_BEAM).*ec.*ec./(NI_AUX_M(1).*eps0);
+        omegace = ec.*B_BEAM./me;
+        omegaci = ec.*B_BEAM./NI_AUX_M(1);
+        omegae2 = omegape2+omegace.*omegace;
+        omegai2 = omegapi2+omegaci.*omegaci;
+        rmax = sqrt(1./(omegae2./uave2 + omegai2./uavi2));
+        coulomb_loge = log(rmax./rmine);
+        coulomb_logi = log(rmax./rmini);
+        coulomb_loge(coulomb_loge <=1) = 1;
+        coulomb_logi(coulomb_logi <=1) = 1;
+        ai = NI_AUX_M(1)/amu;
+        zi2_ai = myZ.^2./ai .* coulomb_logi./coulomb_loge;
+        v_crit = 5.33e4 .* sqrt(TE_BEAM) .* zi2_ai.^(1/3);
         vcrit_cube = v_crit.^3;
-        tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log/coul_fac);
-        nu0_fe = 6.6E-11 .* NE_BEAM .* myZ.*myZ ./ sqrt(MASS./9.31E-31) ./ (E_BEAM ./ 1.6022E-19).^(3/2) .* (coulomb_log./17);
-
-        data.coulomb_loge = coulomb_log;
-        data.coulomb_logi = coulomb_log/coul_fac;
-        %data.rmax=bmax;
-        data.zi2_ai= zi2_ai;
-        data.zi2= zi2;
-        v_s = vcrit_cube./tau_spit.*zi2./zi2_ai./2./MASS.*amu;
-    case 'nrl_old'
-        coulomb_log = 35 - log(myZ.*ZE_BEAM.*(MASS+NI_AUX_M(1)).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*NI_AUX_M(1).*beta.*beta.*6.02214076208E+26));
+        tau_spit = 6.32e8 .* (MASS./amu) ./ (myZ.^2 .* coulomb_loge) .* TE_BEAM.^(3/2) ./ (NE_BEAM.*1E-6);
+    case 'nrl' %As in 18707fd7a328bd6a6156583a45ba8ad5bb9638ab
+        coulomb_log = 43 - log(myZ.*ZE_BEAM.*(MASS+NI_AUX_M(1)).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*NI_AUX_M(1).*beta.*beta.*6.02214076208E+26));
         coulomb_log(coulomb_log <=1) = 1;
         v_crit = ((0.75.*sqrt(pi.*NI_AUX_M(1)./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./NI_AUX_M(1));
         vcrit_cube = v_crit.^3;
         tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
-        nu0_fe = 6.6E-11 .* NE_BEAM .* myZ.*myZ ./ sqrt(MASS./9.31E-31) ./ (E_BEAM ./ 1.6022E-19).^(3/2) .* (coulomb_log./17);
-        v_s = vcrit_cube./tau_spit.*zi2./zi2_ai./2./MASS.*amu;
+    case 'nrl_old'  %As in 18707fd7a328bd6a6156583a45ba8ad5bb9638ab
+        coulomb_log = 35 - log(myZ.*ZE_BEAM.*(MASS+NI_AUX_M(1)).*sqrt(NE_BEAM.*1E-6./TE_BEAM)./(MASS.*NI_AUX_M(1).*beta.*beta.*6.02214076208E+26));
+        coulomb_log(coulomb_log <=1) = 1;
+        v_crit = ((0.75.*sqrt(pi.*plasma_mass./me)).^(1./3.)).*sqrt(2.*TE_BEAM.*ec./plasma_mass);
+        vcrit_cube = v_crit.^3;
+        tau_spit = 3.777183E41.*MASS.*sqrt(TE3)./(NE_BEAM.*myZ.*myZ.*coulomb_log);
 end
 
 % Integrate
