@@ -31,6 +31,8 @@ function w7x_beam_params( source ,varargin)
 lplots = 0;
 lrudix = 0;
 loptemist = 0;
+loptemist150kev = 0;
+loptemist300kev = 0;
 lwrite_beams3d = 0;
 grid = 60;
 species ='H2';
@@ -78,6 +80,16 @@ if nargin > 1
                     vmec_data.rmax_surf = 6.5; %Maybe should even be after this section, to avoid WALL OUTSIDE GRID DOMAIN! error
                     vmec_data.rmin_surf = 4.25;
                     vmec_data.zmax_surf = 1.25;
+                case {'optemist150kev','OPTEMIST150KEV','Optemist150keV'}
+                    loptemist150kev=1;
+                    vmec_data.rmax_surf = 6.5; %Maybe should even be after this section, to avoid WALL OUTSIDE GRID DOMAIN! error
+                    vmec_data.rmin_surf = 4.25;
+                    vmec_data.zmax_surf = 1.25;
+                case {'optemist300kev','OPTEMIST300KEV','Optemist300keV'}
+                    loptemist300kev=1;
+                    vmec_data.rmax_surf = 6.5; %Maybe should even be after this section, to avoid WALL OUTSIDE GRID DOMAIN! error
+                    vmec_data.rmin_surf = 4.25;
+                    vmec_data.zmax_surf = 1.25;
                 case 't_end'
                     i=i+1;
                     t_end=varargin{i};
@@ -85,7 +97,7 @@ if nargin > 1
                 case {'filename','file','mass','TE','TI','NE','ZEFF',...
                         'POT','nr','nz','nphi','NPOINC',...
                         'NPARTICLES_START','VC_ADAPT_TOL',...
-                        'RHOFO'}
+                        'RHOFO','NDIST','NDIST_FIDA'}
                     next_varargin = [next_varargin varargin{i}];
                     i = i+1;
                     next_varargin = [next_varargin varargin{i}];
@@ -330,7 +342,7 @@ end
 if loptemist
     E_OPT = (50:10:250) * 1000; 
     %PFRAC = [56 22 22];
-    PFRAC = 1;
+    PFRAC = 1.0
     P_OPT = 1E6; %1 MW 
     for i=1:length(E_OPT)
         r_beam(1,j) = sqrt(xo_RUDI.^2+yo_RUDI.^2); %RUDIX Geometry
@@ -343,6 +355,56 @@ if loptemist
         energy_beam(j) = E_OPT(i);
         div_beam(j)    = 0.0125;
         note{j} = 'OPTEMIST BEAM';
+        source = [source j]; % Treat as source 9
+        j = j + 1;
+    end
+    if lplots
+        hold(ax, 'on');
+        plot3(ax,[xo_OPT xt_OPT],[yo_OPT yt_OPT],[zo_OPT zt_OPT],'k');
+        hold(ax,'off');
+    end
+end
+
+if loptemist150kev
+    E_OPT = [150] * 1000; % Nominal values
+    PFRAC = [90 5 5]./100;
+    P_OPT = 1E6; %1 MW 
+    for i=1:length(E_OPT)
+        r_beam(1,j) = sqrt(xo_RUDI.^2+yo_RUDI.^2); %RUDIX Geometry
+        r_beam(2,j) = sqrt(xt_RUDI.^2+yt_RUDI.^2);
+        p_beam(1,j) = atan2(yo_RUDI,xo_RUDI);
+        p_beam(2,j) = atan2(yt_RUDI,xt_RUDI);
+        z_beam(1,j) = zo_RUDI;
+        z_beam(2,j) = zt_RUDI;
+        power_beam(j) = P_OPT;
+        energy_beam(j) = E_OPT(i);
+        div_beam(j)    = 0.0125;
+        note{j} = 'OPTEMIST 150keV BEAM';
+        source = [source j]; % Treat as source 9
+        j = j + 1;
+    end
+    if lplots
+        hold(ax, 'on');
+        plot3(ax,[xo_OPT xt_OPT],[yo_OPT yt_OPT],[zo_OPT zt_OPT],'k');
+        hold(ax,'off');
+    end
+end
+
+if loptemist300kev
+    E_OPT = [300] * 1000; % Nominal values
+    PFRAC = [34 33 33]./100;
+    P_OPT = 1E6; %1 MW 
+    for i=1:length(E_OPT)
+        r_beam(1,j) = sqrt(xo_RUDI.^2+yo_RUDI.^2); %RUDIX Geometry
+        r_beam(2,j) = sqrt(xt_RUDI.^2+yt_RUDI.^2);
+        p_beam(1,j) = atan2(yo_RUDI,xo_RUDI);
+        p_beam(2,j) = atan2(yt_RUDI,xt_RUDI);
+        z_beam(1,j) = zo_RUDI;
+        z_beam(2,j) = zt_RUDI;
+        power_beam(j) = P_OPT;
+        energy_beam(j) = E_OPT(i);
+        div_beam(j)    = 0.0125;
+        note{j} = 'OPTEMIST 300keV BEAM';
         source = [source j]; % Treat as source 9
         j = j + 1;
     end
