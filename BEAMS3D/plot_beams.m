@@ -72,7 +72,7 @@ if nargin > 1
                     'wall_loss_2d','wall_heat_2d','wall_shine_2d',...
                     'wall_loss_log10','wall_heat_log10','wall_shine_log10',...
                     'grid','grid_s',...
-                    'camview','bmir'}
+                    'camview','bmir','birth_r','birth_z'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
             case 'beam'
                 i=i+1;
@@ -265,6 +265,31 @@ else
                 axis equal;
                 axis off;
                 title('Particle Birth');
+            case 'birth_r'
+                edges = beam_data.raxis(1):0.01:beam_data.raxis(end);
+                dists = discretize(beam_data.R_lines(dex1,born_dex),edges);
+                dists(isnan(dists)) = 1;
+                weights = beam_data.Weight(born_dex);
+                histo = accumarray(dists',weights,[size(edges,2)-1, 1]);
+                x=edges(2:end-1)+mean(diff(edges))/2;
+                plot(x,histo(2:end),'DisplayName','BEAMS3D','LineWidth', 2.0);
+                title('Absolute number')
+                xlabel('R [m]')
+                ylabel('Deposition [particles/s]')
+                legend('Location','best')
+            case 'birth_z'
+                edges = min(beam_data.Z_lines(dex1,born_dex)):0.01:(max(beam_data.Z_lines(dex1,born_dex))+0.05);
+                dists = discretize(beam_data.Z_lines(dex1,born_dex),edges);
+                dists(isnan(dists)) = 1;
+                weights = beam_data.Weight(born_dex);
+                sum(weights)
+                histo = accumarray(dists',weights,[size(edges,2)-1, 1]);
+                x=edges(2:end-1)+mean(diff(edges))/2;
+                plot(x,histo(2:end),'DisplayName','BEAMS3D','LineWidth', 2.0);
+                title('Absolute number')
+                xlabel('Z [m]')
+                ylabel('Deposition [particles/s]')
+                legend('Location','best')
             case {'overview','xyz_total'}
                 leg_text={};
                 x1  = beam_data.X_lines(:,therm_dex);
@@ -968,9 +993,13 @@ else
                 title('Initial Lost Distribution');
             case 'denf2d'
                 figure('Position',[1 1 1024 768],'Color','white','InvertHardCopy','off');
+                if isfield(beam_data,'paxis')
                 dist = squeeze(trapz(beam_data.paxis,trapz(beam_data.Vaxis,trapz(beam_data.Waxis,sum(beam_data.dist_prof,1),6),5),4));
                 pixplot(beam_data.rhoaxis.^2,beam_data.uaxis,dist);
-
+                else
+                dist = squeeze(trapz(beam_data.dist_paxis,trapz(beam_data.dist_Vaxis,trapz(beam_data.dist_Waxis,sum(beam_data.dist_prof,1),6),5),4));
+                pixplot(beam_data.dist_rhoaxis.^2,beam_data.dist_uaxis,dist);
+                end
                 %pixplot(beam_data.rhoaxis.^2.*cos(beam_data.uaxis),beam_data.rhoaxis.^2.*sin(beam_data.uaxis),dist);
                 ylabel('U bins [-]')
                 xlabel('S bins [-]')
@@ -1184,7 +1213,7 @@ else
                 ha=pcolor(edges{1},edges{2},vals');
                 set(ha,'LineStyle','none');
                 colormap hot;
-                caxis([0 mean(max(vals))])
+                caxis([0 max(vals,[],'all')])
                 set(gcf,'Color','white','Position',[1 -100 1024 768]);
                 set(gca,'FontSize',24);
                 xlabel('R [m]');
@@ -1359,7 +1388,7 @@ else
                 if (tend < 1E-6)
                     units = '[ns]'; factor = 1E9;
                 elseif (tend<1E-3)
-                    units = '[µs]'; factor = 1E6;
+                    units = '[s]'; factor = 1E6;
                 end
                 plot(t.*factor,100.*f./ftotal,'k','LineWidth',4);
                 xlabel(['Time ' units]);
@@ -1384,7 +1413,7 @@ else
                 if (tend < 1E-6)
                     units = '[ns]'; factor = 1E9;
                 elseif (tend<1E-3)
-                    units = '[µs]'; factor = 1E6;
+                    units = '[s]'; factor = 1E6;
                 end
                 plot(t.*factor,100.*f./ftotal,'k','LineWidth',4);
                 xlabel(['Time ' units]);

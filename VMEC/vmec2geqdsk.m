@@ -17,7 +17,7 @@ function vmec2geqdsk( varargin )
 
 vmec_data=[];
 ves_data=[];
-for i=1:nargin-1
+for i=1:nargin
     if isstruct(varargin{i})
         if isfield(varargin{i},'datatype')
             switch upper(varargin{i}.datatype)

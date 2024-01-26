@@ -50,7 +50,7 @@ for i = 1:beam_data.nphi-1
 end
 
 if isempty(ns)
-    ns = beam_data.ns_prof1;
+    ns = double(beam_data.ns_prof1);
 end
 ds = 1./(ns);
 edges = 0:ds:1;
