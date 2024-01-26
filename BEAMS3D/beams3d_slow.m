@@ -25,6 +25,7 @@ hbar = 1.05457182E-34;
 eps0 = 8.8541878128E-12;
 amu = 1.66053906660E-27;
 lplot = 0;
+lverb=0;
 beam_dex = []; % Use to downselect beams
 vmec_data=[];
 beam_data=[];
@@ -50,6 +51,8 @@ if nargin > 0
             switch varargin{i}
                 case 'plots'
                     lplot=1;
+                case 'verbose'
+                    lverb=1;
                 case 'beams'
                     i=i+1;
                     beam_dex=varargin{i};
@@ -491,7 +494,9 @@ jb = zeros(1,length(W_BEAM));
 dist = zeros(1,length(W_BEAM));
 t=0;
 while any(V > v_sound)
-    disp([num2str(t*1000) ' ms : ' num2str(max(V)./1E3) ' km/s']);
+    if lverb
+        disp([num2str(t*1000) ' ms : ' num2str(max(V)./1E3) ' km/s']);
+    end
     t = t+dt;
     dex = V > v_sound;
     dve = C1(dex).*V(dex);
