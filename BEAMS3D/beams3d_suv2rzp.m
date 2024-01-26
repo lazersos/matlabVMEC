@@ -1,26 +1,40 @@
 function [r_out, v, z_out] = beams3d_suv2rzp(s, u, v, S_ARR, U_ARR, raxis, phiaxis, zaxis)
-% BEAMS3D_SUV2RZP Converts (S, U, V) coordinates to (R, Z, Phi) coordinates.
-%
-% The function uses a Newton-Raphson method to iteratively solve for the 
-% (R, Z, Phi) coordinates from the given (S, U, V) coordinates, based on
-% provided grid arrays and axis information.
-%
-% Usage:
-% [r_out, phi_out, z_out] = beams3d_suv2rzp(s, u, v, S_ARR, U_ARR, raxis, phiaxis, zaxis)
+%BEAMS3D_SUV2RZP Converts (S, U, V) coordinates to (R, Z, Phi) coordinates.
+%This is e.g. used in the volume normalization of the BEAMS3D distribution.
+%   The function uses a Newton-Raphson method to iteratively solve for the 
+%   (R, Z, Phi) coordinates from the given (S, U, V) coordinates, based on
+%   provided grid arrays and axis information. Tolerance is set to 1e-9 and
+%   the maximum number of iterations is 1000. If this is reached, a plot is
+%   made on the result obtained and some debugging information is printed.
 %
 % Input Parameters:
-% s: Normalized Toroidal Flux (S-coordinate)
-% u: Poloidal Angle (U-coordinate)
-% v: Toroidal Angle (V-coordinate)
-% S_ARR, U_ARR: Grid arrays for the S and U coordinates
-% raxis: Major Radius (R) axis values
-% phiaxis: Toroidal Angle (Phi) axis values
-% zaxis: Vertical Distance (Z) axis values
+%        s:            Normalized Toroidal Flux (S-coordinate)
+%        u:            Poloidal Angle (U-coordinate)
+%        v:            Toroidal Angle (V-coordinate)
+%        S_ARR, U_ARR: Grid arrays for the S and U coordinates
+%        raxis:        Major Radius (R) axis values
+%        phiaxis:      Toroidal Angle (Phi) axis values
+%        zaxis:        Vertical Distance (Z) axis values
 %
 % Output Parameters:
-% r_out: Major Radius Distance R
-% phi_out: Toroidal Angle Phi
-% z_out: Vertical Distance Z
+%        r_out:        Major Radius Distance R
+%        phi_out:      Toroidal Angle Phi
+%        z_out:        Vertical Distance Z
+%
+% Example Usage:
+%        beam_data=read_beams3d('beams3d_test.h5');  
+%        s = beam_data.dist_rhoaxis.^2;
+%        u = beam_data.dist_uaxis;
+%        v = beam_data.dist_paxis;
+%        S_ARR = beam_data.S_ARR;
+%        U_ARR = beam_data.U_ARR;
+%        raxis = beam_data.raxis;
+%        phiaxis = beam_data.phiaxis;
+%        zaxis = beam_data.phiaxis;
+%        [r,phi,z] = beams3d_suv2rzp(s,u,v,S_ARR,U_ARR,raxis,phiaxis,zaxis)
+%
+% Maintained by: David Kulla (david.kulla@ipp.mpg.de)
+% Version:       1.00
 
 % Create a grid from the input coordinates
 [s, u, v] = ndgrid(s, u, v);
@@ -34,7 +48,6 @@ hz = zaxis(2) - zaxis(1);
 % Constants and parameters for the Newton-Raphson method
 nphi = numel(phiaxis);
 pi2 = 2 * pi;
-fnorm_max = 1e5;
 max_iterations = 1000;
 tolerance = 1e-9;
 
@@ -92,22 +105,17 @@ while ( max(residual,[],'all') > tolerance && n < max_iterations) %residual > to
     delR = min(max(delR, -hr(1)), hr(1));
     delZ = min(max(delZ, -hz(1)), hz(1));
 
-    residual = (x_term.^2 + y_term.^2);%.* fnorm;
+    residual = (x_term.^2 + y_term.^2);
 
     dex=residual < 0.01;
     delR(dex) = delR(dex) * 0.5;
     delZ(dex) = delZ(dex) * 0.5;
 
-
     r_out = max(min(r_out + delR * factor, raxis(end)), raxis(1));
     z_out = max(min(z_out + delZ * factor, zaxis(end)), zaxis(1));
-
     n = n + 1;
-    
-    %scatter3(v(1:5:end),r_out(1:5:end),z_out(1:5:end),10.0,residual(1:5:end),'o');
 
 end
-%xlim([0 0.1])
 
 % If the maximum number of iterations is reached, print a warning.
 if n >= max_iterations
@@ -116,10 +124,9 @@ if n >= max_iterations
     scatter3(v(:),r_out(:),z_out(:),10.0,residual(:),'o');
     hold on
     [x_b3d,y_b3d,z_b3d] = meshgrid(phiaxis,raxis,zaxis);
-    %tmp=permute(S_ARR,[3 1 2]);
-    contourslice(x_b3d,y_b3d,z_b3d,S_ARR,[v(1,1,:)],[],[],linspace(0,1,10),'linear');%,linspace(-1,1,20)
+    contourslice(x_b3d,y_b3d,z_b3d,S_ARR,[v(1,1,:)],[],[],linspace(0,1,10),'linear');
     contourslice(x_b3d,y_b3d,z_b3d,U_ARR,[v(1,1,:)],[],[],linspace(0,2*pi,10),'linear');
-    caxis([0 1])
+    clim([0 1])
     xlim([0 1.1])
     warning('Maximum number of iterations reached.');
 end
