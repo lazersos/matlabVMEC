@@ -15,7 +15,7 @@ function [varargout]=isotoro(r,z,zeta,s,varargin)
 % Inputs
 % r:        Radial position r(s,theta,zeta)
 % z:        Vertical position z(s,theta,zeta)
-% theta:    Magnetic polodial angle (theta)
+% zeta:     Magnetic toroidal angle (zeta)
 % s:        Vector of surfaces to plot
 % color:    Array of colors to plot on surface.
 % 'STL':    Will output to an STL file.
