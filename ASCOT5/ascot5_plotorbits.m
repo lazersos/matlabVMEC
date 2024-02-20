@@ -136,7 +136,7 @@ for f = 1:size(files,2)
     y{f} = r{f}.*sind(phi{f});
     
     xyz_mat = [x{f}, y{f}, z{f}];
-    writematrix(xyz_mat, 'xyz_particle_NBI_19.txt', 'Delimiter', ';');
+    %writematrix(xyz_mat, 'xyz_particle_NBI_19.txt', 'Delimiter', ';');
     
     rhocostheta{f} = rho{f}.*cosd(theta{f});
     rhosintheta{f} = rho{f}.*sind(theta{f});
@@ -163,8 +163,8 @@ for f = 1:size(files,2)
     end
     
 end
-vll = pll./amu; %ONLY CORRECT FOR HYDROGEN!!!
-bmir = b .* (vll.^2 + vperp .^2) ./ vperp.^2;
+vll{f} = pll{f}./amu; %ONLY CORRECT FOR HYDROGEN!!!
+bmir{f} = b{f} .* (vll{f}.^2 + vperp{f} .^2) ./ vperp{f}.^2;
     
 %----------Calculate Orbits
 
@@ -356,14 +356,14 @@ switch plottype
                         end
                     end
                     if mirspace
-                        plot(ax2, time(:,j), bmir(:,j), 'Color', linecolors(j,:));
-                        plot(ax2, time(i-tail:i,j), bmir(i-tail:i,j));
-                        plot(ax2, time(i,j), bmir(i,j), 'r.', 'MarkerSize', 36);
+                        plot(ax2, time{f}(:,j), bmir{f}(:,j), 'Color', linecolors{f}(j,:));
+                        plot(ax2, time{f}(i-tail:i,j), bmir{f}(i-tail:i,j));
+                        plot(ax2, time{f}(i,j), bmir{f}(i,j), 'r.', 'MarkerSize', 36);
                          for m = plot_torrevolutions(j,1):plot_torrevolutions(j,1) %Frames for toroidal crossings
-                            ploty = phi(i-tail:i,j)-toroidalextent*m;
+                            ploty = phi{f}(i-tail:i,j)-toroidalextent*m;
                             ploty = ploty(dex);
                             %ploty = mod(ploty(dex),toroidalextent); %Mod should be removed by previous calculations
-                            plot(ax3, plotx, ploty, 'Color', linecolors(j,:));
+                            plot(ax3, plotx, ploty, 'Color', linecolors{f}(j,:));
                         end                       
                     end
                     

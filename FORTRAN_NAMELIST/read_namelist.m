@@ -57,7 +57,7 @@ while (~strncmpi(strtrim(line),'/',1) && (~strncmpi(strtrim(upper(line)),'&END',
     line=fgetl(fid);
     while isempty(line)
         line=fgetl(fid);
-        strtrim(upper(line))
+        strtrim(upper(line));
     end
 end
 % Close the text file

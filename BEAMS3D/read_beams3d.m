@@ -94,6 +94,12 @@ if (strcmp(filename(end-1:end),'h5'))
                 data.(k{1})=double(data.(k{1}));
             end
         end
+        if isfield(data,'dist_prof') && ~isfield(data,'dist2d_prof')
+            % This is a patch for 2018a still used by IPP-HGW because of
+            % reasons
+            data.dist2d_prof = squeeze(sum(sum(sum(data.dist_prof,4),3),2));
+            %data.dist2d_prof = squeeze(sum(data.dist_prof,[2 3 4]));
+        end
         % Make the 5D Axis variables
         data.dist_rhoaxis=(double(1:data.ns_prof1)-0.5)./(data.ns_prof1);
         data.dist_uaxis=2.*pi.*(double(1:data.ns_prof2)-0.5)./(data.ns_prof2);

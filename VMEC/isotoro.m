@@ -18,7 +18,7 @@ function [varargout]=isotoro(r,z,zeta,s,varargin)
 % zeta:     Magnetic toroidal angle (zeta)
 % s:        Vector of surfaces to plot
 % color:    Array of colors to plot on surface.
-% 'STL':    Will output to an STL file.
+% 'STL':    Will output to an STL file. Specify output name after this.
 %
 % Exmaple Usage (data assumed to have at least 10 flux surfaces)
 %      theta=0:2*pi/36:2*pi;
@@ -33,7 +33,7 @@ function [varargout]=isotoro(r,z,zeta,s,varargin)
 
 new_color=[];
 loutputtoobj = 0; % Will output STL files if set to 1
-
+filename = 'isotoro';
 if nargin > 4
     j=1;
     while j<=length(varargin)
@@ -41,6 +41,8 @@ if nargin > 4
             switch varargin{j}
                 case{'STL','stl'}
                     loutputtoobj=1;
+                    j = j+1;
+                    filename = varargin{j};
             end
         elseif isnumeric(varargin{j})
             mincolor=min(min(min(varargin{j})));
@@ -186,7 +188,7 @@ if ns==1
         vertex2(:,3) = vertex(:,3)-z0;
         %scale = 0.1350;
         TR = triangulation(faces(:,[2 1 3]),vertex2*scale);
-        stlwrite(TR, 'isotoro.stl');
+        stlwrite(TR, [filename,'.stl']);
     end
     
     

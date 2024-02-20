@@ -17,6 +17,8 @@ function plot_data = plot_fidasim_profiles(filename,sim_data,varargin)
 %      plot_fidasim(runid,'name', 'test'); %ID Name for legend
 %      plot_fidasim(runid,'fac', 1.0); %Scaling factor
 %
+bg_range=sim_data.bg_range;
+
 bes_range = sim_data.bes_range;
 fida_range = sim_data.fida_range;
 dispersion = sim_data.dispersion;
@@ -36,14 +38,14 @@ end
 lsave = 0;
 lmean = 0;
 plot_type = {};
-
+linestyle = '+';
 fac = 1;
 name = filename(1:end-2);
 if nargin > 2
     i = 1;
     while i < nargin-1
         switch varargin{i}
-            case {'FIDA','BES','FIDABES','fida','bes','fidabes'}
+            case {'FIDA','BES','FIDABES','fida','bes','fidabes','bck'}
                 plot_type{end+1}=varargin{i}; %Make multiple plots possible
             case 'mean'
                 lmean =1;
@@ -61,6 +63,9 @@ if nargin > 2
             case 'name'
                 i = i+1;
                 name = varargin{i};
+            case 'style'
+                i = i+1;
+                linestyle = varargin{i};
             otherwise
                 disp(['ERROR: Option ', varargin{i}, ' not found!']);
 
@@ -70,18 +75,33 @@ if nargin > 2
 end
 
 
-%h5info(filename);
-R = h5read(filename,'/radius');
-full = h5read(filename,'/full');
-half= h5read(filename,'/half');
-third= h5read(filename,'/third');
-halo= h5read(filename,'/halo');
-dcx= h5read(filename,'/dcx');
-fida= h5read(filename,'/fida');
-brems= h5read(filename,'/brems');
-lambda = h5read(filename,'/lambda');
+data=read_hdf5(filename);
+% R = h5read(filename,'/radius');
+% full = h5read(filename,'/full');
+% half= h5read(filename,'/half');
+% third= h5read(filename,'/third');
+% halo= h5read(filename,'/halo');
+% dcx= h5read(filename,'/dcx');
+% fida= h5read(filename,'/fida');
+% pfida= h5read(filename,'/pfida');
+% brems= h5read(filename,'/brems');
+% lambda = h5read(filename,'/lambda');
+R = data.radius;
+full =data.full;
+half= data.half;
+third= data.third;
+halo= data.halo;
+dcx= data.dcx;
+fida= data.fida;
+brems= data.brems;
+lambda =data.lambda;
+if isfield(data,'pfida')
+    pfida=data.pfida;
+else
+    pfida=zeros(size(fida));
+end
 
-spec = full + half + third + halo + dcx + fida;% + brems;
+spec = full + half + third + halo + dcx + fida+pfida;% + brems;
 
 cwav_mid=mean(lambda);
 instfu = box_gauss_funct(lambda,0.,1.,cwav_mid,sim_data.instfu_gamma,sim_data.instfu_box_nm);
@@ -102,7 +122,7 @@ dispersion_tmp = repmat(dispersion_tmp,1,size(spec,2));
 
 % bes_dex = (lambda_dat > repmat(bes_range(:,1)',size(lambda_dat,1),1)) & (lambda_dat < repmat(bes_range(:,2)',size(lambda_dat,1),1));
 % fida_dex = (lambda_dat > fida_range(1)) & (lambda_dat < fida_range(2));
-
+bg_dex = (lambda > bg_range(1)) & (lambda < bg_range(2));
 bes_dex = (lambda > repmat(bes_range(:,1)',size(lambda,1),1)) & (lambda < repmat(bes_range(:,2)',size(lambda,1),1));
 fida_dex = (lambda > fida_range(1)) & (lambda < fida_range(2));
 
@@ -113,7 +133,7 @@ fida_dex = (lambda > fida_range(1)) & (lambda < fida_range(2));
 % bes = sum(spec.*dispersion_tmp.*bes_dex,1);
 % fida = sum(spec.*dispersion_tmp.*fida_dex,1);
 
-
+bg = sum(brems.*dispersion_tmp.*bg_dex,1,'omitnan')./sum(dispersion_tmp.*bg_dex,1,'omitnan');
 bes = sum(spec.*dispersion_tmp.*bes_dex,1,'omitnan');
 fida = sum(spec.*dispersion_tmp.*fida_dex,1,'omitnan');
 
@@ -125,6 +145,9 @@ for i = 1:size(plot_type,2)
     end
     legend(ax{i},'Location','best');
     switch lower(plot_type{i})
+        case 'bck'
+            tmp = bg(dex);
+            ystr = 'BG';
         case 'bes'
             tmp = bes(dex);
             ystr = 'BES';
@@ -134,20 +157,23 @@ for i = 1:size(plot_type,2)
         case 'fidabes'
             tmp = fida(dex)./bes(dex);
             ystr = 'FIDA/BES';
+            if lsave
+                legend(ax{i},'Location','southwest');
+            end
 
     end
 
     if fac~=1
         tmp = tmp.*fac;
-        dispname = ['FIDASIM ', name, ', scaling factor: ' num2str(fac)];
+        dispname = ['', name, ', scaling factor: ' num2str(fac)];
     else
-        dispname = ['FIDASIM ', name];
+        dispname = ['', name];
     end
-    plot(ax{i},R(dex), tmp,'+','DisplayName',dispname, 'LineWidth',2.0);
+    plot(ax{i},R(dex), tmp,linestyle,'DisplayName',dispname, 'LineWidth',2.0);
     xlabel(ax{i},'R [cm]')
     ylabel(ax{i},ystr)
     if lsave
-        legend(ax{i},'Location','best');
+        
         sname = [name, '_', plot_type{i}];
         savefig(gcf,sname)
         exportgraphics(gcf,[sname,'.eps'],'Resolution',300);
