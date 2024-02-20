@@ -72,7 +72,7 @@ else
     length=size(line,2);
     version=str2double(strtrim(line(index:length)));
     % Handle unknown versions
-    if (version < 0) || (version > 8.52)
+    if (version < 0) || (version > 10.0)
         disp('Unknown file type or version.');
         f=2;
         return
