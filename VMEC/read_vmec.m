@@ -107,7 +107,7 @@ elseif (version <= 6.95) && ~netcdffile
     f=read_vmec_695(fid,fmt);
 elseif (version <= 8.00) && ~netcdffile
     f=read_vmec_800(fid,fmt);
-elseif (version <= 8.52) && ~netcdffile
+elseif (version > 8.00) && ~netcdffile
     f=read_vmec_847(fid,fmt);
 elseif netcdffile
     f=read_vmec_netcdf(filename);
