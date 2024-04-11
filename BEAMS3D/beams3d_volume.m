@@ -52,8 +52,8 @@ end
 if isempty(ns)
     ns = double(beam_data.ns_prof1);
 end
-ds = 1./(ns);
-edges = 0:ds:1;
+edges = linspace(0,1,ns+1);
+ds = diff(edges(1:2));
 s = 0.5.*(edges(1:end-1)+edges(2:end));
 
 % Create profile
