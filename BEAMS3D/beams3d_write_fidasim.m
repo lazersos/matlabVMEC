@@ -19,6 +19,7 @@ amu = 1.66053906660E-27; % Dalton [kg]
 lmovie = 0;
 lrecalc=0;
 inputs=0;
+beam_dex = 1:data.nbeams;
 
 filename_dist = [name,'_distribution.h5'];
 filename_eq = [name,'_equilibrium.h5'];
@@ -72,6 +73,9 @@ if ~isempty(varargin)
                 inputs=varargin{i};
                 i=i+1;
                 type=varargin{i};
+            case{'beams'}
+                i = i+1;
+                beam_dex = varargin{i};
             otherwise
                 disp(['Unrecognized Option: ' varargin{i}]);
                 return
@@ -136,13 +140,14 @@ if lrecalc
     f(isinf(f))=0;
 else
     f=beams3d_getdistrpzEpitch(data,R,P,Z,E,PITCH);
-    f = sum(f,1);%.*ec/1000*1e6;%*1e6/2/pi/100; %keV and cm^-3;
+    f = f./(1000*1E6); %ev -> keV, m^-3 -> cm^-3
+    f = sum(f(beam_dex,:),1); % Sum over beamlines
     f = reshape(f,[numel(raxis), numel(paxis), numel(zaxis), numel(Eaxis), numel(pitchaxis)]);
     f= permute(f,[4, 5, 1, 3, 2]); %Align with FIDASIM axis order
 
     %Quick fix
-    f(isnan(f))=0;
-    f(isinf(f))=0;
+    %f(isnan(f))=0;
+    %f(isinf(f))=0;
 
     denf = squeeze(trapz(Eaxis, f,1));
     denf = squeeze(trapz(pitchaxis, denf,1));%Integration in velocity space
