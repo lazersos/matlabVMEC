@@ -1144,7 +1144,7 @@ while ~feof(fid);
                 data.([tstr '_chisq'])(niter,:) = ((temp(:,1)-temp(:,3))./(temp(:,2))).^2;
                 data.([tstr '_s'])(niter,:) = temp(:,4);
             % DKES
-            case {'DKES'}
+            case {'DKES'} 
                 data.([tstr '_target'])(niter,:) = temp(:,1);
                 data.([tstr '_sigma'])(niter,:) = temp(:,2);
                 data.([tstr '_equil'])(niter,:) = temp(:,3);

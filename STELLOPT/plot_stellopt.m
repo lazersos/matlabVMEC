@@ -45,7 +45,8 @@ end
         
 switch data.datatype
     case {'stellopt_pressure','stellopt_neteti','stellopt_magdiag',...
-            'stellopt_mse','stellopt_linne','stellopt_jacobian'}
+            'stellopt_mse','stellopt_linne','stellopt_jacobian',...
+            'stellopt_dkes'}
         plottype=data.datatype;
     case {'stellopt_new','stellopt_output'}
     otherwise
@@ -79,6 +80,8 @@ switch plottype
         plot_stellopt_kinetic_grad(data,vmec_data);
     case 'stellopt_jacobian'
         plot_stellopt_jacobian(data);
+    case 'stellopt_dkes'
+        plot_stellopt_dkes(data);
     otherwise
         disp(['ERROR: Unsuported plottype ' plottype '!']);
 end
@@ -925,6 +928,45 @@ set(gca,'YTickLabel',ytick);
 caxis([-1 1].*abs(min(caxis)));
 colorbar;
 title('STELLOPT Jacobian');
+return
+end
+
+function plot_stellopt_dkes(data)
+%DKES plot
+ns = length(unique(data.DKES_s));
+nnu = length(unique(data.DKES_nu));
+nE = length(unique(data.DKES_er));
+target = reshape(data.DKES_target,nnu,nE,ns);
+sigma = reshape(data.DKES_sigma,nnu,nE,ns);
+equil = reshape(data.DKES_equil,nnu,nE,ns);
+L11m = reshape(data.DKES_L11m,nnu,nE,ns);
+L11p = reshape(data.DKES_L11p,nnu,nE,ns);
+L31m = reshape(data.DKES_L31m,nnu,nE,ns);
+L31p = reshape(data.DKES_L31p,nnu,nE,ns);
+L33m = reshape(data.DKES_L33m,nnu,nE,ns);
+L33p = reshape(data.DKES_L33p,nnu,nE,ns);
+s = reshape(data.DKES_s,nnu,nE,ns);
+nu = reshape(data.DKES_nu,nnu,nE,ns);
+
+L11 = 0.5.*(L11m+L11p);
+L31 = 0.5.*(L31m+L31p);
+L33 = 0.5.*(L33m+L33p);
+for i = 1:ns
+    fig = figure('Position',[1 1 1024 768],'Color','white');
+    for j = 1:nE
+        val = squeeze(L11(:,j,i));
+        valm = squeeze(L11m(:,j,i));
+        valp = squeeze(L11p(:,j,i));
+        temp_txt = strcat('E/vB00=',num2str(data.DKES_er(j),'%12.2E'));
+        errorbar(squeeze(nu(:,j,i)),val,val-valm,valp-val,'DisplayName',temp_txt); hold on;
+    end
+    set(gca,'XScale','log','YScale','log','FontSize',24);
+    xlabel('Collisionality (\nu/v)')
+    ylabel('L_{11}')
+    title(['DKES Coefficient s=',num2str(s(1,1,i))]);
+    legend;
+end
+
 return
 end
 
