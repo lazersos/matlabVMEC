@@ -22,6 +22,8 @@ function [R,PHI,Z,VLL,MU] = beams3d_part2gc(data,Rpart,PHIpart,Zpart,VRpart,VPHI
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.0
 
+lplot=1;
+
 % Save the dimension and vectorize
 nsave = size(Rpart);
 ntotal = prod(nsave);
@@ -63,7 +65,7 @@ Binv = 1.0./sqrt(BX.*BX+BY.*BY+BZ.*BZ);
 Binv(R<0) = 0;
 
 % Create V parallel
-VLL = (VX.*BX+VY.*BY+VZ.*BZ)./Binv;
+VLL = (VX.*BX+VY.*BY+VZ.*BZ).*Binv;
 
 % Calc Vperp
 VPERP = sqrt(abs(VX.*VX+VY.*VY+VZ.*VZ-VLL.*VLL));
@@ -72,7 +74,7 @@ VPERP = sqrt(abs(VX.*VX+VY.*VY+VZ.*VZ-VLL.*VLL));
 rhox = VY.*BZ - VZ.*BY;
 rhoy = VZ.*BX - VX.*BZ;
 rhoz = VX.*BY - VY.*BX;
-rhonorm = sign(C).*sqrt(abs(rhox.*rhox+rhoy.*rhoy+rhoz.*rhoz));
+rhonorm = sign(C).*sqrt(rhox.*rhox+rhoy.*rhoy+rhoz.*rhoz);
 rhox = rhox./rhonorm;
 rhoy = rhoy./rhonorm;
 rhoz = rhoz./rhonorm;
@@ -89,6 +91,13 @@ Y = Y + rhoy;
 R = sqrt(X.*X+Y.*Y);
 P = atan2(Y,X);
 MU = 0.5.*M.*VPERP.*VPERP.*Binv;
+
+
+if lplot
+    quiver3(X,Y,Z,rhox,rhoy,rhoz,1,"filled",'ok');
+    hold on;
+    plot3(X,Y,Z,'om');
+end
 
 % Reshape
 R = reshape(R,nsave);

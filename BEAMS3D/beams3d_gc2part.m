@@ -23,7 +23,7 @@ function [R,PHI,Z,VR,VPHI,VZ] = beams3d_gc2part(data,Rpart,PHIpart,Zpart,VLLpart
 % Version:       1.0
 
 % For plotting
-lplot = 0;
+lplot = 1;
 
 % Save the dimension and vectorize
 nsave = size(Rpart);
@@ -67,7 +67,7 @@ BZ = BZ.*Binv;
 
 % Calculate Gyroradius
 VPERP = sqrt(2.*B.*MU./M);
-RGYRO = M.*VPERP.*Binv./C;
+RGYRO = -M.*VPERP.*Binv./C;
 
 % Calculate the perpendicular vector from (BxZ)xB
 XGYRO = -BX.*BZ.*RGYRO;
@@ -133,7 +133,7 @@ VPHI = -VX.*sin(PHI)+VY.*cos(PHI);
 
 if lplot
     quiver3(X,Y,Z,VX-VLL.*BX,VY-VLL.*BY,VZ-VLL.*BZ,1,'filled','ob');
-    quiver3(X(1),Y(1),Z(1),XPERP(1),YPERP(1),ZPERP(1),1,'filled','go');
+    %quiver3(X(1),Y(1),Z(1),XPERP(1),YPERP(1),ZPERP(1),1,'filled','go');
     quiver3(X,Y,Z,VLL.*BX,VLL.*BY,VLL.*BZ,1','filled','oc');
     axis equal;
 end
