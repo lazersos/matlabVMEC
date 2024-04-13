@@ -22,6 +22,9 @@ function [R,PHI,Z,VR,VPHI,VZ] = beams3d_gc2part(data,Rpart,PHIpart,Zpart,VLLpart
 % Maintained by: Samuel Lazerson (samuel.lazerson@ipp.mpg.de)
 % Version:       1.0
 
+% For plotting
+lplot = 0;
+
 % Save the dimension and vectorize
 nsave = size(Rpart);
 ntotal = prod(nsave);
@@ -62,10 +65,6 @@ BX = BX.*Binv;
 BY = BY.*Binv;
 BZ = BZ.*Binv;
 
-plot3(X,Y,Z,'.r');
-hold on;
-quiver3(X(1),Y(1),Z(1),BX(1),BY(1),BZ(1),0.01,'filled','ro');
-
 % Calculate Gyroradius
 VPERP = sqrt(2.*B.*MU./M);
 RGYRO = M.*VPERP.*Binv./C;
@@ -75,9 +74,11 @@ XGYRO = -BX.*BZ.*RGYRO;
 YGYRO = -BZ.*BY.*RGYRO;
 ZGYRO = (BY.*BY+BX.*BX).*RGYRO;
 
-BX(1).*XGYRO(1)+BY(1).*YGYRO(1)+BZ(1).*ZGYRO(1)
-
-quiver3(X(1),Y(1),Z(1),XGYRO(1),YGYRO(1),ZGYRO(1),1,'filled','go');
+if lplot
+    quiver3(X(1),Y(1),Z(1),BX(1),BY(1),BZ(1),0.01,'filled','ro');
+    hold on;
+    quiver3(X(1),Y(1),Z(1),XGYRO(1),YGYRO(1),ZGYRO(1),1,'filled','go');
+end
 
 % Generate a random gyrophase
 PGYRO = (rand([1,ntotal])-0.5).*2.*pi;
@@ -115,7 +116,6 @@ ZPERP = BX.*YG - BY.*XG;
 RHOPERP = sqrt(XPERP.*XPERP+YPERP.*YPERP+ZPERP.*ZPERP);
 RHOPERPinv = 1./RHOPERP;
 
-quiver3(X(1),Y(1),Z(1),XPERP(1),YPERP(1),ZPERP(1),1,'filled','go');
 
 % Step to particle position
 X = X + XG;
@@ -131,9 +131,12 @@ VZ = VLL.*BZ + VPERP.*ZPERP.*RHOPERPinv;
 VR   =  VX.*cos(PHI)+VY.*sin(PHI);
 VPHI = -VX.*sin(PHI)+VY.*cos(PHI);
 
-quiver3(X,Y,Z,VX-VLL.*BX,VY-VLL.*BY,VZ-VLL.*BZ,1','filled','ob');
-quiver3(X,Y,Z,VLL.*BX,VLL.*BY,VLL.*BZ,1','filled','oc');
-axis equal;
+if lplot
+    quiver3(X,Y,Z,VX-VLL.*BX,VY-VLL.*BY,VZ-VLL.*BZ,1,'filled','ob');
+    quiver3(X(1),Y(1),Z(1),XPERP(1),YPERP(1),ZPERP(1),1,'filled','go');
+    quiver3(X,Y,Z,VLL.*BX,VLL.*BY,VLL.*BZ,1','filled','oc');
+    axis equal;
+end
 
 % Reshape
 R = reshape(R,nsave);
