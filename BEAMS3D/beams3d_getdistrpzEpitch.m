@@ -39,10 +39,12 @@ if data.VERSION<=2.9
     disp(data.dist_prof_description);
 end
 
-mass = data.mass(1); % Assume same mass for all particles
-V = sqrt(ec.*2.*E./mass);
-Vval = V.*pitch; %Vll
-Wval = sqrt(V.^2-Vval.^2); %Vperp
+% Create mass array based on beams;
+mass = zeros(1,data.nbeams);
+for i = 1:data.nbeams
+    j = find(data.Beam==i,1,'first');
+    mass(i) = data.mass(j);
+end
 
 % Interpolate
 S   = permute(data.S_ARR,[2 1 3]);
@@ -52,37 +54,57 @@ sval= interp3(data.raxis,data.phiaxis,data.zaxis,...
     S,r,pgrid,z);
 uval= interp3(data.raxis,data.phiaxis,data.zaxis,...
     U,r,pgrid,z);
-pval = mod(phi,2*pi);
 rhoval = sqrt(sval);
 
-% Jacobian from D. Moseev paper
-% https://doi.org/10.1063/1.5085429
-jac = 2 * pi * V .*ec ./mass; % eq 29, ec for J->keV
-
-dist=zeros(data.nbeams,length(r));
-
-% We must pad in phi and u so extrap handles u=0,2pi and phi = 0,2pi cases
-n = [data.ns_prof1, data.ns_prof2+2, data.ns_prof3+2, data.ns_prof4, data.ns_prof5];
+% We must pad the arrays as data is stored on half-grid mesh
+n = [data.ns_prof1+2, data.ns_prof2+2, data.ns_prof3+2, data.ns_prof4+2, data.ns_prof5+2];
+n1 = 2:(data.ns_prof1+1);
 n2 = 2:(data.ns_prof2+1);
 n3 = 2:(data.ns_prof3+1);
-a = data.dist_paxis(1)   - (data.dist_paxis(2)-data.dist_paxis(1));
-b = data.dist_paxis(end) + (data.dist_paxis(end)-data.dist_paxis(end-1));
-paxis2 = [a data.dist_paxis b];
+n4 = 2:(data.ns_prof4+1);
+n5 = 2:(data.ns_prof5+1);
+a = data.dist_rhoaxis(1)   - (data.dist_rhoaxis(2)-data.dist_rhoaxis(1));
+b = data.dist_rhoaxis(end) + (data.dist_rhoaxis(end)-data.dist_rhoaxis(end-1));
+rhoaxis2 = [a data.dist_rhoaxis b];
 a = data.dist_uaxis(1)   - (data.dist_uaxis(2)-data.dist_uaxis(1));
 b = data.dist_uaxis(end) + (data.dist_uaxis(end)-data.dist_uaxis(end-1));
 uaxis2 = [a data.dist_uaxis b];
+a = data.dist_paxis(1)   - (data.dist_paxis(2)-data.dist_paxis(1));
+b = data.dist_paxis(end) + (data.dist_paxis(end)-data.dist_paxis(end-1));
+paxis2 = [a data.dist_paxis b];
+a = data.dist_Vaxis(1)   - (data.dist_Vaxis(2)-data.dist_Vaxis(1));
+b = data.dist_Vaxis(end) + (data.dist_Vaxis(end)-data.dist_Vaxis(end-1));
+Vaxis2 = [a data.dist_Vaxis b];
+a = data.dist_Waxis(1)   - (data.dist_Waxis(2)-data.dist_Waxis(1));
+b = data.dist_Waxis(end) + (data.dist_Waxis(end)-data.dist_Waxis(end-1));
+Waxis2 = [a data.dist_Waxis b];
 
-% Loop over beams
+% Loop over beams calculating distribution
+dist=zeros(data.nbeams,length(r));
 for i = 1:data.nbeams
-    % Pad dist_norm
+    % Calc Jacobian
+    V = sqrt(ec.*2.*E./mass(i));
+    Vval = V.*pitch; %Vll
+    Wval = sqrt(V.^2-Vval.^2); %Vperp
+    % Jacobian from D. Moseev paper
+    % https://doi.org/10.1063/1.5085429
+    jac = 2 * pi * V .*ec ./mass(i); % eq 29, ec for J->eV
     dist_norm = zeros(n);
-    dist_norm(:,n2,n3,:,:) = squeeze(data.dist_prof(i,:,:,:,:,:));
-    dist_norm(:,1,:,:,:) = dist_norm(:,n(2)-1,:,:,:);
+    dist_norm(n1,n2,n3,n4,n5) = squeeze(data.dist_prof(i,:,:,:,:,:));
+    % Lower bound
+    dist_norm(1,:,:,:,:)    = dist_norm(2,:,:,:,:);
+    dist_norm(:,1,:,:,:)    = dist_norm(:,n(2)-1,:,:,:);
+    dist_norm(:,:,1,:,:)    = dist_norm(:,:,n(3)-1,:,:);
+    %dist_norm(:,:,:,1,:)    = 0;
+    dist_norm(:,:,:,:,1)    = dist_norm(:,:,:,:,2);
+    % Upper bound
+    %dist_norm(n(1),:,:,:,:) = 0;
     dist_norm(:,n(2),:,:,:) = dist_norm(:,2,:,:,:);
-    dist_norm(:,:,1,:,:) = dist_norm(:,:,n(3)-1,:,:);
     dist_norm(:,:,n(3),:,:) = dist_norm(:,:,2,:,:);
+    %dist_norm(:,:,:,n(4),:) = 0;
+    %dist_norm(:,:,:,:,n(5)) = 0;
     % Interpolate
-    dist(i,:)=interpn(data.dist_rhoaxis,uaxis2,paxis2,data.dist_Vaxis,data.dist_Waxis,dist_norm,rhoval,uval,pval,Vval,Wval,'linear',0).*jac;
+    dist(i,:)=interpn(rhoaxis2,uaxis2,paxis2,Vaxis2,Waxis2,dist_norm,rhoval,uval,phi,Vval,Wval,'linear',0).*jac;
 end
 
 end
