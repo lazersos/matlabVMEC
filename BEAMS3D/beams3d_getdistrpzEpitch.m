@@ -1,19 +1,19 @@
 function dist = beams3d_getdistrpzEpitch(data,r,phi,z,E,pitch)
-%BEAMS3D_GETDISTPRZ Calculates the distribution function in energy/pitch
-%   This BEAMS3D_GETDISTRPZ function calculates the distribution function
-%   at a position in the cylindrical phase space given a BEAMS3D data
-%   structure as returned by READ_BEAMS3D.  Either a single point or array
-%   of points can be passed to the funciton as R [m], PHI (rad), Z [m],
-%   Energy [eV], and pitch (vll/v).  Points which fall outside the
+%BEAMS3D_GETDISTRPZEPITCH Calculates the distribution function in energy/pitch
+%   This BEAMS3D_GETDISTRPZEPITCH function calculates the distribution 
+%   function at a position in the cylindrical phase space given a BEAMS3D
+%   data structure as returned by READ_BEAMS3D.  Either a single point or 
+%   array of points can be passed to the funciton as R [m], PHI (rad), 
+%   Z [m], Energy [eV], and pitch (vll/v).  Points which fall outside the
 %   domain return 0.  The function returns a 2D array of size (NBEAMS,
 %   NPTS) where NPTS is the nubmer of requested datapoints.
 %
 % Example usage
 %      % Return an RPZ shaped array
 %      beam_data = read_beams3d('beams3d_test.h5');
-%      raxis   = 4.5:0.05:6.5;
-%      zaxis   = -1.0:0.05:1.0;
-%      paxis   = 0:2*pi/40:2*pi;
+%      raxis   = linspace(4.5,6.5,16);
+%      zaxis   = linspace(-1,1,16);
+%      paxis   = linspace(0,2.*pi,40)
 %      Eaxis   = 0:10E3:100E3;
 %      pitchaxis = -1:0.1:1;
 %      [R,P,Z,E,PITCH] = ndgrid(raxis,paxis,zaxis,Eaxis,pitchaxis);
@@ -89,6 +89,7 @@ for i = 1:data.nbeams
     % Jacobian from D. Moseev paper
     % https://doi.org/10.1063/1.5085429
     jac = 2 * pi * V .*ec ./mass(i); % eq 29, ec for J->eV
+    % Setup distribution
     dist_norm = zeros(n);
     dist_norm(n1,n2,n3,n4,n5) = squeeze(data.dist_prof(i,:,:,:,:,:));
     % Lower bound
