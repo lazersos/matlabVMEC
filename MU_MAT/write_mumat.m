@@ -65,7 +65,7 @@ for i = 1:data.nstate
     if data.state_func(i).type == 1 %hard
         fprintf(fid,'%20.10E %20.10E %20.10E\n',data.state_func(i).M);
     elseif data.state_func(i).type == 2 % Soft
-        fprintf(fid,'%i %i\n',data.state_func(i).nh,data.state_func(i).nt);
+        fprintf(fid,'%i\n',data.state_func(i).nh);
         fprintf(fid,' %20.10E',data.state_func(i).H);
         fprintf(fid,'\n');
         fprintf(fid,' %20.10E',data.state_func(i).M);

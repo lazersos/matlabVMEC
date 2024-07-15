@@ -72,10 +72,9 @@ for i = 1:data.nstate
     if data.state_func(i).type == 1 %hard
         data.state_func(i).M = fscanf(fid,'%E',3);
     elseif data.state_func(i).type == 2 %Soft
-        temp = fscanf(fid,'%i',2);
+        temp = fscanf(fid,'%i',1);
         data.state_func(i).nh = temp(1);
-        data.state_func(i).nt = temp(2);
-        data.state_func(i).H = fscanf(fid,'%E',data.state_func(i).nt);
+        data.state_func(i).H = fscanf(fid,'%E',data.state_func(i).nh);
         data.state_func(i).M = fscanf(fid,'%E',data.state_func(i).nh);
     elseif data.state_func(i).type == 3 %Soft Constant
         data.state_func(i).mu = fscanf(fid,'%E',1);
